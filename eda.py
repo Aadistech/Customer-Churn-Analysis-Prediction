@@ -134,7 +134,7 @@ plt.figure(figsize=(8,5))
 
 df.boxplot(
     column="Total eve minutes",
-    by="churn"
+    by="Churn"
 )
 
 plt.title("Evening Minutes vs Churn")
