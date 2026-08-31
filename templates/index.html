@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang=""en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initil-scale=1.0">
+
+    <title>Customer Churn Prediction</title>
+
+</head>
+
+<body>
+
+    <h1>Customer Churn Prediction System</h1>
+
+    <p>Enter customer details to predict the likelihood of churn.</p>
+
+    <form action="/predict"method="POST">
+
+        <!-- Customer Information -->
+
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" maxlength="2" required>
+
+        <br><br>
+
+        <label for="area_code">Area Code</label>
+        <input type="number" id="area_code" name="area_code" required>
+
+        <br><br>
+
+        <!-- Service Plans -->
+
+        <label for="international_plan">International Plan</label>
+
+        <selected id="international_plan" name="international_plan" required>
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+        </selected>
+
+        <br><br>
+
+        <lable for="voice_mail_plan">Voice Mail Plan</lable>
+
+        <select id="voice_mail_plan" name="voice_mail_plan" required>
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>"
+        </select>
+
+        <br><br>
+
+        <label for=""number_vmail_message">
+        Number of voice Mail Message
+        </label>
+
+        <input
+        type="number"
+        id="number_vmail_messages"
+        name="number_vmail_messages"
+        >
+
+        <br><br>
+
+        <!-- Day Usage -->
+
+        <label for="total_day_minutes">Total Day Minutes</label>
+
+        <input
+        type="number"
+        step="0.1"
+        id="total_day_minutes"
+        name="total_day_minutes"
+        required
+        >
+
+        <br><br>
+
+        <label for="total_day_calls">Total Day Calls</label>
+
+        <input
+        type="number"
+        id="total_day_calls"
+        name="total_day_calls"
+        required
+        >
+
+        <br><br>
+
+        <label for="total_day_charge">Total Day Charge</label>
+
+        <input
+        type="number"
+        step="0.01"
+        id="total_day_charge"
+        name="total_day_charge"
+        required
+        >
+
+        <br><br>
+
+        <!-- Evening Usage -->
+
+        <label for="total_eve_minutes">Total Evening Minutes</label>
+
+        <input 
+        type="number"
+        step="0.1"
+        id="total_eve_minutes"
+        name="total_eve_minutes"
+        required
+        >
+
+        <br><br>
+
+        <label for="total_eve_calls">Total Evening Calls</label>
+
+        <input 
+        type="number"
+        id="total_eve_calls"
+        name="total_eve_calls"
+        required
+        >
+
+        <br><br>
+
+        <label for="total_eve_charge">Total Evening Charge</label>
+
+        <input
+        type="number"
+        step="0.01"
+        id="total_eve_charge"
+        name="total_eve_charge"
+        required
+        >
+
+        <br><br>
+
+        <!-- Night Usage -->
+
+        <label for="total_night_minutes">Total Night Minutes</label>
+        <input
+            type="number"
+            step="0.1"
+            id="total_night_minutes"
+            name="total_night_minutes"
+            required
+        >
+
+        <br><br>
+
+        <label for="total_night_calls">Total Night Calls</label>
+
+        <input
+            type="number"
+            id="total_night_calls"
+            name="total_night_calls"
+            required
+        >
+
+        <br><br>
+
+        <label for="total_night_charge">Total Night Charge</label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_night_charge"
+            name="total_night_charge"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- International Usage -->
+
+        <label for="total_intl_minutes">
+            Total International Minutes
+        </label>
+
+        <input
+            type="number"
+            step="0.1"
+            id="total_intl_minutes"
+            name="total_intl_minutes"
+            required
+        >
+
+        <br><br>
+
+        <label for="total_intl_calls">
+            Total International Calls
+        </label>
+
+        <input
+            type="number"
+            id="total_intl_calls"
+            name="total_intl_calls"
+            required
+        >
+
+        <br><br>
+
+        <label for="total_intl_charge">
+            Total International Charge
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_intl_charge"
+            name="total_intl_charge"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- Customer Service -->
+
+        <label for="customer_service_calls">
+            Customer Service Calls
+        </label>
+
+        <input
+            type="number"
+            id="customer_service_calls"
+            name="customer_service_calls"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- Submit -->
+
+        <button type="submit">
+            Predict Churn
+        </button>
+
+    </form>
+
+</body>
+
+</html>
+    </form>
+</body></html>
