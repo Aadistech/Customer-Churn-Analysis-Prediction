@@ -2,37 +2,62 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>Prediction Result</title>
+
 </head>
+
 
 <body>
 
-    <h1>Customer Churn Prediction Result</h1>
+    <h1>
+        Customer Churn Prediction Result
+    </h1>
 
-    <h2>{{ prediction }}</h2>
 
     <hr>
 
-    <h3>Prediction Probability</h3>
+
+    <h2>
+        {{ prediction }}
+    </h2>
+
+
+    <h3>
+        Prediction Probability
+    </h3>
+
 
     <p>
         Stay Probability:
-        <strong>{{ stay_probability }}%</strong>
+        <strong>
+            {{ stay_probability }}%
+        </strong>
     </p>
+
 
     <p>
         Churn Probability:
-        <strong>{{ churn_probability }}%</strong>
+        <strong>
+            {{ churn_probability }}%
+        </strong>
     </p>
+
 
     <br>
 
+
     <a href="/">
-        <button>Predict Another Customer</button>
+        <button>
+            Predict Another Customer
+        </button>
     </a>
+
 
 </body>
 

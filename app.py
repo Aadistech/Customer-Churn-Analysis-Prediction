@@ -223,8 +223,7 @@ def predict():
     )
 
     churn_probability = round(
-        probability[0][1] * 100,
-        2
+        probability[0][1] * 100,2
     )
 
 

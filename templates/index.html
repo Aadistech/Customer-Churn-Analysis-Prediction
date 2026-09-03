@@ -1,145 +1,297 @@
 <!DOCTYPE html>
-<html lang=""en">
+<html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initil-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>Customer Churn Prediction</title>
 
 </head>
 
+
 <body>
 
     <h1>Customer Churn Prediction System</h1>
 
-    <p>Enter customer details to predict the likelihood of churn.</p>
+    <p>
+        Enter customer information to predict
+        whether the customer is likely to churn.
+    </p>
 
-    <form action="/predict"method="POST">
+    <hr>
 
-        <!-- Customer Information -->
 
-        <label for="state">State</label>
-        <input type="text" id="state" name="state" maxlength="2" required>
+    <form action="/predict" method="POST">
 
-        <br><br>
 
-        <label for="area_code">Area Code</label>
-        <input type="number" id="area_code" name="area_code" required>
+        <!-- STATE -->
 
-        <br><br>
+        <label for="state">
+            State:
+        </label>
 
-        <!-- Service Plans -->
+        <select id="state"
+                name="state"
+                required>
 
-        <label for="international_plan">International Plan</label>
+            <option value="SC">SC</option>
+            <option value="LA">LA</option>
+            <option value="CA">CA</option>
+            <option value="NY">NY</option>
+            <option value="TX">TX</option>
+            <option value="FL">FL</option>
+            <option value="GA">GA</option>
+            <option value="IL">IL</option>
+            <option value="NJ">NJ</option>
+            <option value="OH">OH</option>
+            <option value="PA">PA</option>
+            <option value="VA">VA</option>
+            <option value="WA">WA</option>
+            <option value="OR">OR</option>
+            <option value="ID">ID</option>
+            <option value="MT">MT</option>
+            <option value="AK">AK</option>
+            <option value="AL">AL</option>
+            <option value="AR">AR</option>
+            <option value="AZ">AZ</option>
+            <option value="CO">CO</option>
+            <option value="CT">CT</option>
+            <option value="DE">DE</option>
+            <option value="HI">HI</option>
+            <option value="IA">IA</option>
+            <option value="IN">IN</option>
+            <option value="KS">KS</option>
+            <option value="KY">KY</option>
+            <option value="MA">MA</option>
+            <option value="MD">MD</option>
+            <option value="ME">ME</option>
+            <option value="MI">MI</option>
+            <option value="MN">MN</option>
+            <option value="MO">MO</option>
+            <option value="MS">MS</option>
+            <option value="NC">NC</option>
+            <option value="ND">ND</option>
+            <option value="NE">NE</option>
+            <option value="NH">NH</option>
+            <option value="NM">NM</option>
+            <option value="NV">NV</option>
+            <option value="NY">NY</option>
+            <option value="OK">OK</option>
+            <option value="RI">RI</option>
+            <option value="SD">SD</option>
+            <option value="TN">TN</option>
+            <option value="UT">UT</option>
+            <option value="VT">VT</option>
+            <option value="WI">WI</option>
+            <option value="WV">WV</option>
+            <option value="WY">WY</option>
 
-        <selected id="international_plan" name="international_plan" required>
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-        </selected>
-
-        <br><br>
-
-        <lable for="voice_mail_plan">Voice Mail Plan</lable>
-
-        <select id="voice_mail_plan" name="voice_mail_plan" required>
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>"
         </select>
 
         <br><br>
 
-        <label for=""number_vmail_message">
-        Number of voice Mail Message
+
+        <!-- ACCOUNT LENGTH -->
+
+        <label for="account_length">
+            Account Length:
         </label>
 
         <input
-        type="number"
-        id="number_vmail_messages"
-        name="number_vmail_messages"
+            type="number"
+            id="account_length"
+            name="account_length"
+            required
         >
 
         <br><br>
 
-        <!-- Day Usage -->
 
-        <label for="total_day_minutes">Total Day Minutes</label>
+        <!-- AREA CODE -->
 
-        <input
-        type="number"
-        step="0.1"
-        id="total_day_minutes"
-        name="total_day_minutes"
-        required
-        >
+        <label for="area_code">
+            Area Code:
+        </label>
 
-        <br><br>
-
-        <label for="total_day_calls">Total Day Calls</label>
-
-        <input
-        type="number"
-        id="total_day_calls"
-        name="total_day_calls"
-        required
-        >
-
-        <br><br>
-
-        <label for="total_day_charge">Total Day Charge</label>
-
-        <input
-        type="number"
-        step="0.01"
-        id="total_day_charge"
-        name="total_day_charge"
-        required
-        >
-
-        <br><br>
-
-        <!-- Evening Usage -->
-
-        <label for="total_eve_minutes">Total Evening Minutes</label>
-
-        <input 
-        type="number"
-        step="0.1"
-        id="total_eve_minutes"
-        name="total_eve_minutes"
-        required
-        >
-
-        <br><br>
-
-        <label for="total_eve_calls">Total Evening Calls</label>
-
-        <input 
-        type="number"
-        id="total_eve_calls"
-        name="total_eve_calls"
-        required
-        >
-
-        <br><br>
-
-        <label for="total_eve_charge">Total Evening Charge</label>
-
-        <input
-        type="number"
-        step="0.01"
-        id="total_eve_charge"
-        name="total_eve_charge"
-        required
-        >
-
-        <br><br>
-
-        <!-- Night Usage -->
-
-        <label for="total_night_minutes">Total Night Minutes</label>
         <input
             type="number"
-            step="0.1"
+            id="area_code"
+            name="area_code"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- INTERNATIONAL PLAN -->
+
+        <label for="international_plan">
+            International Plan:
+        </label>
+
+        <select
+            id="international_plan"
+            name="international_plan"
+            required
+        >
+
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+
+        </select>
+
+        <br><br>
+
+
+        <!-- VOICE MAIL PLAN -->
+
+        <label for="voice_mail_plan">
+            Voice Mail Plan:
+        </label>
+
+        <select
+            id="voice_mail_plan"
+            name="voice_mail_plan"
+            required
+        >
+
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+
+        </select>
+
+        <br><br>
+
+
+        <!-- NUMBER VMAIL MESSAGES -->
+
+        <label for="number_vmail_messages">
+            Number of Voice Mail Messages:
+        </label>
+
+        <input
+            type="number"
+            id="number_vmail_messages"
+            name="number_vmail_messages"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- DAY MINUTES -->
+
+        <label for="total_day_minutes">
+            Total Day Minutes:
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_day_minutes"
+            name="total_day_minutes"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- DAY CALLS -->
+
+        <label for="total_day_calls">
+            Total Day Calls:
+        </label>
+
+        <input
+            type="number"
+            id="total_day_calls"
+            name="total_day_calls"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- DAY CHARGE -->
+
+        <label for="total_day_charge">
+            Total Day Charge:
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_day_charge"
+            name="total_day_charge"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- EVENING MINUTES -->
+
+        <label for="total_eve_minutes">
+            Total Evening Minutes:
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_eve_minutes"
+            name="total_eve_minutes"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- EVENING CALLS -->
+
+        <label for="total_eve_calls">
+            Total Evening Calls:
+        </label>
+
+        <input
+            type="number"
+            id="total_eve_calls"
+            name="total_eve_calls"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- EVENING CHARGE -->
+
+        <label for="total_eve_charge">
+            Total Evening Charge:
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
+            id="total_eve_charge"
+            name="total_eve_charge"
+            required
+        >
+
+        <br><br>
+
+
+        <!-- NIGHT MINUTES -->
+
+        <label for="total_night_minutes">
+            Total Night Minutes:
+        </label>
+
+        <input
+            type="number"
+            step="0.01"
             id="total_night_minutes"
             name="total_night_minutes"
             required
@@ -147,7 +299,12 @@
 
         <br><br>
 
-        <label for="total_night_calls">Total Night Calls</label>
+
+        <!-- NIGHT CALLS -->
+
+        <label for="total_night_calls">
+            Total Night Calls:
+        </label>
 
         <input
             type="number"
@@ -158,7 +315,12 @@
 
         <br><br>
 
-        <label for="total_night_charge">Total Night Charge</label>
+
+        <!-- NIGHT CHARGE -->
+
+        <label for="total_night_charge">
+            Total Night Charge:
+        </label>
 
         <input
             type="number"
@@ -171,15 +333,15 @@
         <br><br>
 
 
-        <!-- International Usage -->
+        <!-- INTERNATIONAL MINUTES -->
 
         <label for="total_intl_minutes">
-            Total International Minutes
+            Total International Minutes:
         </label>
 
         <input
             type="number"
-            step="0.1"
+            step="0.01"
             id="total_intl_minutes"
             name="total_intl_minutes"
             required
@@ -187,8 +349,11 @@
 
         <br><br>
 
+
+        <!-- INTERNATIONAL CALLS -->
+
         <label for="total_intl_calls">
-            Total International Calls
+            Total International Calls:
         </label>
 
         <input
@@ -200,8 +365,11 @@
 
         <br><br>
 
+
+        <!-- INTERNATIONAL CHARGE -->
+
         <label for="total_intl_charge">
-            Total International Charge
+            Total International Charge:
         </label>
 
         <input
@@ -215,10 +383,10 @@
         <br><br>
 
 
-        <!-- Customer Service -->
+        <!-- CUSTOMER SERVICE CALLS -->
 
         <label for="customer_service_calls">
-            Customer Service Calls
+            Customer Service Calls:
         </label>
 
         <input
@@ -228,19 +396,19 @@
             required
         >
 
-        <br><br>
+        <br><br><br>
 
 
-        <!-- Submit -->
+        <!-- SUBMIT -->
 
         <button type="submit">
             Predict Churn
         </button>
 
+
     </form>
+
 
 </body>
 
 </html>
-    </form>
-</body></html>
