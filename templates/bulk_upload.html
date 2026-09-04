@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bulk Customer Prediction</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 70%;
+            margin: 60px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 2px dashed #888;
+            padding: 40px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        input[type="file"] {
+            margin: 20px;
+        }
+
+        button {
+            background: #222;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .info {
+            margin-top: 25px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #222;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📊 Bulk Customer Churn Prediction</h1>
+
+    <p class="subtitle">
+        Upload your customer dataset and predict churn for all customers at once.
+    </p>
+
+    <form action="/bulk_predict" method="POST" enctype="multipart/form-data">
+
+        <div class="upload-box">
+
+            <h3>Upload Customer Dataset</h3>
+
+            <p>Supported formats: CSV, Excel (.xlsx)</p>
+
+            <input
+                type="file"
+                name="dataset"
+                accept=".csv,.xlsx"
+                required
+            >
+
+        </div>
+
+        <button type="submit">
+            🚀 Analyze & Predict
+        </button>
+
+    </form>
+
+    <div class="info">
+        <p>
+            The system will process the dataset and generate
+            churn predictions for every customer.
+        </p>
+    </div>
+
+    <a href="/">
+        ← Back to Individual Prediction
+    </a>
+
+</div>
+
+</body>
+</html>
