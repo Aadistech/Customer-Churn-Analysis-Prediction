@@ -1,1 +1,60 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bulk analysis — ChurnLens</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body><nav class="navbar"><a class="brand" href="/"><span class="brand-mark">C</span> ChurnLens</a><div class="nav-links"><a href="/">Single prediction</a><a href="/dashboard">Dashboard</a><a class="active" href="/bulk">Bulk analysis</a></div></nav><main class="shell bulk-shell"><p class="eyebrow">Portfolio intelligence</p><h1>Analyze your customer base.</h1><p class="lead">Upload a customer dataset to identify churn risk across every account.</p><form class="upload-card" action="/bulk_predict" method="post" enctype="multipart/form-data"><div class="upload-symbol">↑</div><h2>Upload customer data</h2><p>CSV and Excel files are supported.</p><label class="file-drop" for="dataset"><input id="dataset" type="file" name="dataset" accept=".csv,.xlsx" required><span id="file-label">Click anywhere here to choose a CSV or Excel file</span><small id="file-help">You can also drag and drop a file in this area</small></label><button class="submit-btn" type="submit">Analyze customer base <b>→</b></button></form><p class="template-note">Use the same columns as the project’s <code>customer_churn.csv</code> file. A <code>Churn</code> column, if included, will be ignored.</p></main><script>const dataset=document.getElementById('dataset');const fileLabel=document.getElementById('file-label');const fileHelp=document.getElementById('file-help');dataset.addEventListener('change',()=>{if(dataset.files.length){fileLabel.textContent=dataset.files[0].name;fileHelp.textContent='Ready to analyze — click the button below.';}});</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Upload - AadiBI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Full Screen Loader -->
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <h2>Analyzing your dataset...</h2>
+        <p style="color: var(--text-muted); margin-top: 10px;">Applying Random Forest model to generate predictions.</p>
+    </div>
+
+    <nav class="navbar">
+        <div class="brand">📊 AadiBI</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/bulk">Bulk Analysis</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 800px;">
+        <div class="card" style="text-align: center;">
+            <h1 style="margin-bottom: 1rem;">Bulk Customer Churn Analysis</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Upload your customer dataset in CSV or Excel format to analyze churn risk across all customers.</p>
+            
+            <form id="upload-form" action="/bulk_predict" method="POST" enctype="multipart/form-data">
+                <div class="upload-area" onclick="triggerFileInput()">
+                    <div class="upload-icon">📂</div>
+                    <h3 style="margin-bottom: 0.5rem;">Click or Drag to Upload Dataset</h3>
+                    <p id="file-name" style="color: var(--text-muted);">Supports .csv, .xlsx</p>
+                    <input type="file" id="dataset-upload" name="dataset" accept=".csv, .xlsx, .xls" required style="display: block; margin: 1rem auto; padding: 10px;">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%; font-size: 1.1rem; padding: 1rem;">Analyze Dataset</button>
+            </form>
+        </div>
+
+        <div class="card" style="margin-top: 2rem; background: #f8fafc;">
+            <h3 style="margin-bottom: 1rem;">How it works:</h3>
+            <ol style="margin-left: 1.5rem; color: var(--text-muted); line-height: 1.8;">
+                <li><strong>Upload dataset:</strong> Provide your batch customer data.</li>
+                <li><strong>System processes customer data:</strong> Cleans and scales features automatically.</li>
+                <li><strong>Random Forest predicts churn:</strong> Runs our trained Machine Learning pipeline.</li>
+                <li><strong>Dashboard displays insights:</strong> View high-level KPIs and graphs.</li>
+                <li><strong>Download complete results:</strong> Export the data with appended predictions.</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <footer>
+        <h4>AadiBI Customer Churn Intelligence System</h4>
+        <p>Machine Learning • Data Analytics • Business Intelligence</p>
+    </footer>
+</body>
+</html>

@@ -1,1 +1,81 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in — ChurnLens</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body class="login-page"><main class="login-card"><a class="brand" href="/login"><span class="brand-mark">C</span> ChurnLens</a><p class="eyebrow">Secure workspace</p><h1>Sign in to continue</h1><p class="login-copy">Access customer risk analysis with your assigned role.</p>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<p class="login-error">{{ message }}</p>{% endfor %}{% endwith %}<form method="post"><label>Username<input name="username" autocomplete="username" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button class="submit-btn" type="submit">Sign in <b>→</b></button></form><div class="demo-accounts"><b>Local demo accounts</b><span>Admin: <code>admin / admin123</code></span><span>Analyst: <code>analyst / analyst123</code></span></div></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - AadiBI Customer Churn Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="split-auth-body">
+
+    <div class="split-layout">
+        
+        <!-- LEFT PANEL: Image, Messaging & Branding -->
+        <div class="split-left">
+            <!-- Dark overlay to make text readable over the background image -->
+            <div class="split-overlay"></div>
+            
+            <div class="left-content">
+                <div class="brand-logo" style="margin-bottom: 2rem;">
+                    <span class="logo-icon">📊</span>
+                    <span class="logo-text" style="color: #ffffff;">AadiBI</span>
+                </div>
+                
+                <h1 class="hero-title">Predict Churn.<br>Retain Customers.</h1>
+                <p class="hero-subtitle">
+                    Harness the power of Machine Learning to analyze customer behavior, identify high-risk accounts, and prevent churn before it happens.
+                </p>
+                
+                <div class="feature-bullets">
+                    <div class="bullet">✨ Powered by Random Forest Algorithm</div>
+                    <div class="bullet">📈 Real-time Bulk Data Processing</div>
+                    <div class="bullet">🎯 Actionable Retention Insights</div>
+                </div>
+            </div>
+
+            <!-- Custom Academic Project Footer -->
+            <div class="project-footer">
+                <p>System developed by Aaditya, Padmaj & Parth</p>
+                <p class="college-text">MGM College of CS & IT</p>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Login Form -->
+        <div class="split-right">
+            <div class="auth-card-modern">
+                <div style="margin-bottom: 2rem;">
+                    <span class="badge-tag">SECURE WORKSPACE</span>
+                    <h2 style="margin-top: 1rem; color: #0f172a; font-size: 1.8rem;">Welcome back</h2>
+                    <p style="color: #64748b; font-size: 0.95rem;">Sign in to access the analytics dashboard.</p>
+                </div>
+
+                <form action="/login" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem; padding: 0.9rem;">
+                        Sign in to Dashboard &rarr;
+                    </button>
+                </form>
+
+                <div class="demo-box" style="margin-top: 2.5rem;">
+                    <div class="demo-title">🔑 Demo Credentials</div>
+                    <div class="demo-grid">
+                        <div class="demo-item"><span class="role">Admin:</span> <code>admin</code> / <code>admin123</code></div>
+                        <div class="demo-item"><span class="role">Analyst:</span> <code>analyst</code> / <code>analyst123</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

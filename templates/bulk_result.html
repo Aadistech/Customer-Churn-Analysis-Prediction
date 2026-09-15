@@ -1,45 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Dashboard — Customer Churn Analysis</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - AadiBI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Load Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="analytics-app">
-  <header class="app-topbar">
-    <a class="app-brand" href="/"><span>☰</span> Customer Churn Analysis <b>&amp;</b> Prediction System</a>
-    <nav><a class="selected" href="/dashboard">▣ Dashboard</a><a href="/">◉ Prediction</a><a href="/bulk">⇧ Upload data</a></nav>
-  </header>
-  <div class="app-layout">
-    <aside class="app-sidebar">
-      <a href="/">⌂ <span>Home</span></a>
-      <a class="current" href="/dashboard">▣ <span>Dashboard</span></a>
-      <a href="#customer-table">▤ <span>Customer analysis</span></a>
-      <a href="/">⌁ <span>Predict churn</span></a>
-      <a href="/bulk">⇧ <span>Analyze a file</span></a>
-    </aside>
-    <main class="analytics-main">
-      <section class="app-heading">
-        <div><p class="section-kicker">Customer churn summary</p><h1>Dashboard overview</h1><p>Explore risk signals across your full customer portfolio.</p></div>
-        <a class="download-button" href="/download_results">↓ Download predictions</a>
-      </section>
-      <section class="kpi-grid">
-        <article class="kpi blue"><span class="kpi-icon">♙</span><div><small>Total customers</small><strong>{{ total_customers }}</strong></div></article>
-        <article class="kpi red"><span class="kpi-icon">♟</span><div><small>Predicted churn</small><strong>{{ churn_count }}</strong></div></article>
-        <article class="kpi green"><span class="kpi-icon">✓</span><div><small>Customers retained</small><strong>{{ stay_count }}</strong></div></article>
-        <article class="kpi amber"><span class="kpi-icon">!</span><div><small>Churn rate</small><strong>{{ churn_rate }}%</strong></div></article>
-      </section>
-      <section class="chart-grid">
-        <article class="viz-card distribution"><h2>Churn distribution</h2><div class="donut-chart" style="--stay: {{ stay_rate }}"><div><strong>{{ stay_rate }}%</strong><span>predicted to stay</span></div></div><div class="chart-key"><span><i class="dot-stay"></i>Stayed {{ stay_rate }}%</span><span><i class="dot-churn"></i>Churned {{ churn_rate }}%</span></div></article>
-        {% set chart_cards = [('Churn by international plan', charts.international, 'blue-bars'), ('Churn by voice mail plan', charts.voicemail, 'green-bars'), ('Churn by service calls', charts.service_calls, 'orange-bars'), ('Churn by day minutes', charts.day_minutes, 'purple-bars')] %}
-        {% for title, items, class_name in chart_cards %}
-        <article class="viz-card"><h2>{{ title }}</h2><div class="bar-chart {{ class_name }}">{% for item in items %}<div class="bar-entry"><span class="bar-value">{{ item.value }}%</span><div class="bar-track"><i style="height: {{ item.value }}%"></i></div><span class="bar-label">{{ item.label }}</span></div>{% endfor %}</div></article>
-        {% endfor %}
-      </section>
-      <section class="risk-banner"><div><span class="attention">!</span><b>{{ high_risk }} high-risk customers</b><p>{{ high_risk_rate }}% of customers have a churn probability of 70% or more.</p></div><a href="#customer-table">Review customers →</a></section>
-      <section id="customer-table" class="app-table-card"><div class="table-heading"><div><h2>Customer prediction results</h2><p>Showing the first {{ results|length }} customers. Download the CSV for every result.</p></div><span>Live model analysis</span></div><div class="app-table-wrap"><table><thead><tr><th>Customer</th><th>Prediction</th><th>Churn probability</th><th>Risk level</th></tr></thead><tbody>{% for row in results %}<tr><td>#{{ row.customer }}</td><td><b class="prediction-pill {{ row.prediction|lower }}">{{ row.prediction }}</b></td><td><div class="app-progress"><i style="width:{{ row.churn_probability }}%"></i></div>{{ row.churn_probability }}%</td><td><b class="risk-pill {{ row.risk|lower }}">{{ row.risk }}</b></td></tr>{% endfor %}</tbody></table></div></section>
-    </main>
-  </div>
+<body>
+    <nav class="navbar">
+        <div class="brand">📊 AadiBI Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/bulk">New Bulk Analysis</a>
+            <a href="/download_results" class="btn btn-primary" style="color:white; padding: 0.5rem 1rem;">Download Complete Results</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- KPI Row -->
+        <div class="grid-5" style="margin-bottom: 2rem;">
+            <div class="card kpi-card">
+                <div class="kpi-title">Total Customers</div>
+                <div class="kpi-value">{{ total_customers }}</div>
+            </div>
+            <div class="card kpi-card" style="border-top-color: var(--danger);">
+                <div class="kpi-title">Predicted Churn</div>
+                <div class="kpi-value">{{ churned_customers }}</div>
+            </div>
+            <div class="card kpi-card" style="border-top-color: var(--success);">
+                <div class="kpi-title">Predicted Stay</div>
+                <div class="kpi-value">{{ staying_customers }}</div>
+            </div>
+            <div class="card kpi-card" style="border-top-color: var(--warning);">
+                <div class="kpi-title">Overall Churn Rate</div>
+                <div class="kpi-value">{{ churn_rate }}%</div>
+            </div>
+            <div class="card kpi-card" style="border-top-color: #8b5cf6;">
+                <div class="kpi-title">High Risk Customers (>=70%)</div>
+                <div class="kpi-value">{{ high_risk_customers }}</div>
+            </div>
+        </div>
+
+        <!-- Charts and Insights -->
+        <div class="grid-2" style="margin-bottom: 2rem;">
+            <!-- Chart Section -->
+            <div class="card">
+                <h3 class="section-title">Customer Distribution</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="churnChart" data-churn="{{ churned_customers }}" data-stay="{{ staying_customers }}"></canvas>
+                </div>
+            </div>
+            
+            <!-- Business Insights -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+                <h3 class="section-title">Business Insights</h3>
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary); margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Risk Assessment</h4>
+                    <p style="color: var(--text-muted);">
+                        {% if churn_rate|float >= 20 %}
+                            High churn risk detected ({{ churn_rate }}%). The business should urgently prioritize retention campaigns and intervention strategies for high-risk accounts.
+                        {% elif churn_rate|float >= 10 %}
+                            Moderate churn risk detected. Targeted retention campaigns and discounts should be considered for the {{ churned_customers }} at-risk customers.
+                        {% else %}
+                            Low churn risk detected. Continue monitoring high-risk customers while maintaining normal business operations.
+                        {% endif %}
+                    </p>
+                </div>
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary);">
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Model Information</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        Predictions are generated using a trained Random Forest machine-learning model mapping behavioral features to churn probabilities. Note: "High-risk" is classified as customers with a predicted churn probability of 70% or higher.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="section-title" style="margin: 0;">Sample Customer Predictions</h3>
+                <span class="badge" style="background: #e2e8f0; color: #475569;">Showing Top 20 Records</span>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <!-- Dynamically generate headers from the first dictionary in table_data -->
+                            {% if table_data and table_data|length > 0 %}
+                                {% for key in table_data[0].keys() %}
+                                    <th>{{ key|replace('_', ' ')|title }}</th>
+                                {% endfor %}
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in table_data[:20] %}
+                        <tr>
+                            {% for key, value in row.items() %}
+                                <td>
+                                    {% if key|lower == 'prediction' %}
+                                        {% if value == 'CUSTOMER WILL CHURN' or value|lower == 'churn' or value == 1 %}
+                                            <span class="badge badge-danger">WILL CHURN</span>
+                                        {% else %}
+                                            <span class="badge badge-success">WILL STAY</span>
+                                        {% endif %}
+                                    {% elif 'probability' in key|lower %}
+                                        <!-- Format probability columns nicely -->
+                                        {{ value }}%
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="/download_results" class="btn btn-primary">Download Complete Dataset (.csv)</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <footer>
+        <h4>AadiBI Customer Churn Intelligence System</h4>
+        <p>Machine Learning • Data Analytics • Business Intelligence</p>
+    </footer>
 </body>
 </html>

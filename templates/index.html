@@ -1,15 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ChurnLens — Customer risk intelligence</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
-<body>
-<nav class="navbar"><a class="brand" href="/"><span class="brand-mark">C</span> ChurnLens</a><div class="nav-links"><a class="active" href="/">Single prediction</a><a href="/dashboard">Dashboard</a><a href="/bulk">Bulk analysis</a></div></nav>
-<main class="shell">
-<section class="hero"><div><p class="eyebrow">Customer retention intelligence</p><h1>See churn risk before<br>customers leave.</h1><p class="hero-copy">Turn customer usage signals into an actionable churn prediction in seconds.</p></div><div class="hero-stat"><span>MODEL ACCURACY</span><strong>91<span>%</span></strong><p>Random Forest classifier</p></div></section>
-<section class="intro-row"><div><p class="eyebrow">Risk assessment</p><h2>Customer profile</h2><p>Complete the fields below to generate a tailored churn-risk score.</p></div><div class="steps"><a class="dashboard-link" href="/dashboard">Analyze all project customers →</a><span class="step active">1 <small>Profile</small></span><i></i><span class="step">2 <small>Analysis</small></span><i></i><span class="step">3 <small>Result</small></span></div></section>
-<form class="prediction-form" action="/predict" method="post">
-<section class="form-panel"><div class="panel-heading"><div class="panel-icon blue">⌁</div><div><h3>Account details</h3><p>Basic account and service configuration</p></div></div><div class="form-grid">
-<label>State<select name="state" required>{% for state in ['AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY'] %}<option value="{{ state }}" {% if state == 'CA' %}selected{% endif %}>{{ state }}</option>{% endfor %}</select></label>
-<label>Area code<select name="area_code" required><option value="408">408</option><option value="415">415</option><option value="510">510</option></select></label><label>Account length <span class="unit">months</span><input name="account_length" type="number" min="0" value="100" required></label><label>Customer service calls<input name="customer_service_calls" type="number" min="0" value="1" required></label><label>International plan<select name="international_plan" required><option value="No" selected>No</option><option value="Yes">Yes</option></select></label><label>Voice mail plan<select name="voice_mail_plan" required><option value="No" selected>No</option><option value="Yes">Yes</option></select></label><label>Voice mail messages<input name="number_vmail_messages" type="number" min="0" value="0" required></label></div></section>
-<section class="form-panel usage-panel"><div class="panel-heading"><div class="panel-icon purple">◫</div><div><h3>Usage &amp; charges</h3><p>Enter monthly totals from the customer account</p></div></div><div class="usage-grid">
-{% for name, title, period, minute, calls, charge in [('day','Daytime','6 AM – 6 PM','180.0','100','30.60'),('eve','Evening','6 PM – 10 PM','200.0','100','17.00'),('night','Night','10 PM – 6 AM','200.0','100','9.00'),('intl','International','All international calls','10.0','3','2.70')] %}<div class="usage-group"><h4><span>{{ title }}</span><small>{{ period }}</small></h4><div class="mini-grid"><label>Minutes<input name="total_{{ name }}_minutes" type="number" min="0" step="0.1" value="{{ minute }}" required></label><label>Calls<input name="total_{{ name }}_calls" type="number" min="0" value="{{ calls }}" required></label><label class="full">Charge ($)<input name="total_{{ name }}_charge" type="number" min="0" step="0.01" value="{{ charge }}" required></label></div></div>{% endfor %}
-</div></section><button class="submit-btn" type="submit"><span>Generate churn prediction</span><b>→</b></button><p class="privacy">Your input is used only to generate this prediction.</p></form></main></body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AadiBI - Customer Churn Intelligence System</title>
+    <!-- CRITICAL: This line connects your HTML to the static/css/style.css file -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3"><body>
+    <nav class="navbar">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="AadiBI Logo" class="brand-img">
+            <span class="logo-text">AadiBI</span>
+        </div>
+        <!-- This is the section that went missing! -->
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/#individual">Individual Prediction</a>
+            <a href="/bulk">Bulk Analysis</a>
+        </div>
+    </nav>
+
+    <div class="container">
+       <!-- Hero Section with Image -->
+        <div class="hero" style="display: flex; align-items: center; justify-content: space-between; text-align: left; gap: 2rem; padding: 4rem 3rem;">
+            
+            <!-- Left Side: Text -->
+            <div style="flex: 1;">
+                <h1 style="font-size: 2.8rem; margin-bottom: 1rem; line-height: 1.2;">Predict Churn.<br><span style="color: #60a5fa;">Retain Customers.</span></h1>
+                <p id="typewriter-text" style="color: #cbd5e1; font-size: 1.1rem; margin-bottom: 2rem; max-width: 500px;">
+                    Analyze customer behavior, identify churn risk and make data-driven retention decisions using our Random Forest machine learning model.
+                </p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#individual" class="btn btn-primary">Individual Predict</a>
+                    <a href="/bulk" class="btn btn-outline" style="border-color: rgba(255,255,255,0.3); color: white;">Bulk Analysis</a>
+                </div>
+            </div>
+
+            <!-- Right Side: Image (Loaded directly from the web) -->
+            <div style="flex: 1; display: flex; justify-content: flex-end;" class="hero-image-container">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" 
+                     alt="Data Analytics Dashboard" 
+                     style="max-width: 100%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+            </div>
+            
+        </div>
+
+        <!-- Features -->
+        <div class="grid-2" style="margin-bottom: 3rem;">
+            <div class="card feature-card">
+                <div class="feature-icon">👤</div>
+                <h3>Individual Prediction</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Enter customer details and predict whether the customer is likely to stay or churn.</p>
+                <a href="#individual" class="btn btn-outline">Predict Individual Customer</a>
+            </div>
+            <div class="card feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Bulk Dataset Analysis</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Upload a CSV or Excel dataset and predict churn for hundreds or thousands of customers at once.</p>
+                <a href="/bulk" class="btn btn-primary">Upload Dataset</a>
+            </div>
+        </div>
+
+        <!-- Individual Prediction Form -->
+        <div id="individual" class="card">
+            <h2 class="section-title">Individual Customer Prediction Form</h2>
+            <form action="/predict" method="POST">
+                
+                <div class="form-section">
+                    <h3>Customer Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>State</label><input type="text" name="state" class="form-control" required placeholder="e.g. KS"></div>
+                        <div class="form-group"><label>Account Length</label><input type="number" name="account_length" class="form-control" required></div>
+                        <div class="form-group"><label>Area Code</label><input type="number" name="area_code" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Plan Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>International Plan (yes/no)</label><input type="text" name="international_plan" class="form-control" required></div>
+                        <div class="form-group"><label>Voice Mail Plan (yes/no)</label><input type="text" name="voice_mail_plan" class="form-control" required></div>
+                        <div class="form-group"><label>Number of VMail Messages</label><input type="number" name="number_vmail_messages" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Day Usage</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Total Day Minutes</label><input type="number" step="any" name="total_day_minutes" class="form-control" required></div>
+                        <div class="form-group"><label>Total Day Calls</label><input type="number" name="total_day_calls" class="form-control" required></div>
+                        <div class="form-group"><label>Total Day Charge</label><input type="number" step="any" name="total_day_charge" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Evening Usage</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Total Eve Minutes</label><input type="number" step="any" name="total_eve_minutes" class="form-control" required></div>
+                        <div class="form-group"><label>Total Eve Calls</label><input type="number" name="total_eve_calls" class="form-control" required></div>
+                        <div class="form-group"><label>Total Eve Charge</label><input type="number" step="any" name="total_eve_charge" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Night Usage</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Total Night Minutes</label><input type="number" step="any" name="total_night_minutes" class="form-control" required></div>
+                        <div class="form-group"><label>Total Night Calls</label><input type="number" name="total_night_calls" class="form-control" required></div>
+                        <div class="form-group"><label>Total Night Charge</label><input type="number" step="any" name="total_night_charge" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>International Usage</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Total Intl Minutes</label><input type="number" step="any" name="total_intl_minutes" class="form-control" required></div>
+                        <div class="form-group"><label>Total Intl Calls</label><input type="number" name="total_intl_calls" class="form-control" required></div>
+                        <div class="form-group"><label>Total Intl Charge</label><input type="number" step="any" name="total_intl_charge" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Customer Service</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Customer Service Calls</label><input type="number" name="customer_service_calls" class="form-control" required></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">Predict Customer</button>
+                    <button type="reset" class="btn btn-outline">Reset Form</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <h4>AadiBI Customer Churn Intelligence System</h4>
+        <p>Machine Learning • Data Analytics • Business Intelligence</p>
+    </footer>
+</body>
+</html>

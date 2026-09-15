@@ -1,6 +1,65 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prediction result — ChurnLens</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
-<body><nav class="navbar"><a class="brand" href="/"><span class="brand-mark">C</span> ChurnLens</a><div class="nav-links"><a href="/dashboard">Dashboard</a><a href="/">Prediction</a><a href="/logout">Sign out</a></div></nav>
-<main class="shell result-shell"><p class="eyebrow">Prediction complete</p><section class="result-card {% if churn_probability >= 50 %}at-risk{% else %}safe{% endif %}"><div class="result-copy"><span class="status-dot"></span><p class="result-label">{{ 'High retention attention needed' if churn_probability >= 50 else 'Customer looks stable' }}</p><h1>{{ prediction }}</h1><p>Based on the service profile and usage behavior provided.</p><a class="submit-btn small" href="/">Assess another customer <b>→</b></a></div><div class="score"><div class="score-ring" style="--score: {{ churn_probability }}"><div><strong>{{ churn_probability }}%</strong><span>churn risk</span></div></div><div class="score-caption">{{ stay_probability }}% likelihood to stay</div></div></section>
-<section class="insight-grid"><article><span>Stay probability</span><strong>{{ stay_probability }}%</strong><div class="bar"><i class="stay" style="width:{{ stay_probability }}%"></i></div></article><article><span>Churn probability</span><strong>{{ churn_probability }}%</strong><div class="bar"><i class="churn" style="width:{{ churn_probability }}%"></i></div></article><article><span>Recommended action</span><strong>{{ 'Reach out soon' if churn_probability >= 50 else 'Maintain engagement' }}</strong><p>{{ recommendation }}</p></article></section>
-<section class="explanation-card"><div><p class="eyebrow">Model explanation</p><h2>Key risk signals</h2><p>These account characteristics most strongly contributed to the recommended action.</p></div><ul>{% for driver in drivers %}<li><span>✓</span>{{ driver }}</li>{% endfor %}</ul></section></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result - AadiBI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .result-box { text-align: center; padding: 3rem; border-radius: var(--radius); margin-bottom: 2rem; color: white; }
+        .result-churn { background-color: var(--danger); }
+        .result-stay { background-color: var(--success); }
+        .prob-bar-container { width: 100%; background: #e2e8f0; border-radius: 999px; height: 24px; margin-top: 1rem; overflow: hidden; display: flex; }
+        .prob-churn { background: var(--danger); height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;}
+        .prob-stay { background: var(--success); height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">📊 AadiBI</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/bulk">Bulk Analysis</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 800px;">
+        <div class="card">
+            <h2 class="section-title text-center">Customer Churn Prediction</h2>
+            
+            <div class="result-box {% if prediction == 'CUSTOMER WILL CHURN' %}result-churn{% else %}result-stay{% endif %}">
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ prediction }}</h1>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <h3>Probability Analysis</h3>
+                <div class="prob-bar-container">
+                    <div class="prob-churn" style="width: {{ churn_probability }}%;">{{ churn_probability }}% Churn</div>
+                    <div class="prob-stay" style="width: {{ stay_probability }}%;">{{ stay_probability }}% Stay</div>
+                </div>
+            </div>
+
+            <div class="card" style="background: #f8fafc; border-left: 4px solid var(--primary); margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.5rem;">Recommended Action</h4>
+                <p>
+                    {% if prediction == 'CUSTOMER WILL CHURN' %}
+                        <strong>High Risk:</strong> Consider contacting this customer immediately with a targeted retention offer or discount plan.
+                    {% else %}
+                        <strong>Low Risk:</strong> Customer currently shows lower churn risk. Continue regular engagement and standard marketing.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="/" class="btn btn-outline">Predict Another</a>
+                <a href="/bulk" class="btn btn-primary">Go to Bulk Analysis</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <h4>AadiBI Customer Churn Intelligence System</h4>
+        <p>Machine Learning • Data Analytics • Business Intelligence</p>
+    </footer>
+</body>
+</html>

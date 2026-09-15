@@ -1,1 +1,39 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }} — ChurnLens</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body><nav class="navbar"><a class="brand" href="/"><span class="brand-mark">C</span> ChurnLens</a><div class="nav-links"><a href="/dashboard">Dashboard</a><a href="/bulk">Bulk analysis</a></div></nav><main class="shell error-shell"><p class="eyebrow">Something needs attention</p><section class="form-panel"><h1>{{ title }}</h1><p>{{ message }}</p><a class="submit-btn small" href="/dashboard">Try dashboard again <b>→</b></a></section></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - ChurnLens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="error-body">
+
+    <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        
+        <div class="error-subtitle">Something needs attention</div>
+        <h1 class="error-title">Dashboard unavailable</h1>
+        
+        <div class="error-message">
+            {{ error | default("'table_data' is undefined") }}
+        </div>
+
+        <!-- NEW: Troubleshooting Section -->
+        <div class="error-troubleshoot">
+            <h4>What you can do next:</h4>
+            <ul>
+                <li>Verify your uploaded CSV or Excel file is not empty.</li>
+                <li>Check that the dataset contains the correct customer columns.</li>
+                <li>Ensure the file format is supported (.csv, .xlsx).</li>
+            </ul>
+        </div>
+
+        <!-- NEW: Interactive Buttons -->
+        <div class="error-actions">
+            <a href="/bulk" class="btn btn-primary">Upload New Dataset</a>
+            <a href="/" class="btn btn-outline">Return Home</a>
+        </div>
+    </div>
+
+</body>
+</html> 
