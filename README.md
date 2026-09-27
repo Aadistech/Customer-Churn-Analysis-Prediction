@@ -217,8 +217,7 @@ Open your browser and navigate to `http://127.0.0.1:5000`.
 
 ## 👨‍💻 Author & Acknowledgments
 
-- **Lead Developer:** Aaditya Jadhav (B.Sc. Computer Science)
-- **Contributors:** Padmaj, Parth
+- **Developer:** Aaditya Jadhav (B.Sc. Computer Science)
 - **Institution:** MGM College of CS & IT
 
 ---
