@@ -3,55 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Upload - AadiBI</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Bulk Dataset Upload - AadiBI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
 </head>
 <body>
     <!-- Full Screen Loader -->
     <div id="loader" class="loader-overlay">
         <div class="spinner"></div>
-        <h2>Analyzing your dataset...</h2>
-        <p style="color: var(--text-muted); margin-top: 10px;">Applying Random Forest model to generate predictions.</p>
+        <h2 style="font-size: 1.5rem; font-weight: 700;">Analyzing customer dataset...</h2>
+        <p style="color: var(--text-muted); margin-top: 8px;">Applying Random Forest ML pipeline to generate predictions.</p>
     </div>
 
     <nav class="navbar">
-        <div class="brand">📊 AadiBI</div>
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img">
+            <span class="logo-text">AadiBI</span>
+        </div>
         <div class="nav-links">
             <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
             <a href="/bulk">Bulk Analysis</a>
+            <a href="/about">About</a>
+            <a href="/logout" class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Sign Out</a>
         </div>
     </nav>
 
-    <div class="container" style="max-width: 800px;">
-        <div class="card" style="text-align: center;">
-            <h1 style="margin-bottom: 1rem;">Bulk Customer Churn Analysis</h1>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">Upload your customer dataset in CSV or Excel format to analyze churn risk across all customers.</p>
+    <div class="container" style="max-width: 860px;">
+        <div class="card" style="text-align: center; padding: 3rem 2.5rem;">
+            <span class="badge badge-success" style="margin-bottom: 1rem;">BATCH PROCESSING ENGINE</span>
+            <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem; color: #ffffff;">Bulk Customer Churn Analysis</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Upload your customer dataset in CSV or Excel (.xlsx) format to predict churn probabilities and generate strategic insights across all customer accounts.
+            </p>
             
             <form id="upload-form" action="/bulk_predict" method="POST" enctype="multipart/form-data">
                 <div class="upload-area" onclick="triggerFileInput()">
                     <div class="upload-icon">📂</div>
-                    <h3 style="margin-bottom: 0.5rem;">Click or Drag to Upload Dataset</h3>
-                    <p id="file-name" style="color: var(--text-muted);">Supports .csv, .xlsx</p>
-                    <input type="file" id="dataset-upload" name="dataset" accept=".csv, .xlsx, .xls" required style="display: block; margin: 1rem auto; padding: 10px;">
+                    <h3 style="margin-bottom: 0.5rem; color: #ffffff; font-weight: 700;">Click or Drag Dataset Here</h3>
+                    <p id="file-name" style="color: var(--text-muted);">Supports .csv, .xlsx files</p>
+                    <input type="file" id="dataset-upload" name="dataset" accept=".csv, .xlsx, .xls" required style="display: none;">
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%; font-size: 1.1rem; padding: 1rem;">Analyze Dataset</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%; font-size: 1.1rem; padding: 1rem;">
+                    🚀 Analyze Dataset & Generate Dashboard
+                </button>
             </form>
         </div>
 
-        <div class="card" style="margin-top: 2rem; background: #f8fafc;">
-            <h3 style="margin-bottom: 1rem;">How it works:</h3>
-            <ol style="margin-left: 1.5rem; color: var(--text-muted); line-height: 1.8;">
-                <li><strong>Upload dataset:</strong> Provide your batch customer data.</li>
-                <li><strong>System processes customer data:</strong> Cleans and scales features automatically.</li>
-                <li><strong>Random Forest predicts churn:</strong> Runs our trained Machine Learning pipeline.</li>
-                <li><strong>Dashboard displays insights:</strong> View high-level KPIs and graphs.</li>
-                <li><strong>Download complete results:</strong> Export the data with appended predictions.</li>
+        <div class="card" style="margin-top: 2rem;">
+            <h3 class="section-title">How Batch Analysis Works</h3>
+            <ol style="margin-left: 1.5rem; color: var(--text-muted); line-height: 2;">
+                <li><strong style="color: var(--text-main);">Upload Dataset:</strong> Provide raw customer records in CSV or XLSX format.</li>
+                <li><strong style="color: var(--text-main);">Automatic Data Cleaning:</strong> Missing values are imputed and state codes are mapped to 69 model features.</li>
+                <li><strong style="color: var(--text-main);">Random Forest Inference:</strong> The ML model calculates churn probabilities and risk levels for every row.</li>
+                <li><strong style="color: var(--text-main);">BI Dashboard Insights:</strong> Real-time KPI summaries, interactive charts, and risk signals are rendered instantly.</li>
+                <li><strong style="color: var(--text-main);">Export Predictions:</strong> Download the complete scored dataset with model output columns appended.</li>
             </ol>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=5"></script>
     <footer>
         <h4>AadiBI Customer Churn Intelligence System</h4>
         <p>Machine Learning • Data Analytics • Business Intelligence</p>

@@ -4,59 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AadiBI - Customer Churn Intelligence System</title>
-    <!-- CRITICAL: This line connects your HTML to the static/css/style.css file -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3"><body>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
+</head>
+<body>
     <nav class="navbar">
         <div class="brand">
-            <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="AadiBI Logo" class="brand-img">
+            <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img">
             <span class="logo-text">AadiBI</span>
         </div>
-        <!-- This is the section that went missing! -->
         <div class="nav-links">
             <a href="/">Home</a>
+            <a href="/dashboard">Analytics Dashboard</a>
             <a href="/#individual">Individual Prediction</a>
             <a href="/bulk">Bulk Analysis</a>
+            <a href="/about">About</a>
+            <a href="/logout" class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Sign Out</a>
         </div>
     </nav>
 
     <div class="container">
-       <!-- Hero Section with Image -->
-        <div class="hero" style="display: flex; align-items: center; justify-content: space-between; text-align: left; gap: 2rem; padding: 4rem 3rem;">
-            
-            <!-- Left Side: Text -->
-            <div style="flex: 1;">
-                <h1 style="font-size: 2.8rem; margin-bottom: 1rem; line-height: 1.2;">Predict Churn.<br><span style="color: #60a5fa;">Retain Customers.</span></h1>
-                <p id="typewriter-text" style="color: #cbd5e1; font-size: 1.1rem; margin-bottom: 2rem; max-width: 500px;">
-                    Analyze customer behavior, identify churn risk and make data-driven retention decisions using our Random Forest machine learning model.
+        <!-- Hero Section -->
+        <div class="card hero" style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3.5rem 3rem; margin-bottom: 2.5rem; background: linear-gradient(135deg, rgba(31,41,55,0.9) 0%, rgba(17,24,39,0.9) 100%);">
+            <div style="flex: 1.2;">
+                <span class="badge badge-success" style="margin-bottom: 1rem;">RANDOM FOREST MODEL v2.4</span>
+                <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.15; letter-spacing: -0.03em;">
+                    Predict Churn.<br>
+                    <span style="background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Retain High-Value Customers.</span>
+                </h1>
+                <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; max-width: 540px;">
+                    Analyze customer behavioral data, pinpoint high-risk telecom accounts, and deliver targeted retention strategies powered by Machine Learning.
                 </p>
-                <div style="display: flex; gap: 1rem;">
-                    <a href="#individual" class="btn btn-primary">Individual Predict</a>
-                    <a href="/bulk" class="btn btn-outline" style="border-color: rgba(255,255,255,0.3); color: white;">Bulk Analysis</a>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="#individual" class="btn btn-primary">⚡ Predict Individual Customer</a>
+                    <a href="/bulk" class="btn btn-outline">📂 Bulk Dataset Analysis</a>
                 </div>
             </div>
-
-            <!-- Right Side: Image (Loaded directly from the web) -->
             <div style="flex: 1; display: flex; justify-content: flex-end;" class="hero-image-container">
                 <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" 
                      alt="Data Analytics Dashboard" 
-                     style="max-width: 100%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                     style="max-width: 100%; border-radius: 14px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-highlight);">
             </div>
-            
         </div>
 
-        <!-- Features -->
+        <!-- Action Feature Cards -->
         <div class="grid-2" style="margin-bottom: 3rem;">
             <div class="card feature-card">
                 <div class="feature-icon">👤</div>
-                <h3>Individual Prediction</h3>
-                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Enter customer details and predict whether the customer is likely to stay or churn.</p>
-                <a href="#individual" class="btn btn-outline">Predict Individual Customer</a>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: white;">Individual Account Scoring</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.95rem;">
+                    Input customer behavioral metrics (usage minutes, plans, service calls) to get instant churn probability scores and transparent risk drivers.
+                </p>
+                <a href="#individual" class="btn btn-outline" style="margin-top: auto;">Scoring Form &rarr;</a>
             </div>
             <div class="card feature-card">
                 <div class="feature-icon">📊</div>
-                <h3>Bulk Dataset Analysis</h3>
-                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Upload a CSV or Excel dataset and predict churn for hundreds or thousands of customers at once.</p>
-                <a href="/bulk" class="btn btn-primary">Upload Dataset</a>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: white;">Batch Dataset Analytics</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.95rem;">
+                    Upload customer CSV or XLSX files to score hundreds of customer accounts simultaneously and view real-time BI analytics.
+                </p>
+                <a href="/bulk" class="btn btn-primary" style="margin-top: auto;">Upload Dataset &rarr;</a>
             </div>
         </div>
 
@@ -66,68 +72,131 @@
             <form action="/predict" method="POST">
                 
                 <div class="form-section">
-                    <h3>Customer Information</h3>
+                    <h3>Customer Profile & State</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>State</label><input type="text" name="state" class="form-control" required placeholder="e.g. KS"></div>
-                        <div class="form-group"><label>Account Length</label><input type="number" name="account_length" class="form-control" required></div>
-                        <div class="form-group"><label>Area Code</label><input type="number" name="area_code" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>State Code</label>
+                            <input type="text" name="state" class="form-control" required placeholder="e.g. KS, NY, CA">
+                        </div>
+                        <div class="form-group">
+                            <label>Account Length (Months)</label>
+                            <input type="number" name="account_length" class="form-control" required placeholder="e.g. 128">
+                        </div>
+                        <div class="form-group">
+                            <label>Area Code</label>
+                            <input type="number" name="area_code" class="form-control" required placeholder="e.g. 415, 408, 510">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
-                    <h3>Plan Information</h3>
+                    <h3>Plan Subscriptions</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>International Plan (yes/no)</label><input type="text" name="international_plan" class="form-control" required></div>
-                        <div class="form-group"><label>Voice Mail Plan (yes/no)</label><input type="text" name="voice_mail_plan" class="form-control" required></div>
-                        <div class="form-group"><label>Number of VMail Messages</label><input type="number" name="number_vmail_messages" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>International Plan</label>
+                            <select name="international_plan" class="form-control" required>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Voice Mail Plan</label>
+                            <select name="voice_mail_plan" class="form-control" required>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Voicemail Messages Count</label>
+                            <input type="number" name="number_vmail_messages" class="form-control" required placeholder="e.g. 25">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
-                    <h3>Day Usage</h3>
+                    <h3>Daytime Usage</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Total Day Minutes</label><input type="number" step="any" name="total_day_minutes" class="form-control" required></div>
-                        <div class="form-group"><label>Total Day Calls</label><input type="number" name="total_day_calls" class="form-control" required></div>
-                        <div class="form-group"><label>Total Day Charge</label><input type="number" step="any" name="total_day_charge" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>Total Day Minutes</label>
+                            <input type="number" step="any" name="total_day_minutes" class="form-control" required placeholder="e.g. 265.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Day Calls</label>
+                            <input type="number" name="total_day_calls" class="form-control" required placeholder="e.g. 110">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Day Charge ($)</label>
+                            <input type="number" step="any" name="total_day_charge" class="form-control" required placeholder="e.g. 45.07">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
                     <h3>Evening Usage</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Total Eve Minutes</label><input type="number" step="any" name="total_eve_minutes" class="form-control" required></div>
-                        <div class="form-group"><label>Total Eve Calls</label><input type="number" name="total_eve_calls" class="form-control" required></div>
-                        <div class="form-group"><label>Total Eve Charge</label><input type="number" step="any" name="total_eve_charge" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>Total Evening Minutes</label>
+                            <input type="number" step="any" name="total_eve_minutes" class="form-control" required placeholder="e.g. 197.4">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Evening Calls</label>
+                            <input type="number" name="total_eve_calls" class="form-control" required placeholder="e.g. 99">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Evening Charge ($)</label>
+                            <input type="number" step="any" name="total_eve_charge" class="form-control" required placeholder="e.g. 16.78">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
                     <h3>Night Usage</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Total Night Minutes</label><input type="number" step="any" name="total_night_minutes" class="form-control" required></div>
-                        <div class="form-group"><label>Total Night Calls</label><input type="number" name="total_night_calls" class="form-control" required></div>
-                        <div class="form-group"><label>Total Night Charge</label><input type="number" step="any" name="total_night_charge" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>Total Night Minutes</label>
+                            <input type="number" step="any" name="total_night_minutes" class="form-control" required placeholder="e.g. 244.7">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Night Calls</label>
+                            <input type="number" name="total_night_calls" class="form-control" required placeholder="e.g. 91">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Night Charge ($)</label>
+                            <input type="number" step="any" name="total_night_charge" class="form-control" required placeholder="e.g. 11.01">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
                     <h3>International Usage</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Total Intl Minutes</label><input type="number" step="any" name="total_intl_minutes" class="form-control" required></div>
-                        <div class="form-group"><label>Total Intl Calls</label><input type="number" name="total_intl_calls" class="form-control" required></div>
-                        <div class="form-group"><label>Total Intl Charge</label><input type="number" step="any" name="total_intl_charge" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>Total Intl Minutes</label>
+                            <input type="number" step="any" name="total_intl_minutes" class="form-control" required placeholder="e.g. 10.0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Intl Calls</label>
+                            <input type="number" name="total_intl_calls" class="form-control" required placeholder="e.g. 3">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Intl Charge ($)</label>
+                            <input type="number" step="any" name="total_intl_charge" class="form-control" required placeholder="e.g. 2.70">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-section">
-                    <h3>Customer Service</h3>
+                    <h3>Support Activity</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Customer Service Calls</label><input type="number" name="customer_service_calls" class="form-control" required></div>
+                        <div class="form-group">
+                            <label>Customer Service Calls Count</label>
+                            <input type="number" name="customer_service_calls" class="form-control" required placeholder="e.g. 1, 4, 7">
+                        </div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary">Predict Customer</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.9rem 2rem;">Predict Churn Risk</button>
                     <button type="reset" class="btn btn-outline">Reset Form</button>
                 </div>
             </form>

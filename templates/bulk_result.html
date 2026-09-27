@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard - AadiBI</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
     <!-- Load Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar">
-        <div class="brand">📊 AadiBI Dashboard</div>
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img">
+            <span class="logo-text">AadiBI Dashboard</span>
+        </div>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/bulk">New Bulk Analysis</a>
-            <a href="/download_results" class="btn btn-primary" style="color:white; padding: 0.5rem 1rem;">Download Complete Results</a>
+            <a href="/about">About</a>
+            <a href="/download_results" class="btn btn-primary" style="padding: 0.5rem 1.2rem;">📥 Download Full CSV Report</a>
+            <a href="/logout" class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Sign Out</a>
         </div>
     </nav>
 
@@ -27,19 +32,19 @@
             </div>
             <div class="card kpi-card" style="border-top-color: var(--danger);">
                 <div class="kpi-title">Predicted Churn</div>
-                <div class="kpi-value">{{ churned_customers }}</div>
+                <div class="kpi-value" style="color: #f87171;">{{ churned_customers }}</div>
             </div>
             <div class="card kpi-card" style="border-top-color: var(--success);">
                 <div class="kpi-title">Predicted Stay</div>
-                <div class="kpi-value">{{ staying_customers }}</div>
+                <div class="kpi-value" style="color: #34d399;">{{ staying_customers }}</div>
             </div>
             <div class="card kpi-card" style="border-top-color: var(--warning);">
                 <div class="kpi-title">Overall Churn Rate</div>
-                <div class="kpi-value">{{ churn_rate }}%</div>
+                <div class="kpi-value" style="color: #fbbf24;">{{ churn_rate }}%</div>
             </div>
             <div class="card kpi-card" style="border-top-color: #8b5cf6;">
-                <div class="kpi-title">High Risk Customers (>=70%)</div>
-                <div class="kpi-value">{{ high_risk_customers }}</div>
+                <div class="kpi-title">High Risk (>=70%)</div>
+                <div class="kpi-value" style="color: #a78bfa;">{{ high_risk_customers }}</div>
             </div>
         </div>
 
@@ -64,24 +69,24 @@
 
         <!-- Business Insights Card -->
         <div class="card" style="margin-bottom: 2rem;">
-            <h3 class="section-title">Business Insights & Recommended Actions</h3>
+            <h3 class="section-title">Business Intelligence Insights</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary);">
-                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Risk Assessment</h4>
-                    <p style="color: var(--text-muted);">
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); border-left: 4px solid var(--primary);">
+                    <h4 style="margin-bottom: 0.5rem; color: #ffffff; font-weight: 700;">Executive Risk Assessment</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
                         {% if churn_rate|float >= 20 %}
-                            High churn risk detected ({{ churn_rate }}%). The business should urgently prioritize retention campaigns and intervention strategies for high-risk accounts.
+                            Critical churn rate detected ({{ churn_rate }}%). Immediate intervention, proactive discount packages, and dedicated customer success outreach are strongly advised for at-risk accounts.
                         {% elif churn_rate|float >= 10 %}
-                            Moderate churn risk detected. Targeted retention campaigns and discounts should be considered for the {{ churned_customers }} at-risk customers.
+                            Moderate churn risk detected ({{ churn_rate }}%). Targeted retention campaigns should be deployed for the {{ churned_customers }} identified at-risk accounts.
                         {% else %}
-                            Low churn risk detected. Continue monitoring high-risk customers while maintaining normal business operations.
+                            Healthy retention posture detected ({{ churn_rate }}% churn rate). Maintain standard engagement and continue monitoring high-risk accounts.
                         {% endif %}
                     </p>
                 </div>
-                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary);">
-                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Model Information</h4>
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); border-left: 4px solid var(--accent);">
+                    <h4 style="margin-bottom: 0.5rem; color: #ffffff; font-weight: 700;">Model Architecture & Scoring Thresholds</h4>
                     <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        Predictions are generated using a trained Random Forest machine-learning model mapping behavioral features to churn probabilities. Note: "High-risk" is classified as customers with a predicted churn probability of 70% or higher.
+                        Inference generated via trained Random Forest Classifier mapping 69 features to calibrated churn probabilities. Accounts with probabilities ≥ 70% are flagged as <span style="color: #f87171; font-weight: 700;">HIGH RISK</span>.
                     </p>
                 </div>
             </div>
@@ -89,9 +94,9 @@
 
         <!-- Data Table -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                 <h3 class="section-title" style="margin: 0;">Sample Customer Predictions</h3>
-                <span class="badge" style="background: #e2e8f0; color: #475569;">Showing Top 20 Records</span>
+                <span class="badge badge-warning">Showing Top 20 Scored Records</span>
             </div>
             
             <div class="table-container">
@@ -120,12 +125,12 @@
                                         {% if value == 'HIGH' %}
                                             <span class="badge badge-danger">HIGH</span>
                                         {% elif value == 'MEDIUM' %}
-                                            <span class="badge" style="background: #fef08a; color: #854d0e;">MEDIUM</span>
+                                            <span class="badge badge-warning">MEDIUM</span>
                                         {% else %}
                                             <span class="badge badge-success">LOW</span>
                                         {% endif %}
                                     {% elif 'probability' in key|lower %}
-                                        {{ value }}%
+                                        <strong style="color: #ffffff;">{{ value }}%</strong>
                                     {% else %}
                                         {{ value }}
                                     {% endif %}
@@ -136,13 +141,13 @@
                     </tbody>
                 </table>
             </div>
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <a href="/download_results" class="btn btn-primary">Download Complete Dataset (.csv)</a>
+            <div style="text-align: center; margin-top: 1.75rem;">
+                <a href="/download_results" class="btn btn-primary" style="padding: 0.9rem 2rem;">📥 Export Complete Dataset (.csv)</a>
             </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=5"></script>
     <footer>
         <h4>AadiBI Customer Churn Intelligence System</h4>
         <p>Machine Learning • Data Analytics • Business Intelligence</p>

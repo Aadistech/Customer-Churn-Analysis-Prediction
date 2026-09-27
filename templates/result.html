@@ -3,56 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Result - AadiBI</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Customer Prediction Result - AadiBI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
     <style>
-        .result-box { text-align: center; padding: 3rem; border-radius: var(--radius); margin-bottom: 2rem; color: white; }
-        .result-churn { background-color: var(--danger); }
-        .result-stay { background-color: var(--success); }
-        .prob-bar-container { width: 100%; background: #e2e8f0; border-radius: 999px; height: 24px; margin-top: 1rem; overflow: hidden; display: flex; }
-        .prob-churn { background: var(--danger); height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;}
-        .prob-stay { background: var(--success); height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;}
+        .result-box { 
+            text-align: center; 
+            padding: 2.5rem 2rem; 
+            border-radius: var(--radius); 
+            margin-bottom: 2rem; 
+            color: white; 
+            box-shadow: var(--shadow-lg);
+        }
+        .result-churn { 
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); 
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .result-stay { 
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%); 
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .prob-bar-container { 
+            width: 100%; 
+            background: rgba(255, 255, 255, 0.08); 
+            border-radius: 999px; 
+            height: 28px; 
+            margin-top: 1rem; 
+            overflow: hidden; 
+            display: flex; 
+            border: 1px solid var(--border-color);
+        }
+        .prob-churn { 
+            background: linear-gradient(90deg, #ef4444, #f87171); 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+        }
+        .prob-stay { 
+            background: linear-gradient(90deg, #10b981, #34d399); 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+        }
+        .driver-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-highlight);
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="brand">📊 AadiBI</div>
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img">
+            <span class="logo-text">AadiBI</span>
+        </div>
         <div class="nav-links">
             <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
             <a href="/bulk">Bulk Analysis</a>
+            <a href="/about">About</a>
+            <a href="/logout" class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Sign Out</a>
         </div>
     </nav>
 
-    <div class="container" style="max-width: 800px;">
+    <div class="container" style="max-width: 820px;">
         <div class="card">
-            <h2 class="section-title text-center">Customer Churn Prediction</h2>
+            <h2 class="section-title">Individual Customer Prediction Result</h2>
             
             <div class="result-box {% if prediction == 'CUSTOMER WILL CHURN' %}result-churn{% else %}result-stay{% endif %}">
-                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ prediction }}</h1>
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white; margin-bottom: 0.75rem;">PREDICTION OUTPUT</span>
+                <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.25rem;">{{ prediction }}</h1>
+                <p style="font-size: 1.05rem; opacity: 0.9;">
+                    {% if prediction == 'CUSTOMER WILL CHURN' %}
+                        High Churn Probability Detected ({{ churn_probability }}%)
+                    {% else %}
+                        Customer Retained & Stable ({{ stay_probability }}% Stay Probability)
+                    {% endif %}
+                </p>
             </div>
 
-            <div style="margin-bottom: 2rem;">
-                <h3>Probability Analysis</h3>
+            <div style="margin-bottom: 2.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">Calibrated Probability Distribution</h3>
                 <div class="prob-bar-container">
                     <div class="prob-churn" style="width: {{ churn_probability }}%;">{{ churn_probability }}% Churn</div>
                     <div class="prob-stay" style="width: {{ stay_probability }}%;">{{ stay_probability }}% Stay</div>
                 </div>
             </div>
 
-            <div class="card" style="background: #f8fafc; border-left: 4px solid var(--primary); margin-bottom: 2rem;">
-                <h4 style="margin-bottom: 0.5rem;">Recommended Action</h4>
-                <p>
-                    {% if prediction == 'CUSTOMER WILL CHURN' %}
-                        <strong>High Risk:</strong> Consider contacting this customer immediately with a targeted retention offer or discount plan.
-                    {% else %}
-                        <strong>Low Risk:</strong> Customer currently shows lower churn risk. Continue regular engagement and standard marketing.
-                    {% endif %}
+            {% if drivers %}
+            <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem;">Primary Risk Drivers Identified</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                    {% for driver in drivers %}
+                        <div class="driver-chip">⚡ {{ driver }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card" style="background: rgba(255, 255, 255, 0.03); border-left: 4px solid var(--primary); margin-bottom: 2rem; padding: 1.5rem;">
+                <h4 style="margin-bottom: 0.5rem; color: #ffffff; font-weight: 700;">Recommended Retention Action</h4>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                    {{ recommendation | default("Monitor account usage patterns and service calls regularly.") }}
                 </p>
             </div>
 
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <a href="/" class="btn btn-outline">Predict Another</a>
-                <a href="/bulk" class="btn btn-primary">Go to Bulk Analysis</a>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/#individual" class="btn btn-outline">🔄 Score Another Account</a>
+                <a href="/bulk" class="btn btn-primary">📂 Perform Bulk Analysis</a>
             </div>
         </div>
     </div>

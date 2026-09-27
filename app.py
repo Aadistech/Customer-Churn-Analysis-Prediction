@@ -259,6 +259,12 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/about")
+@login_required
+def about():
+    return render_template("about.html")
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
