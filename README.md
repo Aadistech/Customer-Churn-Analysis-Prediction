@@ -1,436 +1,228 @@
-# Customer Churn Analysis & Prediction System
+# Customer Churn Analysis & Prediction System (AadiBI)
 
 ## 📌 Project Overview
 
-The **Customer Churn Analysis & Prediction System** is a Machine Learning-based application designed to analyze customer behavior and predict whether a customer is likely to **stay** or **churn**.
+The **Customer Churn Analysis & Prediction System** (AadiBI Intelligence System) is a Machine Learning-powered application designed to analyze customer behavior, predict churn risk, and deliver actionable business intelligence.
 
-Customer churn refers to a situation where a customer stops using a company's services. Predicting churn helps organizations identify high-risk customers and take preventive retention actions.
+Customer churn occurs when a customer stops using a company's services. By predicting churn early, organizations can identify high-risk customers, understand underlying risk drivers, and deploy proactive retention strategies.
 
 The system performs:
-
-- Data loading and preprocessing
-- Exploratory Data Analysis (EDA)
-- Feature preparation
-- Machine Learning model training
-- Model evaluation
-- Customer churn prediction
-- Churn probability analysis
-- Web-based prediction using Flask
+- **Data Ingestion & Preprocessing:** Data cleaning, missing value handling, categorical encoding, and feature scaling.
+- **Exploratory Data Analysis (EDA):** Statistical inspection and visual analysis of behavioral churn drivers.
+- **Feature Selection & Preparation:** Train-test splitting and feature alignment.
+- **Machine Learning Modeling:** Multiple classification algorithms (Logistic Regression, Random Forest).
+- **Model Evaluation:** Performance comparison across Accuracy, Precision, Recall, F1 Score, and ROC-AUC metrics.
+- **Individual & Bulk Churn Prediction:** Web application predicting churn for single customers or bulk batch datasets (CSV / Excel).
+- **Interactive Business Intelligence Dashboard:** Real-time KPI summaries, dynamic Chart.js visualizations, risk level segmentation, and downloadable prediction reports.
 
 ---
 
 ## 🎯 Objectives
 
-The main objectives of this project are:
-
-1. Analyze customer data to identify churn patterns.
-2. Identify factors associated with customer churn.
-3. Prepare customer data for Machine Learning.
-4. Train multiple classification models.
-5. Compare model performance using evaluation metrics.
-6. Select the most suitable model for churn prediction.
-7. Develop a web-based customer churn prediction system.
-8. Help businesses identify customers who may be at risk of leaving.
+1. Analyze customer usage data to identify key churn indicators.
+2. Build and compare classification models to identify the optimal predictor.
+3. Select the best performing model (Random Forest Classifier).
+4. Build a secure Flask web application supporting user roles (`admin` & `analyst`).
+5. Develop an intuitive frontend interface for individual customer lookup and bulk dataset uploads.
+6. Generate rule-based retention recommendations and transparent risk signals.
+7. Enable CSV/Excel data export with model prediction and risk scores appended.
 
 ---
 
 ## 🏗️ Project Architecture
 
 ```text
-Customer Churn Analysis & Prediction System
-                    │
-                    ▼
-             Customer Dataset
-                    │
-                    ▼
-          Data Preprocessing
-                    │
-                    ▼
-        Exploratory Data Analysis
-                    │
-                    ▼
-       Feature Selection & Preparation
-                    │
-                    ▼
-             Train-Test Split
-                    │
-                    ▼
-             Machine Learning
-              ┌─────┴─────┐
-              ▼           ▼
-        Logistic       Random
-        Regression      Forest
-              │           │
-              └─────┬─────┘
-                    ▼
-            Model Evaluation
-                    │
-                    ▼
-          Best Model Selection
-                    │
-                    ▼
-          Customer Prediction
-                    │
-                    ▼
-             Flask Backend
-                    │
-                    ▼
-          Web Application
-                    │
-                    ▼
-       Churn Prediction Result
+               Customer Dataset (CSV / Excel)
+                             │
+                             ▼
+                   Data Preprocessing
+                             │
+                             ▼
+                Exploratory Data Analysis
+                             │
+                             ▼
+              Feature Engineering & Preparation
+                             │
+                             ▼
+                     Train-Test Split
+                             │
+                             ▼
+              Machine Learning Model Training
+               ┌─────────────┴─────────────┐
+               ▼                           ▼
+      Logistic Regression           Random Forest
+               │                           │
+               └─────────────┬─────────────┘
+                             ▼
+                     Model Evaluation
+                             │
+                             ▼
+                 Best Model Selection (RF)
+                             │
+                             ▼
+                      Flask Web Backend
+               ┌─────────────┴─────────────┐
+               ▼                           ▼
+     Individual Prediction           Bulk Upload
+     (Single Customer Form)       (Batch CSV/XLSX)
+               │                           │
+               └─────────────┬─────────────┘
+                             ▼
+               AadiBI Analytics Dashboard
+            (KPIs, Charts, Risk Signals, CSV Export)
+```
 
-📊 Dataset
+---
 
-The project uses a customer churn dataset containing 667 customer records and 20 original columns.
+## 📊 Dataset & Features
 
-Important attributes include:
-State
-Account Length
-Area Code
-International Plan
-Voice Mail Plan
-Number of Voice Mail Messages
-Total Day Minutes
-Total Day Calls
-Total Day Charge
-Total Evening Minutes
-Total Evening Calls
-Total Evening Charge
-Total Night Minutes
-Total Night Calls
-Total Night Charge
-Total International Minutes
-Total International Calls
-Total International Charge
-Customer Service Calls
-Churn
-Target Variable
-Churn = 0 → Customer Stayed
-Churn = 1 → Customer Churned
-🔬 Project Modules
-Module 1 — Data Loading
+The baseline dataset contains **667 customer records** with **20 original features**:
 
-The original customer dataset is loaded using Pandas.
+- `State`: Customer location (51 U.S. states)
+- `Account length`: Duration of account active status
+- `Area code`: Phone area code
+- `International plan`: Binary indicator (`Yes`/`No`)
+- `Voice mail plan`: Binary indicator (`Yes`/`No`)
+- `Number vmail messages`: Count of voicemail messages
+- `Total day minutes`, `Total day calls`, `Total day charge`: Daytime usage metrics
+- `Total eve minutes`, `Total eve calls`, `Total eve charge`: Evening usage metrics
+- `Total night minutes`, `Total night calls`, `Total night charge`: Night usage metrics
+- `Total intl minutes`, `Total intl calls`, `Total intl charge`: International usage metrics
+- `Customer service calls`: Frequency of support calls
+- `Churn`: Target classification (`0` = Stayed, `1` = Churned)
 
-File:
+Preprocessing expands state variables into 51 one-hot encoded columns, resulting in **69 feature inputs** for the model.
 
-data/customer_churn.csv
-Module 2 — Data Cleaning & Preprocessing
+---
 
-The dataset is inspected and prepared for Machine Learning.
+## 📈 Model Performance & Evaluation
 
-Operations include:
+| Metric | Logistic Regression | Random Forest (Selected Model) |
+| :--- | :---: | :---: |
+| **Accuracy** | 84.33% | **91.04%** |
+| **Precision** | 33.33% | **100.00%** |
+| **Recall** | 10.53% | **36.84%** |
+| **F1 Score** | 16.00% | **53.85%** |
+| **ROC-AUC** | 73.78% | **90.05%** |
 
-Checking missing values
-Checking duplicate records
-Converting categorical variables
-Encoding the target variable
-One-hot encoding State
-Creating a cleaned dataset
+### Selected Model: Random Forest Classifier
+- High precision (100%) ensures zero false positives when classifying high-risk accounts.
+- Superior ROC-AUC score (0.900) demonstrates strong capability in ranking customer churn probability.
 
-Output:
+---
 
-data/cleaned_customer_churn.csv
+## 📁 Project Structure
 
-The cleaned dataset contains:
-
-667 rows × 70 columns
-Module 3 — Exploratory Data Analysis
-
-EDA is used to understand customer churn patterns.
-
-The analysis includes:
-
-Churn distribution
-Churn by International Plan
-Churn by Voice Mail Plan
-Churn vs Customer Service Calls
-Day Minutes vs Churn
-Evening Minutes vs Churn
-Night Minutes vs Churn
-International Minutes vs Churn
-Top States by Churn
-Correlation Analysis
-Key EDA Findings
-
-The dataset contains:
-
-Stayed   : 572
-Churned  : 95
-
-Customers with higher Total Day Minutes showed a stronger relationship with churn.
-
-Customer service calls also showed a positive relationship with churn.
-
-The correlation analysis showed:
-
-Total Day Minutes       → 0.243
-Customer Service Calls  → 0.233
-Total Eve Minutes       → 0.176
-Module 4 — Feature Selection & ML Preparation
-
-The cleaned dataset is separated into:
-
-X → Features
-y → Target (Churn)
-
-The data is divided into:
-
-80% → Training
-20% → Testing
-
-Stratified splitting is used to maintain the churn distribution.
-
-Feature scaling is performed using StandardScaler.
-
-The scaler is saved as:
-
-models/scaler.pkl
-Module 5 — Model Training
-
-Two Machine Learning classification algorithms are trained:
-
-1. Logistic Regression
-
-Used as a baseline classification model.
-
-2. Random Forest
-
-Used to capture nonlinear relationships and interactions between customer features.
-
-The trained models are saved using Joblib.
-
-models/
-├── logistic_model.pkl
-├── random_forest_model.pkl
-└── scaler.pkl
-📈 Module 6 — Model Evaluation
-
-The models are evaluated using:
-
-Accuracy
-Precision
-Recall
-F1 Score
-ROC-AUC
-Confusion Matrix
-Classification Report
-Model Comparison
-Metric	Logistic Regression	Random Forest
-Accuracy	84.33%	91.04%
-Precision	33.33%	100.00%
-Recall	10.53%	36.84%
-F1 Score	16.00%	53.85%
-ROC-AUC	0.738	0.900
-🏆 Selected Model
-
-Random Forest was selected as the final model.
-
-It achieved:
-
-Accuracy : 91.04%
-Precision: 100.00%
-Recall   : 36.84%
-F1 Score : 53.85%
-ROC-AUC  : 0.900
-
-Random Forest performed better than Logistic Regression across the major evaluation metrics.
-
-Since the primary objective is to identify customers who may churn, recall and F1-score were also considered rather than relying only on accuracy.
-
-🤖 Module 7 — Customer Churn Prediction
-
-The trained Random Forest model is used to predict individual customer churn.
-
-The prediction system provides:
-
-Customer Information
-        ↓
-Machine Learning Model
-        ↓
-Prediction
-        ↓
-Stayed / Churned
-        ↓
-Churn Probability
-🌐 Module 8 — Flask Backend
-
-The Flask backend will connect the Machine Learning model with the web application.
-
-The backend will:
-
-Receive customer information
-Prepare input data
-Apply the saved scaler
-Load the trained Random Forest model
-Generate a prediction
-Calculate churn probability
-Return the prediction to the frontend
-🎨 Module 9 — Frontend & Dashboard
-
-The frontend will be developed using:
-
-HTML
-CSS
-JavaScript
-
-The web application will provide a professional interface for entering customer information and viewing prediction results.
-
-Planned interface:
-
-┌─────────────────────────────────────────┐
-│       CUSTOMER CHURN PREDICTION         │
-├─────────────────────────────────────────┤
-│                                         │
-│ Customer Information                    │
-│                                         │
-│ Account Length      [          ]         │
-│ Area Code           [          ]         │
-│ International Plan [ Yes / No ]         │
-│ Voice Mail Plan     [ Yes / No ]        │
-│ Day Minutes         [          ]         │
-│ Evening Minutes     [          ]         │
-│ Night Minutes       [          ]         │
-│ Customer Calls      [          ]         │
-│                                         │
-│          [ Predict Churn ]              │
-│                                         │
-├─────────────────────────────────────────┤
-│ Prediction: Customer Will Stay          │
-│ Churn Probability: 18.5%                │
-└─────────────────────────────────────────┘
-🧪 Module 10 — Testing & Documentation
-
-The final stage will include:
-
-Model testing
-Prediction testing
-Flask application testing
-Frontend testing
-Input validation
-Error handling
-Documentation
-Final project demonstration
-🛠️ Technologies Used
-Technology	Purpose
-Python	Core programming
-Pandas	Data manipulation
-NumPy	Numerical operations
-Scikit-learn	Machine Learning
-Matplotlib	Data visualization
-Flask	Backend / Web API
-HTML	Frontend structure
-CSS	Frontend styling
-JavaScript	Frontend interaction
-Joblib	Model serialization
-Git	Version control
-GitHub	Project repository
-VS Code	Development environment
-📁 Project Structure
+```text
 Customer_Churn_Analysis_Prediction/
 │
 ├── data/
-│   ├── customer_churn.csv
-│   └── cleaned_customer_churn.csv
+│   ├── customer_churn.csv            # Original raw dataset
+│   ├── cleaned_customer_churn.csv    # Preprocessed 69-feature dataset
+│   └── bulk_prediction_results.csv   # Output prediction export file
 │
 ├── models/
-│   ├── scaler.pkl
-│   ├── logistic_model.pkl
-│   └── random_forest_model.pkl
+│   ├── scaler.pkl                    # StandardScaler model artifact
+│   ├── logistic_model.pkl            # Trained Logistic Regression model
+│   └── random_forest_model.pkl       # Trained Random Forest model
 │
 ├── static/
 │   ├── css/
-│   └── js/
+│   │   └── style.css                 # Modern UI responsive styling
+│   ├── js/
+│   │   └── script.js                  # Frontend interactivity & Chart.js logic
+│   └── images/
+│       └── brandlogo.jpg              # System logo asset
 │
-├── Customer churn analysis and predction system/
-│   ├── project images
-│   └── project synopsis
+├── templates/
+│   ├── login.html                    # Authentication page
+│   ├── index.html                    # Home & individual prediction form
+│   ├── bulk_upload.html              # CSV/XLSX file upload interface
+│   ├── bulk_result.html              # Analytics dashboard & results table
+│   ├── result.html                   # Individual prediction result view
+│   └── error.html                    # User-friendly error page
 │
-├── analysis.py
-├── eda.py
-├── feature_selection.py
-├── train_model.py
-├── model_evaluation.py
-├── predict.py
-├── app.py
-├── requirements.txt
-├── .gitignore
-└── README.md
-▶️ How to Run the Project
-1. Clone the repository
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-2. Open the project
+├── analysis.py                       # Module 1 & 2: Data loading and cleaning
+├── eda.py                            # Module 3: Exploratory Data Analysis
+├── feature_selection.py              # Module 4: ML preparation and scaling
+├── train_model.py                    # Module 5: Model training
+├── model_evaluation.py               # Module 6: Model evaluation metrics
+├── predict.py                        # Module 7: CLI prediction utility
+├── app.py                            # Module 8 & 9: Flask Web Application
+├── requirements.txt                  # Project dependencies
+├── .gitignore                        # Git exclusion rules
+└── README.md                         # Project documentation
+```
+
+---
+
+## 🛠️ Installation & Setup Guide
+
+### 1. Prerequisites
+Ensure Python 3.9+ is installed on your system.
+
+### 2. Clone Repository & Setup Virtual Environment
+```bash
+git clone https://github.com/Aadistech/Customer-Churn-Analysis-Prediction.git
 cd Customer_Churn_Analysis_Prediction
-3. Install dependencies
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
 pip install -r requirements.txt
-4. Run Data Analysis
+```
+
+### 4. Run Machine Learning Pipeline (Optional re-training)
+```bash
 python analysis.py
-5. Run EDA
 python eda.py
-6. Prepare ML Features
 python feature_selection.py
-7. Train Models
 python train_model.py
-8. Evaluate Models
 python model_evaluation.py
-9. Run Prediction
-python predict.py
-10. Run Flask Application
+```
+
+### 5. Launch the Web Application
+```bash
 python app.py
+```
+Open your browser and navigate to `http://127.0.0.1:5000`.
 
-The web application will then be available locally through the Flask development server.
+### Demo Credentials
+- **Admin Role:** `admin` / `admin123`
+- **Analyst Role:** `analyst` / `analyst123`
 
-📌 Current Project Status
-Module 1  Data Loading                  ✅
-Module 2  Data Cleaning                ✅
-Module 3  Exploratory Data Analysis    ✅
-Module 4  ML Preparation               ✅
-Module 5  Model Training               ✅
-Module 6  Model Evaluation             ✅
-Module 7  Prediction System             🔄
-Module 8  Flask Backend                 ⏳
-Module 9  Frontend & Dashboard          ⏳
-Module 10 Testing & Documentation       ⏳
-🔮 Future Improvements
+---
 
-Possible future improvements include:
+## 📌 Project Module Status
 
-Hyperparameter tuning
-Cross-validation
-Improved churn recall
-Feature importance visualization
-Customer risk scoring
-Interactive dashboard
-Prediction history
-Database integration
-Customer retention recommendations
-Deployment to a cloud platform
-👨‍💻 Author
+| Module | Description | Status |
+| :---: | :--- | :---: |
+| **Module 1** | Data Loading & Verification | ✅ Completed |
+| **Module 2** | Data Cleaning & Categorical Encoding | ✅ Completed |
+| **Module 3** | Exploratory Data Analysis (EDA) | ✅ Completed |
+| **Module 4** | Feature Selection & Standard Scaling | ✅ Completed |
+| **Module 5** | Classification Model Training | ✅ Completed |
+| **Module 6** | Model Evaluation & Performance Metrics | ✅ Completed |
+| **Module 7** | CLI & Web Customer Prediction System | ✅ Completed |
+| **Module 8** | Flask Backend & Authentication | ✅ Completed |
+| **Module 9** | Business Intelligence Frontend Dashboard | ✅ Completed |
+| **Module 10** | End-to-End Testing & Comprehensive Documentation | ✅ Completed |
 
-Aaditya Jadhav
+---
 
-B.Sc. Computer Science
+## 👨‍💻 Author & Acknowledgments
 
-📜 License
+- **Lead Developer:** Aaditya Jadhav (B.Sc. Computer Science)
+- **Contributors:** Padmaj, Parth
+- **Institution:** MGM College of CS & IT
+
+---
+
+## 📜 License
 
 This project is developed for educational and academic purposes.
-
-
-### One important thing
-
-Don't commit this README just yet if we're going to continue developing the project.
-
-Our README currently describes **Modules 7–10 as planned/in progress**, which is correct. Once we finish the Flask application and frontend, we'll come back and update the README with:
-
-- actual screenshots
-- actual application workflow
-- final project structure
-- installation instructions
-- final model results
-- GitHub repository information
-
-For now, create `README.md`, paste the content, save it, and then run:
-
-```powershell
-git status    

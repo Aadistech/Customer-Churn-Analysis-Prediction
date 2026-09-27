@@ -43,20 +43,30 @@
             </div>
         </div>
 
-        <!-- Charts and Insights -->
+        <!-- Charts and Insights Grid -->
         <div class="grid-2" style="margin-bottom: 2rem;">
-            <!-- Chart Section -->
+            <!-- Doughnut Chart Section -->
             <div class="card">
                 <h3 class="section-title">Customer Distribution</h3>
-                <div style="position: relative; height: 300px; width: 100%;">
+                <div style="position: relative; height: 280px; width: 100%;">
                     <canvas id="churnChart" data-churn="{{ churned_customers }}" data-stay="{{ staying_customers }}"></canvas>
                 </div>
             </div>
             
-            <!-- Business Insights -->
-            <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
-                <h3 class="section-title">Business Insights</h3>
-                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary); margin-bottom: 1rem;">
+            <!-- Service Calls Bar Chart Section -->
+            <div class="card">
+                <h3 class="section-title">Churn Rate by Service Calls</h3>
+                <div style="position: relative; height: 280px; width: 100%;">
+                    <canvas id="serviceCallsChart" data-charts='{{ charts | tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Insights Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 class="section-title">Business Insights & Recommended Actions</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border-left: 4px solid var(--primary);">
                     <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Risk Assessment</h4>
                     <p style="color: var(--text-muted);">
                         {% if churn_rate|float >= 20 %}
@@ -88,7 +98,6 @@
                 <table>
                     <thead>
                         <tr>
-                            <!-- Dynamically generate headers from the first dictionary in table_data -->
                             {% if table_data and table_data|length > 0 %}
                                 {% for key in table_data[0].keys() %}
                                     <th>{{ key|replace('_', ' ')|title }}</th>
@@ -107,8 +116,15 @@
                                         {% else %}
                                             <span class="badge badge-success">WILL STAY</span>
                                         {% endif %}
+                                    {% elif key|lower == 'risk' %}
+                                        {% if value == 'HIGH' %}
+                                            <span class="badge badge-danger">HIGH</span>
+                                        {% elif value == 'MEDIUM' %}
+                                            <span class="badge" style="background: #fef08a; color: #854d0e;">MEDIUM</span>
+                                        {% else %}
+                                            <span class="badge badge-success">LOW</span>
+                                        {% endif %}
                                     {% elif 'probability' in key|lower %}
-                                        <!-- Format probability columns nicely -->
                                         {{ value }}%
                                     {% else %}
                                         {{ value }}

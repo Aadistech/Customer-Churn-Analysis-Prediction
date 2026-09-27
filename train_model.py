@@ -86,7 +86,7 @@ joblib.dump(
 
 joblib.dump(
     random_forest_model,
-    "models/ranndom_forest_model.pkl"
+    "models/random_forest_model.pkl"
 )
 
 print("\n===== MODELS SAVED =====")
