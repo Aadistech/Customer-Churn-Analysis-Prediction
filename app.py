@@ -26,6 +26,8 @@ from services.firebase_service import (
     register_or_sync_firebase_user,
 )
 from services.email_service import send_login_email_alert
+from database import get_retrain_history_from_db
+from ml_pipeline import retrain_model_pipeline
 
 # ============================================================
 # FLASK BACKEND - AadiBI CUSTOMER CHURN INTELLIGENCE SYSTEM
@@ -543,7 +545,33 @@ def bulk():
 @login_required
 def about():
     """AI System Architecture and Model Intelligence view."""
-    return render_template("about.html")
+    try:
+        history = get_retrain_history_from_db(limit=10)
+    except Exception as e:
+        print(f"[Database History Warning]: {e}")
+        history = []
+    return render_template("about.html", history=history)
+
+
+@app.route("/api/retrain", methods=["POST"])
+@login_required
+@admin_required
+def api_retrain():
+    """Triggers Scikit-Learn Random Forest model retraining & database logging."""
+    try:
+        dataset_name = "customer_churn.csv"
+        if os.path.exists(RAW_DATA_PATH):
+            df = pd.read_csv(RAW_DATA_PATH)
+        elif os.path.exists(CLEANED_DATA_PATH):
+            df = pd.read_csv(CLEANED_DATA_PATH)
+        else:
+            return jsonify({"success": False, "error": "Training dataset file not found."}), 404
+
+        metrics = retrain_model_pipeline(df, dataset_name=dataset_name)
+        return jsonify({"success": True, "metrics": metrics})
+    except Exception as e:
+        print(f"[Retrain API Error]: {e}")
+        return jsonify({"success": False, "error": str(e)}), 400
 
 
 @app.route("/download_results")
