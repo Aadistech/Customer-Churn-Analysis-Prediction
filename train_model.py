@@ -49,9 +49,14 @@ logistic_model = LogisticRegression(
 )
 
 random_forest_model = RandomForestClassifier(
-    n_estimators=200,
+    n_estimators=150,
+    max_depth=8,
+    min_samples_split=8,
+    min_samples_leaf=4,
+    max_features=0.7,
+    class_weight="balanced",
     random_state=42,
-    class_weight="balanced"
+    n_jobs=-1
 )
 
 print("Logistic Regression created.")

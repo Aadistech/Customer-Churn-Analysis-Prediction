@@ -157,9 +157,12 @@ def retrain_model_pipeline(df, dataset_name="customer_churn.csv"):
 
     # Train Random Forest Classifier
     rf_model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=15,
-        min_samples_split=5,
+        n_estimators=150,
+        max_depth=8,
+        min_samples_split=8,
+        min_samples_leaf=4,
+        max_features=0.7,
+        class_weight="balanced",
         random_state=42,
         n_jobs=-1
     )
