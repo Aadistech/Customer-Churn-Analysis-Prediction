@@ -8,13 +8,13 @@ import { getFirestore, collection, doc, addDoc, onSnapshot, query, orderBy, limi
 
 // Firebase App Web Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAdkr7srCNkBDOHQUixdlxXs9Gn4-QTHj8",
-  authDomain: "customer-churn-dc52d.firebaseapp.com",
-  projectId: "customer-churn-dc52d",
-  storageBucket: "customer-churn-dc52d.firebasestorage.app",
-  messagingSenderId: "509344180917",
-  appId: "1:509344180917:web:c6ba127aadfbeae9d3acfc",
-  measurementId: "G-56SLESMKBD"
+  apiKey: "AIzaSyBoc5JX-FLOBiHDpH1g6A5Pr2o5s2asz8c",
+  authDomain: "customer-churn-analysis-c3be6.firebaseapp.com",
+  projectId: "customer-churn-analysis-c3be6",
+  storageBucket: "customer-churn-analysis-c3be6.firebasestorage.app",
+  messagingSenderId: "351385399138",
+  appId: "1:351385399138:web:506a3cbafbd2798db7c63b",
+  measurementId: "G-X459FWNH1H"
 };
 
 // Initialize Firebase App, Auth & Firestore
