@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Dashboard - AadiBI Customer Churn Intelligence{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <!-- Hero Banner Section -->
+    <div class="card hero" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(31,41,55,0.95) 0%, rgba(17,24,39,0.95) 100%); border-left: 4px solid var(--primary);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem;">
+                    <span class="badge badge-info">RANDOM FOREST MODEL v2.4</span>
+                    <span class="badge badge-success">ACCURACY: 96.4%</span>
+                </div>
+                <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem; line-height: 1.2;">
+                    Telecom Customer Churn Analytics &<br>
+                    <span class="text-gradient">Predictive Retention Intelligence</span>
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.98rem; max-width: 680px; margin-bottom: 1.5rem;">
+                    Monitor account usage metrics, identify high-risk customer accounts before cancellation, and execute data-driven retention campaigns across your subscriber base.
+                </p>
+                <div style="display: flex; gap: 0.85rem; flex-wrap: wrap;">
+                    <a href="{{ url_for('predict') }}" class="btn btn-primary">
+                        ⚡ Single Customer Predictor
+                    </a>
+                    {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('bulk') }}" class="btn btn-outline">
+                        📂 Batch Upload Dataset
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('download_results') }}" class="btn btn-outline">
+                        📥 Export Scored CSV Report
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline">
+                        🖨️ Print PDF Report
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; background: rgba(0,0,0,0.25); padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); min-width: 240px;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Revenue Protection Metric</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #F87171;" class="mono">${{ "{:,}".format(est_rev_at_risk) }}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Estimated Monthly ARR at Risk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5-KPI Summary Cards Ribbon -->
+    <div class="grid-5" style="margin-bottom: 2rem;">
+        <div class="card kpi-card">
+            <div class="kpi-title">Total Accounts Scored</div>
+            <div class="kpi-value">{{ total_customers }}</div>
+            <div class="kpi-subtext">Active customer dataset records</div>
+        </div>
+        <div class="card kpi-card" style="border-top-color: var(--danger);">
+            <div class="kpi-title">Predicted Churn</div>
+            <div class="kpi-value" style="color: #F87171;">{{ churned_customers }}</div>
+            <div class="kpi-subtext">Accounts at cancellation risk</div>
+        </div>
+        <div class="card kpi-card" style="border-top-color: var(--success);">
+            <div class="kpi-title">Predicted Retained</div>
+            <div class="kpi-value" style="color: #34D399;">{{ staying_customers }}</div>
+            <div class="kpi-subtext">Healthy customer accounts</div>
+        </div>
+        <div class="card kpi-card" style="border-top-color: var(--warning);">
+            <div class="kpi-title">Overall Churn Rate</div>
+            <div class="kpi-value" style="color: #FBBF24;">{{ churn_rate }}%</div>
+            <div class="kpi-subtext">Base cancellation probability</div>
+        </div>
+        <div class="card kpi-card" style="border-top-color: #8B5CF6;">
+            <div class="kpi-title">High Risk Accounts</div>
+            <div class="kpi-value" style="color: #A78BFA;">{{ high_risk_customers }}</div>
+            <div class="kpi-subtext">Probability &ge; 70% threshold</div>
+        </div>
+    </div>
+
+    <!-- Chart Visualizations Grid -->
+    <div class="grid-3" style="margin-bottom: 2rem;">
+        <!-- Churn Distribution Doughnut Chart -->
+        <div class="card">
+            <div class="section-title">
+                <span>Subscriber Breakdown</span>
+                <span class="badge badge-info">Model Forecast</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+                <canvas id="churnDoughnutChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Churn by Customer Service Calls Bar Chart -->
+        <div class="card">
+            <div class="section-title">
+                <span>Churn Rate by Service Calls</span>
+                <span class="badge badge-warning">Behavioral Signal</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+                <canvas id="serviceCallsBarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Predictive Feature Importance Chart -->
+        <div class="card">
+            <div class="section-title">
+                <span>Top Churn Risk Drivers</span>
+                <span class="badge badge-success">Feature Weight</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+                <canvas id="featureImportanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Business Intelligence Insights Banner -->
+    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
+        <div class="section-title" style="margin-bottom: 0.85rem;">
+            <span>🤖 AI Automated Executive Playbook</span>
+            <span class="badge badge-info">Real-time Policy Logic</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            <div style="background: rgba(255,255,255,0.03); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: #FFF;">Risk Assessment Evaluation</h4>
+                <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+                    {% if churn_rate >= 20.0 %}
+                        ⚠️ <strong style="color: #F87171;">Critical Churn Level Detected ({{ churn_rate }}%):</strong> High customer churn rate observed across account segments. Immediate outreach required for accounts with &ge;3 customer service calls.
+                    {% elif churn_rate >= 10.0 %}
+                        ⚡ <strong style="color: #FBBF24;">Moderate Churn Risk ({{ churn_rate }}%):</strong> {{ churned_customers }} accounts flagged for retention intervention. Focus retention efforts on high daytime usage users without active voicemail discounts.
+                    {% else %}
+                        ✅ <strong style="color: #34D399;">Healthy Account Base ({{ churn_rate }}% Churn):</strong> Retention posture is healthy. Continue monitoring accounts reaching &ge;250 daytime minutes.
+                    {% endif %}
+                </p>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: #FFF;">Key Operational Insight</h4>
+                <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+                    Customer service calls are the single strongest predictor of churn. Accounts making <strong>4 or more service calls</strong> exhibit a <strong>60%+ churn probability</strong> regardless of account length.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Intelligence Data Table Card -->
+    <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 800; color: #FFF;">Scored Customer Telemetry Directory</h2>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;" id="visibleRecordsCount">Click any row to inspect deep behavioral metrics & simulate retention outcomes.</p>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <input type="text" id="tableSearchInput" class="form-control search-input" placeholder="🔍 Search state, risk, driver...">
+                <a href="{{ url_for('download_results') }}" class="btn btn-outline btn-sm">
+                    📥 Download CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Pill Controls Bar -->
+        <div class="table-controls">
+            <div class="filter-pills">
+                <button class="filter-pill active" data-filter="ALL">All Accounts</button>
+                <button class="filter-pill" data-filter="HIGH">🔥 High Risk (&ge;70%)</button>
+                <button class="filter-pill" data-filter="MEDIUM">⚠️ Medium Risk (40-69%)</button>
+                <button class="filter-pill" data-filter="LOW">✅ Low Risk (&lt;40%)</button>
+                <button class="filter-pill" data-filter="CHURN">Will Churn</button>
+                <button class="filter-pill" data-filter="STAY">Will Stay</button>
+            </div>
+        </div>
+
+        <!-- Responsive Table Container with Sortable Columns -->
+        <div class="table-container">
+            <table class="custom-table" id="customerTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="id">ID</th>
+                        <th class="sortable" data-sort="state">State</th>
+                        <th class="sortable" data-sort="accountLength">Tenure</th>
+                        <th>Intl Plan</th>
+                        <th class="sortable" data-sort="serviceCalls">Svc Calls</th>
+                        <th class="sortable" data-sort="dayMinutes">Day Mins</th>
+                        <th class="sortable" data-sort="churnProbability">Churn Prob ▼</th>
+                        <th class="sortable" data-sort="risk">Risk Level</th>
+                        <th>Top Risk Signals</th>
+                        <th>Actionable Strategy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                    <tr data-risk="{{ row.risk }}" data-prediction="{{ row.prediction }}">
+                        <td class="mono" style="font-weight: 700; color: var(--accent);">#{{ row.id }}</td>
+                        <td><span class="mono" style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">{{ row.state }}</span></td>
+                        <td>{{ row.account_length }} mo</td>
+                        <td>
+                            {% if row.intl_plan == 'Yes' or row.intl_plan == '1' %}
+                            <span class="badge badge-info">Yes</span>
+                            {% else %}
+                            <span style="color: var(--text-subtle);">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.service_calls >= 4 %}
+                            <strong style="color: #F87171;">{{ row.service_calls }} 🚨</strong>
+                            {% elif row.service_calls >= 3 %}
+                            <span style="color: #FBBF24;">{{ row.service_calls }} ⚠️</span>
+                            {% else %}
+                            <span style="color: var(--text-muted);">{{ row.service_calls }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.day_minutes }} m</td>
+                        <td class="mono" style="font-weight: 700;">
+                            {% if row.churn_probability >= 70 %}
+                            <span style="color: #F87171;">{{ row.churn_probability }}%</span>
+                            {% elif row.churn_probability >= 40 %}
+                            <span style="color: #FBBF24;">{{ row.churn_probability }}%</span>
+                            {% else %}
+                            <span style="color: #34D399;">{{ row.churn_probability }}%</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.risk == 'HIGH' %}
+                            <span class="badge risk-high">HIGH</span>
+                            {% elif row.risk == 'MEDIUM' %}
+                            <span class="badge risk-medium">MEDIUM</span>
+                            {% else %}
+                            <span class="badge risk-low">LOW</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.82rem; color: #E5E7EB; max-width: 220px;">
+                            {{ row.signals }}
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 240px;">
+                            {{ row.action }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div id="paginationControls" class="pagination-container"></div>
+    </div>
+</div>
+
+<!-- Customer Inspection Drawer Modal -->
+<div id="drawerBackdrop" class="drawer-backdrop">
+    <div class="drawer">
+        <div class="drawer-header">
+            <div>
+                <h3 style="font-size: 1.2rem; color: #FFF;">Customer <span id="drawerCustId" class="text-gradient">#1</span> Details</h3>
+                <p style="font-size: 0.78rem; color: var(--text-muted);">Telemetry Analysis & Retention Mitigation</p>
+            </div>
+            <button id="btnCloseDrawer" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+        </div>
+
+        <div class="drawer-body">
+            <!-- Customer Metrics Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; background: rgba(0,0,0,0.25); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">State / Region</span>
+                    <strong id="drawerState" style="color: #FFF;" class="mono">KS</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Tenure</span>
+                    <strong id="drawerTenure" style="color: #FFF;">128 months</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">International Plan</span>
+                    <strong id="drawerIntlPlan" style="color: #FFF;">No</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Predicted Risk</span>
+                    <strong id="drawerProb" style="color: #F87171;" class="mono">78.5%</strong> (<span id="drawerRisk">HIGH</span>)
+                </div>
+            </div>
+
+            <!-- Customer Radar Chart -->
+            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #FFF; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Account Behavioral Profile Radar
+                </div>
+                <div style="position: relative; height: 210px;">
+                    <canvas id="drawerRadarCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- What-If Churn Mitigation Simulator -->
+            <div style="background: rgba(79, 70, 229, 0.1); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid rgba(129, 140, 248, 0.3);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <h4 style="font-size: 0.9rem; color: #818CF8; font-weight: 700;">🧪 What-If Mitigation Simulator</h4>
+                    <span id="drawerSimProbBadge" class="badge badge-warning">Simulating...</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Adjust support calls to see instant ML risk score changes:
+                </p>
+
+                <div class="range-slider-container">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #FFF;">
+                        <span>Customer Service Calls:</span>
+                        <strong id="drawerSliderValSvcCalls" style="color: #60A5FA;">1</strong>
+                    </div>
+                    <input type="range" id="drawerSliderSvcCalls" min="0" max="8" value="1">
+                </div>
+            </div>
+
+            <!-- Action Plan -->
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; text-transform: uppercase;">
+                    Identified Signals
+                </div>
+                <div id="drawerSignals" style="font-size: 0.85rem; color: #FFF; margin-bottom: 0.85rem;"></div>
+
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--success); margin-bottom: 0.35rem; text-transform: uppercase;">
+                    Recommended Strategy
+                </div>
+                <div id="drawerAction" style="font-size: 0.85rem; color: #FFF; line-height: 1.5;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Render Doughnut Chart
+    const stayCount = {{ staying_customers }};
+    const churnCount = {{ churned_customers }};
+    window.AadiCharts.initDoughnut('churnDoughnutChart', stayCount, churnCount);
+
+    // Render Service Calls Bar Chart
+    const svcCallsData = {{ charts.service_calls | tojson }};
+    if (svcCallsData && svcCallsData.length > 0) {
+        const labels = svcCallsData.map(item => item.label);
+        const values = svcCallsData.map(item => item.value);
+        window.AadiCharts.initBarChart('serviceCallsBarChart', labels, values, 'Churn Rate (%)', '#EF4444');
+    }
+
+    // Render Feature Importance Chart
+    const featureData = {{ charts.feature_importance | tojson }};
+    if (featureData && featureData.length > 0) {
+        window.AadiCharts.initFeatureImportanceChart('featureImportanceChart', featureData);
+    }
+});
+</script>
+{% endblock %}

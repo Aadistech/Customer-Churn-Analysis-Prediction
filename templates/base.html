@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AadiBI - Customer Churn Intelligence System{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- App Design System Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sticky Executive Navigation Bar -->
+        <nav class="navbar">
+            <a href="{{ url_for('dashboard') }}" class="brand">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                </div>
+                <div>
+                    <span>Aadi<span class="text-gradient">BI</span></span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; font-weight: 500; margin-top: -3px;">Churn Intelligence</span>
+                </div>
+            </a>
+
+            <div class="nav-links">
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' or request.path == '/' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('predict') }}" class="nav-link {% if request.endpoint == 'predict' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Single Predictor
+                </a>
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('bulk') }}" class="nav-link {% if request.endpoint == 'bulk' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Batch Upload
+                </a>
+                {% endif %}
+                <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    AI System Specs
+                </a>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="system-status">
+                    <div class="status-dot"></div>
+                    <span>Firebase Auth 🔥 (customer-churn-dc52d)</span>
+                </div>
+                {% if session.get('username') %}
+                <div style="display: flex; align-items: center; gap: 0.75rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
+                    {% if session.get('user_photo') %}
+                    <img src="{{ session.get('user_photo') }}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent);">
+                    {% endif %}
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        👤 <strong style="color: #FFF;">{{ session.get('username') }}</strong>
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Sign Out</a>
+                </div>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Sign In</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Flash Alert Messages Container -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="max-width: 1360px; margin: 1rem auto 0; padding: 0 1.5rem; width: 100%;">
+            {% for category, message in messages %}
+            <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 0.5rem; border-left: 4px solid {% if category == 'error' %}var(--danger){% elif category == 'success' %}var(--success){% else %}var(--info){% endif %}; background: rgba(17, 24, 39, 0.9);">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.9rem; font-weight: 600; color: #FFF;">{{ message }}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Main Page Content -->
+        <main class="container">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div>
+                <strong>AadiBI Customer Churn Intelligence System</strong> &bull; Firebase Project: <code>customer-churn-dc52d</code>
+            </div>
+            <div style="margin-top: 0.35rem; color: var(--text-subtle); font-size: 0.78rem;">
+                Telemetry Scored Dataset &bull; High Precision Predictive Analytics Suite
+            </div>
+        </footer>
+    </div>
+
+    <!-- Firebase App & Analytics Web v10 Global Script -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-analytics.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAdkr7srCNkBDOHQUixdlxXs9Gn4-QTHj8",
+        authDomain: "customer-churn-dc52d.firebaseapp.com",
+        projectId: "customer-churn-dc52d",
+        storageBucket: "customer-churn-dc52d.firebasestorage.app",
+        messagingSenderId: "509344180917",
+        appId: "1:509344180917:web:c6ba127aadfbeae9d3acfc",
+        measurementId: "G-56SLESMKBD"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      try {
+        const analytics = getAnalytics(app);
+        window.firebaseApp = app;
+        window.firebaseAnalytics = analytics;
+      } catch(e) {
+        console.warn("Firebase Analytics notice:", e.message);
+      }
+    </script>
+
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/chart-config.js') }}?v=1.0"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=1.0"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

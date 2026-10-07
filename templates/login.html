@@ -1,81 +1,153 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - AadiBI Customer Churn Intelligence</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body class="split-auth-body">
+{% extends "base.html" %}
 
-    <div class="split-layout">
-        
-        <!-- LEFT PANEL: Image, Messaging & Branding -->
-        <div class="split-left">
-            <!-- Dark overlay to make text readable over the background image -->
-            <div class="split-overlay"></div>
-            
-            <div class="left-content">
-                <div class="brand-logo" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
-                    <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img" style="height: 48px; width: 48px;">
-                    <span class="logo-text" style="color: #ffffff; font-size: 2.2rem; font-weight: 800;">AadiBI</span>
-                </div>
-                
-                <h1 class="hero-title">Predict Churn.<br>Retain Customers.</h1>
-                <p class="hero-subtitle">
-                    Harness the power of Machine Learning to analyze customer behavior, identify high-risk accounts, and prevent churn before it happens.
-                </p>
-                
-                <div class="feature-bullets">
-                    <div class="bullet">✨ Powered by Random Forest Algorithm</div>
-                    <div class="bullet">📈 Real-time Bulk Data Processing</div>
-                    <div class="bullet">🎯 Actionable Retention Insights</div>
-                </div>
-            </div>
+{% block title %}Sign In - AadiBI Churn Intelligence{% endblock %}
 
-            <!-- Custom Academic Project Footer -->
-            <div class="project-footer">
-                <p>System developed by Aaditya Jadhav</p>
-                <p class="college-text">MGM College of CS & IT</p>
+{% block content %}
+<script>
+  // Auto-redirect 127.0.0.1 to localhost for seamless Firebase Auth domain compatibility
+  if (window.location.hostname === '127.0.0.1') {
+    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
+  }
+</script>
+
+<div style="max-width: 460px; margin: 3rem auto 0;" class="animate-fade-in">
+    <div class="card" style="padding: 2.5rem 2rem; border-top: 4px solid var(--primary); box-shadow: var(--shadow-glow);">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="brand-icon" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">
+                🛡️
             </div>
+            <h2 style="font-size: 1.6rem; margin-bottom: 0.4rem;">Executive Access Portal</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">Sign in with your account to access predictive churn analytics.</p>
         </div>
 
-        <!-- RIGHT PANEL: Login Form -->
-        <div class="split-right">
-            <div class="auth-card-modern">
-                <div style="margin-bottom: 2rem;">
-                    <span class="badge-tag">SECURE WORKSPACE</span>
-                    <h2 style="margin-top: 1rem; color: #0f172a; font-size: 1.8rem;">Welcome back</h2>
-                    <p style="color: #64748b; font-size: 0.95rem;">Sign in to access the analytics dashboard.</p>
-                </div>
-
-                <form action="/login" method="POST" class="auth-form">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required autocomplete="off">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem; padding: 0.9rem;">
-                        Sign in to Dashboard &rarr;
-                    </button>
-                </form>
-
-                <div class="demo-box" style="margin-top: 2.5rem;">
-                    <div class="demo-title">🔑 Demo Credentials</div>
-                    <div class="demo-grid">
-                        <div class="demo-item"><span class="role">Admin:</span> <code>admin</code> / <code>admin123</code></div>
-                        <div class="demo-item"><span class="role">Analyst:</span> <code>analyst</code> / <code>analyst123</code></div>
-                    </div>
-                </div>
-            </div>
+        <!-- Firebase Configuration Missing Alert Banner -->
+        <div id="firebaseAuthNotice" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: #FBBF24;">
+            <strong>⚠️ Enable Google Provider in Firebase:</strong>
+            <p style="margin-top: 0.35rem; color: #FDE68A;">
+                Google Sign-In is not yet enabled for project <strong>customer-churn-dc52d</strong>.
+            </p>
+            <ol style="margin: 0.5rem 0 0 1.1rem; color: #E5E7EB;">
+                <li>Go to <a href="https://console.firebase.google.com/project/customer-churn-dc52d/authentication/providers" target="_blank" style="color: #60A5FA; text-decoration: underline;">Firebase Console Authentication</a></li>
+                <li>Click <strong>Google</strong> &rarr; Toggle <strong>Enable</strong> &rarr; Click <strong>Save</strong></li>
+            </ol>
         </div>
 
+        <!-- Google Sign-In Primary Button -->
+        <div style="margin-bottom: 1.75rem;">
+            <button id="btnGoogleSignIn" type="button" class="btn" style="width: 100%; padding: 0.8rem; font-size: 0.95rem; background: #FFFFFF; color: #1F2937; border: 1px solid #E5E7EB; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                Continue with Google
+            </button>
+        </div>
+
+        <!-- Divider -->
+        <div style="display: flex; align-items: center; margin-bottom: 1.75rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+            <div style="flex: 1; border-bottom: 1px solid var(--border-color);"></div>
+            <span style="padding: 0 0.85rem; font-weight: 600; text-transform: uppercase;">Or Sign In with Credentials</span>
+            <div style="flex: 1; border-bottom: 1px solid var(--border-color);"></div>
+        </div>
+
+        <!-- Standard Credentials Form -->
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <label for="username">Username / Email</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Enter username or email" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
+                🔐 Authenticate & Launch App
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.82rem; color: var(--text-muted);">
+            <div style="font-weight: 700; color: #FFF; margin-bottom: 0.4rem;">Demo Credentials:</div>
+            <div style="display: flex; justify-content: space-around; margin-top: 0.5rem;">
+                <span class="mono" style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px;">admin / admin123</span>
+                <span class="mono" style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px;">analyst / analyst123</span>
+            </div>
+        </div>
     </div>
+</div>
+{% endblock %}
 
-</body>
-</html>
+{% block scripts %}
+<!-- Firebase Web App v10 Modular SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+  // User's Firebase Web Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAdkr7srCNkBDOHQUixdlxXs9Gn4-QTHj8",
+    authDomain: "customer-churn-dc52d.firebaseapp.com",
+    projectId: "customer-churn-dc52d",
+    storageBucket: "customer-churn-dc52d.firebasestorage.app",
+    messagingSenderId: "509344180917",
+    appId: "1:509344180917:web:c6ba127aadfbeae9d3acfc",
+    measurementId: "G-56SLESMKBD"
+  };
+
+  // Initialize Firebase & Auth
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  const googleBtn = document.getElementById('btnGoogleSignIn');
+  const authNotice = document.getElementById('firebaseAuthNotice');
+
+  if (googleBtn) {
+    googleBtn.addEventListener('click', async () => {
+      try {
+        googleBtn.disabled = true;
+        googleBtn.innerHTML = '⌛ Connecting to Google...';
+
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Post Google User Profile to Backend Authentication Session
+        const response = await fetch('/api/auth/google_login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: user.uid,
+            displayName: user.displayName || user.email.split('@')[0],
+            email: user.email,
+            photoURL: user.photoURL
+          })
+        });
+
+        const resData = await response.json();
+        if (resData.success) {
+          window.location.href = '/dashboard';
+        } else {
+          alert('Google Authentication session error: ' + (resData.error || 'Failed to authorize'));
+        }
+      } catch (error) {
+        console.error('Google Sign-In Error Code:', error.code, error.message);
+        
+        if (error.code === 'auth/configuration-not-found' || error.message.includes('auth/configuration-not-found')) {
+          if (authNotice) authNotice.style.display = 'block';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          // User cancelled sign in window
+        } else {
+          alert('Google Sign-In Error: ' + error.message);
+        }
+      } finally {
+        if (googleBtn) {
+          googleBtn.disabled = false;
+          googleBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            Continue with Google
+          `;
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}
