@@ -29,3 +29,7 @@ Thumbs.db
 
 # Machine Learning temporary files
 *.tmp
+
+# Firebase Credentials
+firebase_key.json
+*.json
