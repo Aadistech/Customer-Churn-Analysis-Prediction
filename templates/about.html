@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}AI System Specifications - AadiBI Customer Churn Intelligence{% endblock %}
+{% block title %}About - AadiBI Customer Churn Intelligence System{% endblock %}
 
 {% block content %}
 <div class="animate-fade-in" style="max-width: 1100px; margin: 0 auto;">
     <!-- Page Header -->
     <div style="margin-bottom: 2rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <span class="badge badge-info" style="margin-bottom: 0.5rem;">MACHINE LEARNING ARCHITECTURE & VISUALIZATIONS</span>
-            <h1 style="font-size: 2rem; font-weight: 800; color: #FFF;">
-                Model Specifications & <span class="text-gradient">System Architecture</span>
+            <span class="badge badge-info" style="margin-bottom: 0.5rem;">ABOUT PLATFORM & AI ARCHITECTURE</span>
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: #FFF;">
+                About <span class="text-gradient">AadiBI Churn Intelligence</span>
             </h1>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.35rem;">
-                Deep-dive into Random Forest hyperparameters, Matplotlib & Seaborn analytics, MySQL database logs, and REST API endpoints.
+            <p style="color: var(--text-muted); font-size: 0.98rem; margin-top: 0.35rem;">
+                Enterprise customer retention intelligence platform combining Machine Learning, Real-Time Cloud Data Persistence, and Business Intelligence.
             </p>
         </div>
 
@@ -21,6 +21,37 @@
             🔄 Trigger Model Retraining
         </button>
         {% endif %}
+    </div>
+
+    <!-- Executive About & Tech Stack Card -->
+    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--primary);">
+        <h3 class="section-title">💡 System Mission & Tech Stack Architecture</h3>
+        <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin-bottom: 1.25rem;">
+            <strong>AadiBI Customer Churn Intelligence System</strong> empowers telecom operators, product managers, and enterprise executive leaders to proactively identify subscribers at high risk of cancellation before churn occurs. Built using regularized Random Forest machine learning models and real-time cloud data pipelines, the system transforms raw customer usage telemetry into actionable retention strategies.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 0.35rem;">🤖 Machine Learning</div>
+                <div style="font-size: 0.88rem; color: #FFF; font-weight: 600;">Scikit-Learn Random Forest</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">Hyperparameter regularized (92.5% test accuracy, 0.933 ROC-AUC).</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #F59E0B; text-transform: uppercase; margin-bottom: 0.35rem;">🔥 Cloud Persistence</div>
+                <div style="font-size: 0.88rem; color: #FFF; font-weight: 600;">Google Cloud Firestore</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">Real-time prediction streams & executive summary collections sync.</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--success); text-transform: uppercase; margin-bottom: 0.35rem;">🛡️ Authentication</div>
+                <div style="font-size: 0.88rem; color: #FFF; font-weight: 600;">Firebase Auth & Google SSO</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">Single sign-on & role-based access control (Admin / Analyst).</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #A78BFA; text-transform: uppercase; margin-bottom: 0.35rem;">🗄️ Database & APIs</div>
+                <div style="font-size: 0.88rem; color: #FFF; font-weight: 600;">SQLAlchemy ORM & REST APIs</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">Automated retrain logging to SQLite/MySQL & JSON endpoints.</p>
+            </div>
+        </div>
     </div>
 
     <!-- 3-Column Specifications Overview Grid -->

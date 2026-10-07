@@ -1,35 +1,29 @@
-# Python
+# Node & Dependencies
+node_modules/
+
+# Python & Environments
 __pycache__/
 *.py[cod]
 *.pyo
-
-# Virtual Environment
 .venv/
 venv/
+venvvenv/
 env/
 
-# VS Code
+# Data & Databases
+*.db
+data/*.db
+data/bulk_prediction_results.csv
+uploads/
+
+# IDE & OS
 .vscode/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# OS files
+.idea/
 .DS_Store
 Thumbs.db
-
-# Python cache
-*.pyc
-
-# Logs
 *.log
-
-# Environment variables
-.env
-
-# Machine Learning temporary files
 *.tmp
 
-# Firebase Credentials
+# Sensitive Credentials
+.env
 firebase_key.json
-*.json
