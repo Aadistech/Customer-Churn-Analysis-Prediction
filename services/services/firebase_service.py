@@ -1,60 +1,61 @@
 import os
-import json
-import firebase_admin
-from firebase_admin import credentials, firestore
+import requests
+import datetime
+from flask import has_request_context, session
 
-# Path to service account key
-KEY_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "firebase_key.json")
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "")
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "customer-churn-analysis-c3be6")
 
-db = None
-is_firebase_active = False
+is_firebase_active = bool(FIREBASE_API_KEY and FIREBASE_PROJECT_ID)
 
-try:
-    if os.path.exists(KEY_PATH):
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(KEY_PATH)
-            firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        is_firebase_active = True
-        print("[OK] Python Firebase Admin SDK Connected to Cloud Firestore!")
-    else:
-        print(f"[WARN] Firebase key not found at {KEY_PATH}")
-except Exception as e:
-    print(f"[ERROR] Failed to initialize Python Firebase: {e}")
-
-
-def sync_prediction_to_firestore(data):
-    """Store single prediction result in Cloud Firestore collection 'churn_predictions'."""
-    if not is_firebase_active or db is None:
-        return None
-
+def sync_prediction_to_firestore(prediction_data):
+    """Sync single customer prediction result to Cloud Firestore."""
+    if not is_firebase_active:
+        return False
+    url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/churn_predictions?key={FIREBASE_API_KEY}"
+    
+    current_user = session.get("username", "anonymous") if has_request_context() else "system"
+    fields = {
+        "record_type": {"stringValue": "individual_prediction"},
+        "timestamp": {"stringValue": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+        "user": {"stringValue": current_user}
+    }
+    for k, v in prediction_data.items():
+        if isinstance(v, (int, float)):
+            fields[k] = {"doubleValue": float(v)}
+        elif isinstance(v, bool):
+            fields[k] = {"booleanValue": v}
+        elif isinstance(v, list):
+            fields[k] = {"stringValue": "; ".join(map(str, v))}
+        else:
+            fields[k] = {"stringValue": str(v)}
+            
     try:
-        doc_ref = db.collection("churn_predictions").document()
-        payload = dict(data)
-        payload["timestamp"] = firestore.SERVER_TIMESTAMP
-        doc_ref.set(payload)
-        return doc_ref.id
+        res = requests.post(url, json={"fields": fields}, timeout=4)
+        return res.status_code in (200, 201)
     except Exception as e:
-        print(f"[Firebase Firestore Error]: {e}")
-        return None
+        print("[Firebase Sync Notice]:", e)
+        return False
 
-
-def sync_analytics_to_firestore(summary):
-    """Update 'latest_summary' document in Cloud Firestore collection 'churn_analytics'."""
-    if not is_firebase_active or db is None:
-        return None
-
+def sync_analytics_to_firestore(summary_data):
+    """Sync bulk executive analytics summary metrics to Cloud Firestore."""
+    if not is_firebase_active:
+        return False
+    url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/churn_predictions?key={FIREBASE_API_KEY}"
+    
+    current_user = session.get("username", "anonymous") if has_request_context() else "system"
+    fields = {
+        "record_type": {"stringValue": "bulk_batch_analysis"},
+        "timestamp": {"stringValue": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+        "user": {"stringValue": current_user}
+    }
+    for k in ["total_customers", "churned_customers", "churn_rate", "high_risk_customers", "est_rev_at_risk"]:
+        if k in summary_data and summary_data[k] is not None:
+            fields[k] = {"doubleValue": float(summary_data[k])}
+            
     try:
-        doc_ref = db.collection("churn_analytics").document("latest_summary")
-        clean_summary = {
-            "total_customers": summary.get("total_customers", 0),
-            "churned_customers": summary.get("churned_customers", 0),
-            "staying_customers": summary.get("staying_customers", 0),
-            "churn_rate": summary.get("churn_rate", 0.0),
-            "high_risk_customers": summary.get("high_risk_customers", 0),
-            "est_rev_at_risk": summary.get("est_rev_at_risk", 0),
-            "updatedAt": firestore.SERVER_TIMESTAMP
-        }
-        doc_ref.set(clean_summary, merge=True)
+        res = requests.post(url, json={"fields": fields}, timeout=4)
+        return res.status_code in (200, 201)
     except Exception as e:
-        print(f"[Firebase Analytics Sync Error]: {e}")
+        print("[Firebase Analytics Notice]:", e)
+        return False

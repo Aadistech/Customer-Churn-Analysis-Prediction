@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Single Customer Risk Scoring Studio - AadiBI{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in" style="max-width: 1100px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div style="margin-bottom: 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: #FFF; line-height: 1.2;">
+                Individual Account <span class="text-gradient">Risk Scoring Studio</span>
+            </h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+                Enter customer account telemetry or load a preset profile to generate instant ML churn probability scores.
+            </p>
+        </div>
+
+        <!-- Quick Profile Presets -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="btnPresetHighRisk" class="btn btn-outline btn-sm" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;">
+                🚨 Preset: High Risk Account
+            </button>
+            <button id="btnPresetLowRisk" class="btn btn-outline btn-sm" style="border-color: rgba(16, 185, 129, 0.4); color: #34D399;">
+                ✅ Preset: Loyal Customer
+            </button>
+            <button id="btnPresetBorderline" class="btn btn-outline btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #FBBF24;">
+                ❓ Preset: Borderline Account
+            </button>
+        </div>
+    </div>
+
+    <!-- Live Prediction Gauge Result Card (Rendered via AJAX or Form Post) -->
+    <div id="liveResultCard" class="card" style="display: {% if has_result %}block{% else %}none{% endif %}; margin-bottom: 2rem; border-top: 4px solid {% if is_churn %}var(--danger){% else %}var(--success){% endif %}; background: linear-gradient(135deg, rgba(31,41,55,0.95) 0%, rgba(17,24,39,0.95) 100%);">
+        <div style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center;">
+            <!-- Circular Gauge / Dial -->
+            <div style="text-align: center;">
+                <div class="meter-container">
+                    <svg width="160" height="160" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.08)" stroke-width="10" fill="none" />
+                        <circle id="gaugeCircle" cx="50" cy="50" r="42" stroke="{% if is_churn %}#EF4444{% else %}#10B981{% endif %}" stroke-width="10" stroke-dasharray="264" stroke-dashoffset="{{ 264 - (264 * (churn_probability|default(0) / 100)) }}" stroke-linecap="round" fill="none" transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 1s ease;" />
+                    </svg>
+                    <div class="meter-val">
+                        <span id="resProbVal" style="color: {% if is_churn %}#F87171{% else %}#34D399{% endif %};">{{ churn_probability|default(0) }}%</span>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Churn Risk</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span id="resPredictionBadge" class="badge {% if is_churn %}badge-danger{% else %}badge-success{% endif %}">
+                        {{ prediction|default('SCORE READY') }}
+                    </span>
+                    <span id="resRiskBadge" class="badge {% if risk_level == 'HIGH' %}badge-danger{% elif risk_level == 'MEDIUM' %}badge-warning{% else %}badge-success{% endif %}">
+                        {{ risk_level|default('LOW') }} RISK
+                    </span>
+                </div>
+            </div>
+
+            <!-- Risk Details & Playbook -->
+            <div>
+                <div style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+                    Identified Behavioral Signals
+                </div>
+                <div id="resDriversContainer" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                    {% if drivers %}
+                    {% for driver in drivers %}
+                    <div style="background: rgba(255,255,255,0.04); padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.85rem; color: #E5E7EB;">
+                        {{ driver }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div style="background: rgba(255,255,255,0.03); padding: 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); border-left: 4px solid var(--primary);">
+                    <div style="font-size: 0.82rem; text-transform: uppercase; color: #60A5FA; font-weight: 700; margin-bottom: 0.35rem;">
+                        Recommended Actionable Retention Strategy
+                    </div>
+                    <p id="resRecommendationBox" style="font-size: 0.92rem; color: #FFF; line-height: 1.5; font-weight: 500;">
+                        {{ recommendation|default('Ready to compute retention playbook.') }}
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 1.5rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                    <div>Stay Probability: <strong id="resStayProbText" style="color: #34D399;">{{ stay_probability|default(100) }}%</strong></div>
+                    <div>Churn Probability: <strong id="resChurnProbText" style="color: #F87171;">{{ churn_probability|default(0) }}%</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictor Form Card -->
+    <div class="card">
+        <form id="individualPredictionForm" action="{{ url_for('predict') }}" method="POST">
+            
+            <!-- Section 1: Customer Profile -->
+            <div style="margin-bottom: 1.75rem;">
+                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>👤</span> Customer Demographics & Account Metadata
+                </h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="state">State Code (2 Letters)</label>
+                        <input type="text" id="state" name="state" class="form-control" placeholder="e.g. KS, NY, CA" value="{{ inputs.get('state', 'KS') if inputs else 'KS' }}" required maxlength="2" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="account_length">Account Length (Months)</label>
+                        <input type="number" id="account_length" name="account_length" class="form-control" placeholder="e.g. 128" value="{{ inputs.get('account_length', '128') if inputs else '128' }}" required min="1" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="area_code">Area Code</label>
+                        <select id="area_code" name="area_code" class="form-control" required>
+                            <option value="415" {% if inputs and inputs.get('area_code') == '415' %}selected{% endif %}>415 (San Francisco / Bay Area)</option>
+                            <option value="408" {% if inputs and inputs.get('area_code') == '408' %}selected{% endif %}>408 (San Jose / Silicon Valley)</option>
+                            <option value="510" {% if inputs and inputs.get('area_code') == '510' %}selected{% endif %}>510 (Oakland / East Bay)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Subscriptions & Service Interactions -->
+            <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>📱</span> Plan Subscriptions & Customer Service Interactions
+                </h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="international_plan">International Plan Subscribed?</label>
+                        <select id="international_plan" name="international_plan" class="form-control" required>
+                            <option value="no" {% if inputs and inputs.get('international_plan') == 'no' %}selected{% endif %}>No (Standard Plan)</option>
+                            <option value="yes" {% if inputs and inputs.get('international_plan') == 'yes' %}selected{% endif %}>Yes (International Add-on)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="voice_mail_plan">Voicemail Plan Subscribed?</label>
+                        <select id="voice_mail_plan" name="voice_mail_plan" class="form-control" required>
+                            <option value="no" {% if inputs and inputs.get('voice_mail_plan') == 'no' %}selected{% endif %}>No (No Voicemail)</option>
+                            <option value="yes" {% if inputs and inputs.get('voice_mail_plan') == 'yes' %}selected{% endif %}>Yes (Voicemail Active)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="number_vmail_messages">Voicemail Messages Stored</label>
+                        <input type="number" id="number_vmail_messages" name="number_vmail_messages" class="form-control" placeholder="e.g. 0 to 50" value="{{ inputs.get('number_vmail_messages', '0') if inputs else '0' }}" required min="0" max="100">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <label for="customer_service_calls" style="color: #F87171; margin-bottom: 0;">Customer Service Support Calls (High Churn Predictor)</label>
+                        <span id="labelValSvcCalls" class="mono" style="color: #F87171; font-weight: 700;">1 Calls</span>
+                    </div>
+                    <input type="range" id="sliderSvcCalls" min="0" max="9" value="{{ inputs.get('customer_service_calls', '1') if inputs else '1' }}" style="margin-bottom: 0.5rem;">
+                    <input type="hidden" id="customer_service_calls" name="customer_service_calls" value="{{ inputs.get('customer_service_calls', '1') if inputs else '1' }}">
+                    <small style="color: var(--text-muted); font-size: 0.78rem;">Drag slider to see dynamic ML prediction response.</small>
+                </div>
+            </div>
+
+            <!-- Section 3: Usage Minutes & Charges -->
+            <div style="margin-bottom: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>⏱️</span> Usage Call Minutes & Billable Charges
+                </h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="total_day_minutes">Total Day Minutes</label>
+                        <input type="number" step="0.1" id="total_day_minutes" name="total_day_minutes" class="form-control" placeholder="e.g. 180.0" value="{{ inputs.get('total_day_minutes', '180.0') if inputs else '180.0' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_day_calls">Total Day Calls</label>
+                        <input type="number" id="total_day_calls" name="total_day_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_day_calls', '100') if inputs else '100' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_day_charge">Total Day Charge ($)</label>
+                        <input type="number" step="0.01" id="total_day_charge" name="total_day_charge" class="form-control" placeholder="e.g. 30.60" value="{{ inputs.get('total_day_charge', '30.60') if inputs else '30.60' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="total_eve_minutes">Total Evening Minutes</label>
+                        <input type="number" step="0.1" id="total_eve_minutes" name="total_eve_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_eve_minutes', '200.0') if inputs else '200.0' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_eve_calls">Total Evening Calls</label>
+                        <input type="number" id="total_eve_calls" name="total_eve_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_eve_calls', '100') if inputs else '100' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_eve_charge">Total Evening Charge ($)</label>
+                        <input type="number" step="0.01" id="total_eve_charge" name="total_eve_charge" class="form-control" placeholder="e.g. 17.00" value="{{ inputs.get('total_eve_charge', '17.00') if inputs else '17.00' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="total_night_minutes">Total Night Minutes</label>
+                        <input type="number" step="0.1" id="total_night_minutes" name="total_night_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_night_minutes', '200.0') if inputs else '200.0' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_night_calls">Total Night Calls</label>
+                        <input type="number" id="total_night_calls" name="total_night_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_night_calls', '100') if inputs else '100' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_night_charge">Total Night Charge ($)</label>
+                        <input type="number" step="0.01" id="total_night_charge" name="total_night_charge" class="form-control" placeholder="e.g. 9.00" value="{{ inputs.get('total_night_charge', '9.00') if inputs else '9.00' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="total_intl_minutes">Total Intl Minutes</label>
+                        <input type="number" step="0.1" id="total_intl_minutes" name="total_intl_minutes" class="form-control" placeholder="e.g. 10.0" value="{{ inputs.get('total_intl_minutes', '10.0') if inputs else '10.0' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_intl_calls">Total Intl Calls</label>
+                        <input type="number" id="total_intl_calls" name="total_intl_calls" class="form-control" placeholder="e.g. 3" value="{{ inputs.get('total_intl_calls', '3') if inputs else '3' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total_intl_charge">Total Intl Charge ($)</label>
+                        <input type="number" step="0.01" id="total_intl_charge" name="total_intl_charge" class="form-control" placeholder="e.g. 2.70" value="{{ inputs.get('total_intl_charge', '2.70') if inputs else '2.70' }}" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button Bar -->
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button type="submit" id="btnSubmitPrediction" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                    ⚡ Run Predictive Risk Scoring
+                </button>
+                <button type="reset" class="btn btn-outline" onclick="document.getElementById('liveResultCard').style.display='none';">
+                    🔄 Clear Fields
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const sliderCalls = document.getElementById('sliderSvcCalls');
+    const labelCalls = document.getElementById('labelValSvcCalls');
+    const hiddenCalls = document.getElementById('customer_service_calls');
+    const form = document.getElementById('individualPredictionForm');
+
+    if (sliderCalls && labelCalls && hiddenCalls) {
+        sliderCalls.addEventListener('input', () => {
+            const val = sliderCalls.value;
+            labelCalls.textContent = `${val} Calls`;
+            hiddenCalls.value = val;
+            
+            // Trigger automatic debounced submit
+            clearTimeout(window.sliderDebounceTimer);
+            window.sliderDebounceTimer = setTimeout(() => {
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }, 300);
+        });
+    }
+});
+</script>
+{% endblock %}

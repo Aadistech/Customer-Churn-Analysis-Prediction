@@ -18,13 +18,19 @@ from flask import (
 import pandas as pd
 import joblib
 
-# Import Python Services
+# Import Python Services & Database / ML Pipeline
 from services.firebase_service import (
     is_firebase_active,
     sync_prediction_to_firestore,
     sync_analytics_to_firestore,
 )
 from services.email_service import send_login_email_alert
+from database import (
+    log_prediction_to_db,
+    log_batch_analytics_to_db,
+    get_retrain_history_from_db,
+)
+from ml_pipeline import retrain_model_pipeline
 
 # ============================================================
 # FLASK BACKEND - AadiBI CUSTOMER CHURN INTELLIGENCE SYSTEM
@@ -317,8 +323,9 @@ def analyze_customers(source_df):
         "firebase_active": is_firebase_active,
     }
 
-    # Sync summary metrics to Firebase Cloud Firestore
+    # Sync summary metrics to Firebase Cloud Firestore & MySQL Database
     sync_analytics_to_firestore(summary)
+    log_batch_analytics_to_db(summary)
 
     return result_df, summary
 
@@ -487,17 +494,21 @@ def predict():
 
         drivers, recommendation = customer_guidance(new_customer.iloc[0], churn_prob)
 
-        # Sync single prediction result to Cloud Firestore
-        sync_prediction_to_firestore({
+        pred_dict = {
             "state": state,
             "account_length": account_length,
+            "customer_service_calls": customer_service_calls,
+            "total_day_minutes": total_day_minutes,
             "prediction": result_text,
             "churn_probability": churn_prob,
             "stay_probability": stay_prob,
             "risk_level": "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
             "drivers": drivers,
             "recommendation": recommendation,
-        })
+        }
+        # Sync single prediction result to Cloud Firestore & MySQL Database
+        sync_prediction_to_firestore(pred_dict)
+        log_prediction_to_db(pred_dict)
 
         return render_template(
             "predict.html",
@@ -529,7 +540,8 @@ def bulk():
 @login_required
 def about():
     """AI System Architecture and Model Intelligence view."""
-    return render_template("about.html")
+    history = get_retrain_history_from_db()
+    return render_template("about.html", history=history)
 
 
 @app.route("/download_results")
@@ -620,17 +632,21 @@ def api_predict():
         stay_prob = round(probabilities[stay_index] * 100, 2)
         drivers, recommendation = customer_guidance(new_customer.iloc[0], churn_prob)
 
-        # Sync prediction record to Cloud Firestore
-        sync_prediction_to_firestore({
+        pred_dict = {
             "state": state,
             "account_length": account_length,
+            "customer_service_calls": customer_service_calls,
+            "total_day_minutes": total_day_minutes,
             "prediction": "CUSTOMER WILL CHURN" if prediction == 1 else "CUSTOMER WILL STAY",
             "churn_probability": churn_prob,
             "stay_probability": stay_prob,
             "risk_level": "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
             "drivers": drivers,
             "recommendation": recommendation,
-        })
+        }
+        # Sync prediction record to Cloud Firestore & MySQL Database
+        sync_prediction_to_firestore(pred_dict)
+        log_prediction_to_db(pred_dict)
 
         return jsonify({
             "success": True,
@@ -709,6 +725,52 @@ def api_sample_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=sample_customer_churn_dataset.csv"}
     )
+
+
+@app.route("/api/retrain", methods=["POST"])
+@login_required
+@admin_required
+def api_retrain():
+    """Trigger Scikit-Learn ML pipeline retraining and log metrics to database."""
+    global model, model_features
+    try:
+        dataset_name = "customer_churn.csv"
+        if "dataset" in request.files and request.files["dataset"].filename != "":
+            file = request.files["dataset"]
+            filename = file.filename.lower()
+            dataset_name = file.filename
+            if filename.endswith(".csv"):
+                retrain_df = pd.read_csv(file)
+            elif filename.endswith(".xlsx") or filename.endswith(".xls"):
+                retrain_df = pd.read_excel(file)
+            else:
+                return jsonify({"success": False, "error": "Unsupported file format. Upload .csv or .xlsx"}), 400
+        elif os.path.exists(RAW_DATA_PATH):
+            retrain_df = pd.read_csv(RAW_DATA_PATH)
+        else:
+            return jsonify({"success": False, "error": "Base dataset not found for retraining."}), 400
+
+        metrics = retrain_model_pipeline(retrain_df, dataset_name=dataset_name)
+
+        # Reload updated model binary into Flask app state
+        model = joblib.load(MODEL_PATH)
+        df_cleaned = pd.read_csv(CLEANED_DATA_PATH)
+        X = df_cleaned.drop("Churn", axis=1, errors="ignore")
+        model_features = X.columns.tolist()
+
+        history = get_retrain_history_from_db()
+        return jsonify({"success": True, "metrics": metrics, "history": history})
+    except Exception as e:
+        print(f"[ERROR] Retrain API error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/retrain_history", methods=["GET"])
+@login_required
+def api_retrain_history():
+    """Returns past model retrain evaluation events logged in MySQL/SQLite database."""
+    history = get_retrain_history_from_db()
+    return jsonify({"success": True, "history": history})
 
 
 if __name__ == "__main__":

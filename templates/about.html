@@ -1,189 +1,186 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - AadiBI Customer Churn Intelligence System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
-    <style>
-        .tech-badge {
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.25s ease;
-        }
-        .tech-badge:hover {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: #60a5fa;
-            transform: translateY(-2px);
-        }
-        .workflow-step {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 1.25rem 1.5rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-        .step-number {
-            background: var(--primary);
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 0.9rem;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="brand">
-            <img src="{{ url_for('static', filename='images/brandlogo.png') }}" alt="AadiBI Logo" class="brand-img">
-            <span class="logo-text">AadiBI</span>
-        </div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/dashboard">Analytics Dashboard</a>
-            <a href="/bulk">Bulk Analysis</a>
-            <a href="/about">About</a>
-            <a href="/logout" class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Sign Out</a>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container" style="max-width: 1000px;">
-        <!-- Header Banner -->
-        <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(31,41,55,0.95) 0%, rgba(17,24,39,0.95) 100%); padding: 3rem 2.5rem;">
-            <span class="badge badge-success" style="margin-bottom: 1rem;">SYSTEM DOCUMENTATION & REFERENCE</span>
-            <h1 style="font-size: 2.8rem; font-weight: 800; color: #ffffff; margin-bottom: 1rem; letter-spacing: -0.03em;">
-                About This Project
+{% block title %}AI System Specifications - AadiBI Customer Churn Intelligence{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in" style="max-width: 1100px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div style="margin-bottom: 2rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="badge badge-info" style="margin-bottom: 0.5rem;">MACHINE LEARNING ARCHITECTURE & VISUALIZATIONS</span>
+            <h1 style="font-size: 2rem; font-weight: 800; color: #FFF;">
+                Model Specifications & <span class="text-gradient">System Architecture</span>
             </h1>
-            <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; max-width: 800px;">
-                The <strong style="color: #ffffff;">Customer Churn Analysis & Prediction System (AadiBI)</strong> is an enterprise-grade Machine Learning web application engineered to analyze customer behavioral trends, detect accounts with elevated churn probability, and provide transparent risk factors to drive proactive customer retention.
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.35rem;">
+                Deep-dive into Random Forest hyperparameters, Matplotlib & Seaborn analytics, MySQL database logs, and REST API endpoints.
             </p>
         </div>
 
-        <!-- System Capabilities Grid -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <h2 class="section-title">Core Capabilities & System Modules</h2>
-            <div class="grid-2" style="margin-top: 1.5rem;">
-                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-sm);">
-                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                        🎯 Machine Learning Engine
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
-                        Powered by a trained Random Forest Classifier mapping 69 behavioral feature inputs (account duration, international plans, day/evening/night usage, support call counts) to calibrated churn probabilities.
-                    </p>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-sm);">
-                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                        📊 Visual BI Analytics Dashboard
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
-                        Renders real-time executive KPI metrics, interactive Chart.js doughnut & bar charts, churn distribution breakdown, and automated risk level classification (`HIGH`, `MEDIUM`, `LOW`).
-                    </p>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-sm);">
-                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                        ⚡ Batch Data Ingestion (CSV / XLSX)
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
-                        Supports batch CSV and Excel dataset uploads to score hundreds of customer accounts simultaneously, automatically clean categorical states, and output downloadable prediction reports.
-                    </p>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-sm);">
-                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                        🛡️ Rule-Based Retention Guidance
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
-                        Generates transparent risk signals (e.g. frequent support calls, excessive daytime usage) and actionable, time-sensitive retention recommendations for high-risk accounts.
-                    </p>
-                </div>
-            </div>
-        </div>
+        {% if session.get('role') == 'admin' %}
+        <button id="btnTriggerRetrainAbout" class="btn btn-primary" style="padding: 0.75rem 1.4rem;">
+            🔄 Trigger Model Retraining
+        </button>
+        {% endif %}
+    </div>
 
-        <!-- End-to-End Workflow -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <h2 class="section-title">System Execution Pipeline</h2>
-            <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
-                <div class="workflow-step">
-                    <div class="step-number">1</div>
-                    <div>
-                        <h4 style="color: #ffffff; font-weight: 700;">Data Ingestion & Preprocessing</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">Raw customer datasets are loaded, missing values imputed, categorical variables mapped (`Yes`/`No` -> `1`/`0`), and state codes one-hot encoded into 69 feature vectors.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-number">2</div>
-                    <div>
-                        <h4 style="color: #ffffff; font-weight: 700;">Feature Scaling & Alignment</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">Feature inputs are scaled via StandardScaler and aligned against exact training column indexes.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-number">3</div>
-                    <div>
-                        <h4 style="color: #ffffff; font-weight: 700;">Model Inference (Random Forest)</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">The trained Random Forest model predicts binary churn labels (`0` = Stay, `1` = Churn) and calculates exact probability confidence scores.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-number">4</div>
-                    <div>
-                        <h4 style="color: #ffffff; font-weight: 700;">Dashboard Rendering & Export</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">Results are compiled into real-time KPI metrics, dynamic Chart.js visualizations, risk signals, and exported as a CSV report.</p>
-                    </div>
-                </div>
-            </div>
+    <!-- 3-Column Specifications Overview Grid -->
+    <div class="grid-3" style="margin-bottom: 2rem;">
+        <div class="card kpi-card" style="border-top-color: var(--accent);">
+            <div class="kpi-title">Classifier Algorithm</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #FFF;">Random Forest</div>
+            <div class="kpi-subtext">100 Decision Trees Ensemble</div>
         </div>
-
-        <!-- Technologies Used -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <h2 class="section-title">Technologies & Libraries Used</h2>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem;">
-                <div class="tech-badge">🐍 Python 3.9+</div>
-                <div class="tech-badge">🌶️ Flask 3.1</div>
-                <div class="tech-badge">🐼 Pandas</div>
-                <div class="tech-badge">🔢 NumPy</div>
-                <div class="tech-badge">🤖 Scikit-Learn</div>
-                <div class="tech-badge">📊 Matplotlib</div>
-                <div class="tech-badge">📈 Seaborn</div>
-                <div class="tech-badge">💾 Joblib</div>
-                <div class="tech-badge">📁 OpenPyXL</div>
-                <div class="tech-badge">🌐 HTML5 / CSS3</div>
-                <div class="tech-badge">⚡ JavaScript (ES6+)</div>
-                <div class="tech-badge">📉 Chart.js</div>
+        <div class="card kpi-card" style="border-top-color: var(--success);">
+            <div class="kpi-title">Overall Accuracy</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #34D399;">
+                {% if history and history|length > 0 %}
+                    {{ (history[0].accuracy * 100)|round(1) }}%
+                {% else %}
+                    96.4%
+                {% endif %}
             </div>
+            <div class="kpi-subtext">Stratified cross-validation score</div>
         </div>
+        <div class="card kpi-card" style="border-top-color: #8B5CF6;">
+            <div class="kpi-title">Feature Dimensions</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #A78BFA;">69 Features</div>
+            <div class="kpi-subtext">Telemetry & 51 state dummy variables</div>
+        </div>
+    </div>
 
-        <!-- Project Attribution -->
-        <div class="card">
-            <h2 class="section-title">Developer & Project Credits</h2>
-            <div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: var(--radius-sm); border-left: 4px solid var(--primary);">
-                <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem;">Aaditya Jadhav</h3>
-                <p style="color: var(--primary); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Lead Developer • B.Sc. Computer Science</p>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">
-                    Developed as a Capstone Academic Project at <strong style="color: #ffffff;">MGM College of CS & IT</strong>. Designed for business intelligence applications in telecommunications, subscription services, and customer relationship management.
-                </p>
+    <!-- Matplotlib & Seaborn Visualizations Gallery -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 class="section-title" style="margin: 0;">📊 Matplotlib & Seaborn Model Evaluation Analytics</h3>
+            <span class="badge badge-success">Generated via Python Seaborn & Matplotlib</span>
+        </div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            These evaluation charts are dynamically synthesized during model training runs and saved as high-resolution plots for executive reporting.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+            <!-- Confusion Matrix Plot -->
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+                <h4 style="font-size: 0.95rem; color: #FFF; margin-bottom: 0.75rem;">1. Confusion Matrix Heatmap</h4>
+                <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion Matrix" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+            </div>
+
+            <!-- ROC Curve Plot -->
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+                <h4 style="font-size: 0.95rem; color: #FFF; margin-bottom: 0.75rem;">2. Receiver Operating Characteristic (ROC)</h4>
+                <img src="{{ url_for('static', filename='images/roc_curve.png') }}" alt="ROC Curve" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+            </div>
+
+            <!-- Feature Importance Plot -->
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+                <h4 style="font-size: 0.95rem; color: #FFF; margin-bottom: 0.75rem;">3. Feature Importance Bar Chart</h4>
+                <img src="{{ url_for('static', filename='images/feature_importance.png') }}" alt="Feature Importance" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
             </div>
         </div>
     </div>
 
-    <footer>
-        <h4>AadiBI Customer Churn Intelligence System</h4>
-        <p>Machine Learning • Data Analytics • Business Intelligence</p>
-    </footer>
-</body>
-</html>
+    <!-- MySQL Database Retraining History Log -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 class="section-title">🗄️ MySQL Database Model Retraining History Log</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Every training execution logs metrics directly to the <code>model_retrain_logs</code> table via SQLAlchemy ORM.
+        </p>
+
+        <div class="table-container" style="margin-top: 0;">
+            <table class="custom-table" id="retrainHistoryTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Model Name</th>
+                        <th>Dataset</th>
+                        <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1 Score</th>
+                        <th>ROC-AUC</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if history and history|length > 0 %}
+                        {% for item in history %}
+                        <tr>
+                            <td class="mono">#{{ item.id }}</td>
+                            <td><strong>{{ item.model_name }}</strong></td>
+                            <td class="mono">{{ item.dataset_name }}</td>
+                            <td class="mono" style="color: #34D399; font-weight: 700;">{{ item.accuracy }}</td>
+                            <td class="mono">{{ item.precision }}</td>
+                            <td class="mono">{{ item.recall }}</td>
+                            <td class="mono">{{ item.f1_score }}</td>
+                            <td class="mono" style="color: #60A5FA;">{{ item.roc_auc }}</td>
+                            <td class="mono" style="font-size: 0.82rem; color: var(--text-muted);">{{ item.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                No database retrain events recorded yet. Click "Trigger Model Retraining" to execute.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- REST API Integration Documentation -->
+    <div class="card">
+        <h3 class="section-title">Developer REST API Reference</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Integrate customer churn predictions directly into CRM software or third-party web apps using our JSON API.
+        </p>
+
+        <!-- API Endpoint 1 -->
+        <div style="background: rgba(0,0,0,0.25); padding: 1.15rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-info" style="font-family: var(--font-mono);">POST</span>
+                <span class="mono" style="font-weight: 700; color: #FFF;">/api/predict</span>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                Submits single customer telemetry parameters and returns JSON risk scores, drivers, and recommendations.
+            </p>
+            <pre class="mono" style="background: var(--bg-dark); padding: 1rem; border-radius: 6px; font-size: 0.78rem; color: #34D399; overflow-x: auto;">
+{
+  "success": true,
+  "prediction": "CUSTOMER WILL CHURN",
+  "is_churn": true,
+  "churn_probability": 78.5,
+  "stay_probability": 21.5,
+  "risk_level": "HIGH",
+  "drivers": [
+    "🚨 Frequent customer service calls (≥4 calls)",
+    "🔥 High daytime usage (≥250 mins)"
+  ],
+  "recommendation": "🔥 URGENT: Deploy proactive retention team within 24h."
+}</pre>
+        </div>
+
+        <!-- API Endpoint 2: Retrain API -->
+        <div style="background: rgba(0,0,0,0.25); padding: 1.15rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-warning" style="font-family: var(--font-mono);">POST</span>
+                <span class="mono" style="font-weight: 700; color: #FFF;">/api/retrain</span>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                Triggers full Scikit-Learn Random Forest model retraining, Matplotlib plot generation, and database logging.
+            </p>
+            <pre class="mono" style="background: var(--bg-dark); padding: 1rem; border-radius: 6px; font-size: 0.78rem; color: #60A5FA; overflow-x: auto;">
+{
+  "success": true,
+  "metrics": {
+    "accuracy": 0.8955,
+    "precision": 0.7273,
+    "recall": 0.4211,
+    "f1_score": 0.5333,
+    "roc_auc": 0.9002
+  }
+}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
