@@ -23,12 +23,12 @@
 
         <!-- Firebase Configuration Missing Alert Banner -->
         <div id="firebaseAuthNotice" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: #FBBF24;">
-            <strong>⚠️ Enable Google Provider in Firebase:</strong>
+            <strong>⚠️ Enable Google Provider in Firebase Console:</strong>
             <p style="margin-top: 0.35rem; color: #FDE68A;">
-                Google Sign-In is not yet enabled for project <strong>customer-churn-dc52d</strong>.
+                Google Sign-In is not yet enabled for project <strong>customer-churn-analysis-c3be6</strong>.
             </p>
             <ol style="margin: 0.5rem 0 0 1.1rem; color: #E5E7EB;">
-                <li>Go to <a href="https://console.firebase.google.com/project/customer-churn-dc52d/authentication/providers" target="_blank" style="color: #60A5FA; text-decoration: underline;">Firebase Console Authentication</a></li>
+                <li>Go to <a href="https://console.firebase.google.com/project/customer-churn-analysis-c3be6/authentication/providers" target="_blank" style="color: #60A5FA; text-decoration: underline;">Firebase Console Authentication</a></li>
                 <li>Click <strong>Google</strong> &rarr; Toggle <strong>Enable</strong> &rarr; Click <strong>Save</strong></li>
             </ol>
         </div>
@@ -80,26 +80,77 @@
 <!-- Firebase Web App v10 Modular SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-  // User's Firebase Web Configuration
+  // Active User Firebase Web Configuration
   const firebaseConfig = {
-    apiKey: "AIzaSyAdkr7srCNkBDOHQUixdlxXs9Gn4-QTHj8",
-    authDomain: "customer-churn-dc52d.firebaseapp.com",
-    projectId: "customer-churn-dc52d",
-    storageBucket: "customer-churn-dc52d.firebasestorage.app",
-    messagingSenderId: "509344180917",
-    appId: "1:509344180917:web:c6ba127aadfbeae9d3acfc",
-    measurementId: "G-56SLESMKBD"
+    apiKey: "AIzaSyBoc5JX-FLOBiHDpH1g6A5Pr2o5s2asz8c",
+    authDomain: "customer-churn-analysis-c3be6.firebaseapp.com",
+    projectId: "customer-churn-analysis-c3be6",
+    storageBucket: "customer-churn-analysis-c3be6.firebasestorage.app",
+    messagingSenderId: "351385399138",
+    appId: "1:351385399138:web:506a3cbafbd2798db7c63b",
+    measurementId: "G-X459FWNH1H"
   };
 
   // Initialize Firebase & Auth
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
 
   const googleBtn = document.getElementById('btnGoogleSignIn');
   const authNotice = document.getElementById('firebaseAuthNotice');
+
+  // Handle redirect login result on page return
+  getRedirectResult(auth).then(async (result) => {
+    if (result && result.user) {
+      await handleAuthUser(result.user);
+    }
+  }).catch((err) => {
+    console.warn("Redirect sign-in check notice:", err.message);
+  });
+
+  async function handleAuthUser(user) {
+    if (googleBtn) {
+      googleBtn.disabled = true;
+      googleBtn.innerHTML = '⌛ Authorizing session...';
+    }
+
+    try {
+      const response = await fetch('/api/auth/google_login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: user.uid,
+          displayName: user.displayName || user.email.split('@')[0],
+          email: user.email,
+          photoURL: user.photoURL
+        })
+      });
+
+      const resData = await response.json();
+      if (resData.success) {
+        window.location.href = resData.redirect || '/dashboard';
+      } else {
+        alert('Google Authentication session error: ' + (resData.error || 'Failed to authorize'));
+        resetButton();
+      }
+    } catch (e) {
+      alert('Backend session connection error: ' + e.message);
+      resetButton();
+    }
+  }
+
+  function resetButton() {
+    if (googleBtn) {
+      googleBtn.disabled = false;
+      googleBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        Continue with Google
+      `;
+    }
+  }
 
   if (googleBtn) {
     googleBtn.addEventListener('click', async () => {
@@ -108,44 +159,26 @@
         googleBtn.innerHTML = '⌛ Connecting to Google...';
 
         const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        // Post Google User Profile to Backend Authentication Session
-        const response = await fetch('/api/auth/google_login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            uid: user.uid,
-            displayName: user.displayName || user.email.split('@')[0],
-            email: user.email,
-            photoURL: user.photoURL
-          })
-        });
-
-        const resData = await response.json();
-        if (resData.success) {
-          window.location.href = '/dashboard';
-        } else {
-          alert('Google Authentication session error: ' + (resData.error || 'Failed to authorize'));
+        if (result && result.user) {
+          await handleAuthUser(result.user);
         }
       } catch (error) {
-        console.error('Google Sign-In Error Code:', error.code, error.message);
+        console.error('Google Sign-In Error:', error.code, error.message);
         
-        if (error.code === 'auth/configuration-not-found' || error.message.includes('auth/configuration-not-found')) {
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+          console.warn("Popup blocked. Trying redirect mode...");
+          await signInWithRedirect(auth, provider);
+          return;
+        } else if (error.code === 'auth/configuration-not-found' || error.message.includes('configuration-not-found')) {
           if (authNotice) authNotice.style.display = 'block';
         } else if (error.code === 'auth/popup-closed-by-user') {
-          // User cancelled sign in window
+          // User closed sign in window
+        } else if (error.code === 'auth/unauthorized-domain') {
+          alert('Firebase Auth Domain Notice: Please ensure 127.0.0.1 or localhost is added to Authorized Domains in Firebase Console.');
         } else {
-          alert('Google Sign-In Error: ' + error.message);
+          alert('Google Sign-In Notice: ' + error.message);
         }
-      } finally {
-        if (googleBtn) {
-          googleBtn.disabled = false;
-          googleBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-            Continue with Google
-          `;
-        }
+        resetButton();
       }
     });
   }

@@ -34,7 +34,7 @@ app.get('/health', (req, res) => {
     system: 'AadiBI Customer Churn Intelligence System',
     runtime: 'Node.js v' + process.version,
     firebaseConnected: isFirebaseInitialized(),
-    projectId: 'customer-churn-dc52d',
+    projectId: 'customer-churn-analysis-c3be6',
     timestamp: new Date().toISOString()
   });
 });
@@ -127,7 +127,7 @@ app.get('*', (req, res) => {
           <div class="badge badge-success" style="margin-bottom: 1rem;">FIREBASE GOOGLE AUTH & CLOUD FIRESTORE ACTIVE</div>
           <h2 class="text-gradient" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Node.js Express Server Online</h2>
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-            Node.js API Gateway (v${process.version}) is active with Firebase Web Auth Project <strong>customer-churn-dc52d</strong>.
+            Node.js API Gateway (v${process.version}) is active with Firebase Web Auth Project <strong>customer-churn-analysis-c3be6</strong>.
           </p>
           <div style="display: flex; gap: 0.75rem; justify-content: center;">
             <a href="http://127.0.0.1:5000" class="btn btn-primary">🚀 Launch Flask UI Dashboard</a>
@@ -145,6 +145,6 @@ app.listen(PORT, () => {
   console.log('\n======================================================');
   console.log(`🟢 AadiBI Node.js Express API Server Running!`);
   console.log(`   Node.js Server URL: http://localhost:${PORT}`);
-  console.log(`   Firebase Web App:   customer-churn-dc52d`);
+  console.log(`   Firebase Web App:   customer-churn-analysis-c3be6`);
   console.log('======================================================\n');
 });
