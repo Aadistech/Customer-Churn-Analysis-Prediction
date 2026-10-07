@@ -55,7 +55,7 @@
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <div class="system-status">
                     <div class="status-dot"></div>
-                    <span>Firebase Auth 🔥 (customer-churn-dc52d)</span>
+                    <span>Firebase Auth & Cloud Firestore 🔥 (customer-churn-dc52d)</span>
                 </div>
                 {% if session.get('username') %}
                 <div style="display: flex; align-items: center; gap: 0.75rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
@@ -131,6 +131,7 @@
     </script>
 
     <!-- Application JavaScript -->
+    <script type="module" src="{{ url_for('static', filename='js/firebase-client.js') }}?v=1.0"></script>
     <script src="{{ url_for('static', filename='js/chart-config.js') }}?v=1.0"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}?v=1.0"></script>
     {% block scripts %}{% endblock %}

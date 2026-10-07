@@ -71,6 +71,85 @@
             <div class="kpi-title">High Risk Accounts</div>
             <div class="kpi-value" style="color: #A78BFA;">{{ high_risk_customers }}</div>
             <div class="kpi-subtext">Probability &ge; 70% threshold</div>
+    </div>
+
+    <!-- Cloud Firestore Real-Time Stream & Explorer Card -->
+    <div class="card" style="margin-bottom: 2rem; border-top: 4px solid #F59E0B;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+                <span class="badge badge-warning" style="margin-bottom: 0.35rem;">FIREBASE CLOUD FIRESTORE INTEGRATION</span>
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: #FFF;">
+                    🔥 Live Cloud Firestore Collections Explorer
+                </h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    Real-time data synchronization feed directly from Google Cloud Firestore collections (<code>churn_predictions</code> & <code>churn_analytics</code>).
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span class="badge badge-success" id="firestoreLiveStatusBadge">🟢 Firestore Active</span>
+                <button id="btnRefreshFirestore" class="btn btn-outline btn-sm">🔄 Sync Now</button>
+            </div>
+        </div>
+
+        <!-- Firestore Real-Time Live Feed Table -->
+        <div class="table-container" style="margin-top: 0;">
+            <table class="custom-table" id="firestorePredictionsTable">
+                <thead>
+                    <tr>
+                        <th>Doc ID</th>
+                        <th>State</th>
+                        <th>Tenure</th>
+                        <th>Prediction</th>
+                        <th>Churn Prob</th>
+                        <th>Risk Level</th>
+                        <th>Risk Signals</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="firestorePredictionsTbody">
+                    {% if firestore_predictions and firestore_predictions|length > 0 %}
+                        {% for doc in firestore_predictions %}
+                        <tr>
+                            <td class="mono" style="font-size: 0.78rem; color: #FBBF24;">{{ doc.id[:10] }}...</td>
+                            <td class="mono">{{ doc.state or 'N/A' }}</td>
+                            <td>{{ doc.account_length or doc.accountLength or 0 }} mo</td>
+                            <td>
+                                {% if doc.prediction == 'CUSTOMER WILL CHURN' or doc.prediction == 'CHURN' %}
+                                <span class="badge badge-danger">CHURN</span>
+                                {% else %}
+                                <span class="badge badge-success">STAY</span>
+                                {% endif %}
+                            </td>
+                            <td class="mono" style="font-weight: 700;">{{ doc.churn_probability or doc.churnProbability or 0 }}%</td>
+                            <td>
+                                {% if doc.risk_level == 'HIGH' or doc.risk == 'HIGH' %}
+                                <span class="badge risk-high">HIGH</span>
+                                {% elif doc.risk_level == 'MEDIUM' or doc.risk == 'MEDIUM' %}
+                                <span class="badge risk-medium">MEDIUM</span>
+                                {% else %}
+                                <span class="badge risk-low">LOW</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.82rem; color: #E5E7EB; max-width: 250px;">
+                                {% if doc.drivers is list %}
+                                    {{ doc.drivers|join('; ') }}
+                                {% else %}
+                                    {{ doc.drivers or 'Normal profile' }}
+                                {% endif %}
+                            </td>
+                            <td class="mono" style="font-size: 0.78rem; color: var(--text-muted);">{{ doc.created_at or 'Synced' }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;" id="firestoreEmptyRow">
+                                ⌛ Waiting for live Cloud Firestore predictions... Submit a prediction in Single Predictor to populate Firestore.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -340,6 +419,68 @@ document.addEventListener('DOMContentLoaded', () => {
     if (featureData && featureData.length > 0) {
         window.AadiCharts.initFeatureImportanceChart('featureImportanceChart', featureData);
     }
+
+    // Setup Real-Time Cloud Firestore Sync Listener
+    const btnRefresh = document.getElementById('btnRefreshFirestore');
+    const tbody = document.getElementById('firestorePredictionsTbody');
+
+    async function loadFirestoreDocs() {
+        try {
+            const res = await fetch('/api/firestore/predictions');
+            const data = await res.json();
+            if (data.success && data.predictions && data.predictions.length > 0) {
+                renderFirestoreRows(data.predictions);
+            }
+        } catch(e) {
+            console.warn('Firestore fetch notice:', e);
+        }
+    }
+
+    function renderFirestoreRows(predictions) {
+        if (!tbody) return;
+        tbody.innerHTML = predictions.map(doc => `
+            <tr>
+                <td class="mono" style="font-size: 0.78rem; color: #FBBF24;">${(doc.id || '').substring(0, 10)}...</td>
+                <td class="mono">${doc.state || 'N/A'}</td>
+                <td>${doc.account_length || doc.accountLength || 0} mo</td>
+                <td>
+                    ${(doc.prediction === 'CUSTOMER WILL CHURN' || doc.prediction === 'CHURN')
+                        ? '<span class="badge badge-danger">CHURN</span>'
+                        : '<span class="badge badge-success">STAY</span>'}
+                </td>
+                <td class="mono" style="font-weight: 700;">${doc.churn_probability || doc.churnProbability || 0}%</td>
+                <td>
+                    ${(doc.risk_level === 'HIGH' || doc.risk === 'HIGH')
+                        ? '<span class="badge risk-high">HIGH</span>'
+                        : (doc.risk_level === 'MEDIUM' || doc.risk === 'MEDIUM')
+                            ? '<span class="badge risk-medium">MEDIUM</span>'
+                            : '<span class="badge risk-low">LOW</span>'}
+                </td>
+                <td style="font-size: 0.82rem; color: #E5E7EB; max-width: 250px;">
+                    ${Array.isArray(doc.drivers) ? doc.drivers.join('; ') : (doc.drivers || 'Normal profile')}
+                </td>
+                <td class="mono" style="font-size: 0.78rem; color: var(--text-muted);">${doc.created_at || 'Synced'}</td>
+            </tr>
+        `).join('');
+    }
+
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', () => {
+            loadFirestoreDocs();
+            if (window.AadiFirebase && typeof window.AadiFirebase.listenToPredictions === 'function') {
+                window.AadiFirebase.listenToPredictions(renderFirestoreRows);
+            }
+        });
+    }
+
+    // Initialize Firestore modular listener if active
+    setTimeout(() => {
+        if (window.AadiFirebase && typeof window.AadiFirebase.listenToPredictions === 'function') {
+            window.AadiFirebase.listenToPredictions(renderFirestoreRows);
+        } else {
+            loadFirestoreDocs();
+        }
+    }, 500);
 });
 </script>
 {% endblock %}
