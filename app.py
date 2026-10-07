@@ -3,16 +3,6 @@ import pandas as pd
 import joblib
 import os
 from functools import wraps
-import firebase_admin
-from firebase_admin import credentials, firestore
-
-app = Flask(__name__) # (Your existing Flask setup)
-
-# --- ADD FIREBASE INITIALIZATION HERE ---
-cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
 # ============================================================
 # MODULE 8 + MODULE 9: FLASK BACKEND
 # CUSTOMER CHURN ANALYSIS & PREDICTION SYSTEM
@@ -74,26 +64,7 @@ def logout():
 
 print("\n===== FLASK APPLICATION STARTED =====")
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    if request.method == 'POST':
-        # ... (Your existing code getting form data and running the model) ...
-        # final_prediction_result = model.predict(...) 
 
-        # --- ADD FIREBASE SAVING CODE HERE ---
-        prediction_data = {
-            'state': request.form.get('state', 'Unknown'),
-            'account_length': int(request.form.get('account_length', 0)),
-            'total_day_charge': float(request.form.get('total_day_charge', 0.0)),
-            'customer_service_calls': int(request.form.get('customer_service_calls', 0)),
-            'predicted_churn': final_prediction_result, 
-            'timestamp': datetime.utcnow()
-        }
-        
-        db.collection('customer_predictions').add(prediction_data)
-        # -------------------------------------
-
-        return render_template('result.html', prediction=final_prediction_result)
 
 # ============================================================
 # LOAD TRAINED MODEL & PREPARATION
