@@ -15,6 +15,14 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
+    <!-- Early Theme Initialization (Anti-Flicker) -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('aadi_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -52,18 +60,24 @@
                 </a>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <!-- Dark / Light Theme Toggle Button -->
+                <button id="themeToggleBtn" class="btn btn-outline btn-sm" style="display: flex; align-items: center; gap: 0.35rem; font-weight: 600;" title="Toggle Light / Dark Theme">
+                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleText">Dark</span>
+                </button>
+
                 <div class="system-status">
                     <div class="status-dot"></div>
                     <span>Firebase Auth & Cloud Firestore 🔥 (customer-churn-analysis-c3be6)</span>
                 </div>
                 {% if session.get('username') %}
-                <div style="display: flex; align-items: center; gap: 0.75rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; border-left: 1px solid var(--border-color); padding-left: 0.85rem;">
                     {% if session.get('user_photo') %}
                     <img src="{{ session.get('user_photo') }}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent);">
                     {% endif %}
                     <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        👤 <strong style="color: #FFF;">{{ session.get('username') }}</strong>
+                        👤 <strong style="color: var(--text-main);">{{ session.get('username') }}</strong>
                     </span>
                     <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Sign Out</a>
                 </div>

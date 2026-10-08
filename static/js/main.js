@@ -5,6 +5,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 AadiBI Churn Intelligence Advanced Frontend Initialized.');
 
+  // Initialize Dark / Light Theme Toggle
+  initThemeToggle();
+
   // Initialize Animated KPI Counters
   initAnimatedCounters();
 
@@ -26,6 +29,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Model Retrain Action Handler
   initModelRetrainHandler();
 });
+
+/* ============================================================
+   DARK & LIGHT THEME TOGGLE SYSTEM
+   ============================================================ */
+function initThemeToggle() {
+  const toggleBtn = document.getElementById('themeToggleBtn');
+  const toggleIcon = document.getElementById('themeToggleIcon');
+  const toggleText = document.getElementById('themeToggleText');
+
+  const currentTheme = localStorage.getItem('aadi_theme') || 'dark';
+  applyTheme(currentTheme);
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+      showToast(`Switched to ${newTheme.toUpperCase()} mode!`, 'info');
+    });
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('aadi_theme', theme);
+
+    if (toggleIcon && toggleText) {
+      if (theme === 'light') {
+        toggleIcon.textContent = '☀️';
+        toggleText.textContent = 'Light';
+      } else {
+        toggleIcon.textContent = '🌙';
+        toggleText.textContent = 'Dark';
+      }
+    }
+  }
+}
 
 /* ============================================================
    ANIMATED KPI STAT COUNTERS
