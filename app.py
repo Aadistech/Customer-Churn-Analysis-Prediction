@@ -149,6 +149,77 @@ def customer_guidance(customer, churn_probability):
     return drivers[:3], action
 
 
+def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=15):
+    """Generate personalized AI retention campaign copy and voucher code based on risk signals."""
+    has_svc_calls = any("service" in str(d).lower() for d in drivers)
+    has_high_day = any("daytime" in str(d).lower() or "day" in str(d).lower() for d in drivers)
+    has_intl_issue = any("intl" in str(d).lower() or "international" in str(d).lower() for d in drivers)
+
+    timestamp_str = datetime.now().strftime("%Y%m")
+
+    if has_svc_calls:
+        voucher_code = f"PRIORITY-VIP-{timestamp_str}"
+        title = "VIP Priority Care Pass & Personal Escalation Manager"
+        details = "Priority support call routing with zero wait time + dedicated executive case manager."
+        discount_offer = f"{discount_percent}% Loyalty Discount on monthly bill for 3 cycles"
+        campaign_copy = (
+            f"Subject: Priority Account Care Notice & {discount_percent}% Bill Credit\n\n"
+            f"Dear Subscriber,\n\n"
+            f"We noticed you recently contacted customer support. Your satisfaction is our absolute priority. "
+            f"We have upgraded your account to VIP Priority Support (Voucher: {voucher_code}). "
+            f"You will receive direct access to senior support specialists and a {discount_percent}% credit on your upcoming bills.\n\n"
+            f"Redeem Voucher Code: {voucher_code}\n"
+            f"AadiBI Customer Care Management"
+        )
+    elif has_high_day:
+        voucher_code = f"DAYTIME-SAVER-{discount_percent}"
+        title = "Executive High-Volume Usage Discount Package"
+        details = f"Apply {discount_percent}% rate credit on peak daytime usage charges + free voicemail add-on."
+        discount_offer = f"{discount_percent}% Daytime Minute Bill Credit"
+        campaign_copy = (
+            f"Subject: Special Daytime Saver Offer: Save {discount_percent}% on Your Account\n\n"
+            f"Dear Subscriber,\n\n"
+            f"As one of our power daytime callers, we want to make sure you get the best value possible. "
+            f"Use voucher code {voucher_code} to activate an instant {discount_percent}% credit on all daytime minutes.\n\n"
+            f"Redeem Voucher Code: {voucher_code}\n"
+            f"AadiBI Subscriber Success Team"
+        )
+    elif has_intl_issue:
+        voucher_code = f"GLOBAL-FREEDOM-{timestamp_str}"
+        title = "Global Freedom International Calling Voucher"
+        details = "Complimentary international roaming & 150 international call minutes per month."
+        discount_offer = "Free International Pack Upgrade for 6 Months"
+        campaign_copy = (
+            f"Subject: Complimentary International Freedom Pack Unlocked!\n\n"
+            f"Dear Subscriber,\n\n"
+            f"Enjoy seamless international calling with zero overage worries. We have added the Global Freedom Pack "
+            f"to your account free of charge for 6 months.\n\n"
+            f"Voucher Code: {voucher_code}\n"
+            f"AadiBI Global Connect Team"
+        )
+    else:
+        voucher_code = f"LOYALTY-HERO-{discount_percent}"
+        title = "Subscriber Loyalty Appreciation Credit"
+        details = f"General account loyalty bonus: {discount_percent}% statement credit."
+        discount_offer = f"{discount_percent}% Account Credit Voucher"
+        campaign_copy = (
+            f"Subject: Thank You for Your Loyalty - Enjoy a {discount_percent}% Bill Credit!\n\n"
+            f"Dear Subscriber,\n\n"
+            f"Thank you for being part of our network. As a gesture of our appreciation, please accept a "
+            f"{discount_percent}% credit voucher applied to your next monthly statement.\n\n"
+            f"Redeem Code: {voucher_code}\n"
+            f"AadiBI Customer Operations"
+        )
+
+    return {
+        "voucher_code": voucher_code,
+        "title": title,
+        "details": details,
+        "discount_offer": discount_offer,
+        "campaign_copy": campaign_copy
+    }
+
+
 def analyze_customers(source_df):
     """Score a customer dataframe and compute executive analytics."""
     if source_df.empty:
@@ -751,6 +822,102 @@ def api_sample_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=sample_customer_churn_dataset.csv"}
     )
+
+
+@app.route("/api/simulate", methods=["POST"])
+@login_required
+def api_simulate():
+    """What-If Retention Simulator & AI Campaign Generator API Endpoint."""
+    try:
+        payload = request.get_json() or request.form
+        state = str(payload.get("state", "KS")).strip().upper()
+        account_length = int(payload.get("account_length", 100))
+        area_code = int(payload.get("area_code", 415))
+        intl_plan = str(payload.get("international_plan", "no")).strip().lower()
+        vmail_plan = str(payload.get("voice_mail_plan", "no")).strip().lower()
+        number_vmail_messages = int(payload.get("number_vmail_messages", 0))
+
+        total_day_minutes = float(payload.get("total_day_minutes", 180.0))
+        total_day_calls = int(payload.get("total_day_calls", 100))
+
+        # Apply discount percent if provided in simulation (e.g. 0, 10, 15, 20%)
+        discount_percent = float(payload.get("discount_percent", 0))
+        raw_day_charge = float(payload.get("total_day_charge", round(total_day_minutes * 0.17, 2)))
+        total_day_charge = round(raw_day_charge * (1.0 - (discount_percent / 100.0)), 2)
+
+        total_eve_minutes = float(payload.get("total_eve_minutes", 200.0))
+        total_eve_calls = int(payload.get("total_eve_calls", 100))
+        total_eve_charge = float(payload.get("total_eve_charge", round(total_eve_minutes * 0.085, 2)))
+
+        total_night_minutes = float(payload.get("total_night_minutes", 200.0))
+        total_night_calls = int(payload.get("total_night_calls", 100))
+        total_night_charge = float(payload.get("total_night_charge", round(total_night_minutes * 0.045, 2)))
+
+        total_intl_minutes = float(payload.get("total_intl_minutes", 10.0))
+        total_intl_calls = int(payload.get("total_intl_calls", 3))
+        total_intl_charge = float(payload.get("total_intl_charge", round(total_intl_minutes * 0.27, 2)))
+
+        customer_service_calls = int(payload.get("customer_service_calls", 1))
+        original_prob = float(payload.get("original_probability", 0))
+
+        sim_customer = pd.DataFrame({
+            "Account length": [account_length],
+            "Area code": [area_code],
+            "International plan": [1 if intl_plan in {"yes", "1", "true"} else 0],
+            "Voice mail plan": [1 if vmail_plan in {"yes", "1", "true"} else 0],
+            "Number vmail messages": [number_vmail_messages],
+            "Total day minutes": [total_day_minutes],
+            "Total day calls": [total_day_calls],
+            "Total day charge": [total_day_charge],
+            "Total eve minutes": [total_eve_minutes],
+            "Total eve calls": [total_eve_calls],
+            "Total eve charge": [total_eve_charge],
+            "Total night minutes": [total_night_minutes],
+            "Total night calls": [total_night_calls],
+            "Total night charge": [total_night_charge],
+            "Total intl minutes": [total_intl_minutes],
+            "Total intl calls": [total_intl_calls],
+            "Total intl charge": [total_intl_charge],
+            "Customer service calls": [customer_service_calls]
+        })
+
+        state_columns = [col for col in model_features if col.startswith("State_")]
+        for col in state_columns:
+            state_name = col.replace("State_", "")
+            sim_customer[col] = 1 if state == state_name else 0
+
+        sim_customer = sim_customer.reindex(columns=model_features, fill_value=0)
+
+        prediction = model.predict(sim_customer)[0]
+        probabilities = model.predict_proba(sim_customer)[0]
+        churn_index = list(model.classes_).index(1)
+        stay_index = list(model.classes_).index(0)
+
+        sim_churn_prob = round(probabilities[churn_index] * 100, 2)
+        sim_stay_prob = round(probabilities[stay_index] * 100, 2)
+        drivers, recommendation = customer_guidance(sim_customer.iloc[0], sim_churn_prob)
+
+        # Calculate risk delta
+        delta_prob = round(sim_churn_prob - original_prob, 2)
+
+        # AI Retention Campaign Playbook Copy Generator
+        campaign = generate_ai_campaign_playbook(drivers, sim_churn_prob, int(discount_percent or 15))
+
+        return jsonify({
+            "success": True,
+            "prediction": "CUSTOMER WILL CHURN" if prediction == 1 else "CUSTOMER WILL STAY",
+            "is_churn": bool(prediction == 1),
+            "churn_probability": sim_churn_prob,
+            "stay_probability": sim_stay_prob,
+            "risk_level": "HIGH" if sim_churn_prob >= 70 else ("MEDIUM" if sim_churn_prob >= 40 else "LOW"),
+            "original_probability": original_prob,
+            "delta_probability": delta_prob,
+            "drivers": drivers,
+            "recommendation": recommendation,
+            "campaign": campaign
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
 
 
 if __name__ == "__main__":

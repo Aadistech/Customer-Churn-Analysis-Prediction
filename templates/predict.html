@@ -70,13 +70,33 @@
                     {% endif %}
                 </div>
 
-                <div style="background: rgba(255,255,255,0.03); padding: 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); border-left: 4px solid var(--primary);">
+                <div style="background: rgba(255,255,255,0.03); padding: 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); border-left: 4px solid var(--primary); margin-bottom: 1rem;">
                     <div style="font-size: 0.82rem; text-transform: uppercase; color: #60A5FA; font-weight: 700; margin-bottom: 0.35rem;">
                         Recommended Actionable Retention Strategy
                     </div>
                     <p id="resRecommendationBox" style="font-size: 0.92rem; color: #FFF; line-height: 1.5; font-weight: 500;">
                         {{ recommendation|default('Ready to compute retention playbook.') }}
                     </p>
+                </div>
+
+                <!-- AI Retention Campaign Voucher Banner -->
+                <div style="background: rgba(16, 185, 129, 0.08); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid rgba(52, 211, 153, 0.3); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: #34D399; font-weight: 700; margin-bottom: 0.2rem;">
+                            🎁 AI Personalized Campaign Voucher
+                        </div>
+                        <span id="predictVoucherCode" class="mono" style="background: #065F46; color: #34D399; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">
+                            PRIORITY-VIP-CARE
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="btnCopyPredictVoucher" type="button" class="btn btn-outline btn-sm" style="border-color: #34D399; color: #34D399;">
+                            📋 Copy Code
+                        </button>
+                        <button id="btnDownloadPredictBrief" type="button" class="btn btn-primary btn-sm">
+                            📄 Download Brief
+                        </button>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 1.5rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">

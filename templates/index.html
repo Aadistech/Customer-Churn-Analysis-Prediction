@@ -371,26 +371,78 @@
                 </div>
             </div>
 
-            <!-- What-If Churn Mitigation Simulator -->
+            <!-- What-If Churn Mitigation Simulator & AI Campaign Generator -->
             <div style="background: rgba(79, 70, 229, 0.1); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid rgba(129, 140, 248, 0.3);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                    <h4 style="font-size: 0.9rem; color: #818CF8; font-weight: 700;">🧪 What-If Mitigation Simulator</h4>
-                    <span id="drawerSimProbBadge" class="badge badge-warning">Simulating...</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h4 style="font-size: 0.95rem; color: #818CF8; font-weight: 700;">🧪 What-If Retention Simulator Lab</h4>
+                    <span id="drawerSimProbBadge" class="badge badge-success">0% Risk Delta</span>
                 </div>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Adjust support calls to see instant ML risk score changes:
+                    Adjust support calls, daytime usage, and retention discounts to observe real-time ML risk score changes:
                 </p>
 
-                <div class="range-slider-container">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #FFF;">
-                        <span>Customer Service Calls:</span>
+                <!-- Slider 1: Customer Service Calls -->
+                <div class="range-slider-container" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #FFF; margin-bottom: 0.25rem;">
+                        <span>Support Calls:</span>
                         <strong id="drawerSliderValSvcCalls" style="color: #60A5FA;">1</strong>
                     </div>
                     <input type="range" id="drawerSliderSvcCalls" min="0" max="8" value="1">
                 </div>
+
+                <!-- Slider 2: Total Day Minutes -->
+                <div class="range-slider-container" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #FFF; margin-bottom: 0.25rem;">
+                        <span>Daytime Minutes:</span>
+                        <strong id="drawerSliderValDayMins" style="color: #FBBF24;">180m</strong>
+                    </div>
+                    <input type="range" id="drawerSliderDayMins" min="0" max="400" value="180">
+                </div>
+
+                <!-- Select: Retention Offer Discount -->
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #FFF; margin-bottom: 0.35rem;">
+                        <span>Retention Plan Discount Offer:</span>
+                        <strong id="drawerValDiscount" style="color: #34D399;">15% Off</strong>
+                    </div>
+                    <select id="drawerSelectDiscount" class="form-control" style="background: rgba(0,0,0,0.4); font-size: 0.85rem; color: #FFF;">
+                        <option value="0">0% (Standard Rates)</option>
+                        <option value="10">10% Off Plan Credit</option>
+                        <option value="15" selected>15% Off Plan Credit (Recommended)</option>
+                        <option value="20">20% Off Executive Retention Credit</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Action Plan -->
+            <!-- AI Retention Campaign Playbook Voucher Box -->
+            <div style="background: rgba(16, 185, 129, 0.08); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid rgba(52, 211, 153, 0.3);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h4 style="font-size: 0.92rem; color: #34D399; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                        <span>🎁</span> AI Personalized Retention Voucher
+                    </h4>
+                    <span id="drawerVoucherCodeBadge" class="mono" style="background: #065F46; color: #34D399; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.82rem;">
+                        LOYALTY-HERO-15
+                    </span>
+                </div>
+
+                <div id="drawerCampaignTitle" style="font-size: 0.9rem; font-weight: 700; color: #FFF; margin-bottom: 0.35rem;">
+                    Subscriber Loyalty Appreciation Credit
+                </div>
+                <div id="drawerCampaignDetails" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.85rem; line-height: 1.4;">
+                    Apply a 15% statement credit to preserve account relationship.
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button id="btnCopyVoucher" class="btn btn-outline btn-sm" style="border-color: #34D399; color: #34D399;">
+                        📋 Copy Voucher Code
+                    </button>
+                    <button id="btnDownloadBrief" class="btn btn-primary btn-sm">
+                        📄 Download Campaign Brief (.txt)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Plan & Risk Signals -->
             <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; text-transform: uppercase;">
                     Identified Signals

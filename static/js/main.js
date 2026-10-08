@@ -308,9 +308,14 @@ function initDrawerSystem() {
   }
 }
 
+let activeCustomerDrawerData = null;
+let currentCampaignData = null;
+
 function openCustomerDrawer(customer) {
   const backdrop = document.getElementById('drawerBackdrop');
   if (!backdrop) return;
+
+  activeCustomerDrawerData = customer;
 
   // Set Drawer Text
   document.getElementById('drawerCustId').textContent = `#${customer.id}`;
@@ -331,44 +336,117 @@ function openCustomerDrawer(customer) {
     serviceCalls: customer.serviceCalls
   });
 
-  // Setup What-If Mitigation Simulator Sliders inside Drawer
+  // Setup What-If Retention Simulator Sliders inside Drawer
   const sliderCalls = document.getElementById('drawerSliderSvcCalls');
-  const sliderValueCalls = document.getElementById('drawerSliderValSvcCalls');
-  const simProbBadge = document.getElementById('drawerSimProbBadge');
+  const labelCalls = document.getElementById('drawerSliderValSvcCalls');
 
-  if (sliderCalls && sliderValueCalls) {
+  const sliderDayMins = document.getElementById('drawerSliderDayMins');
+  const labelDayMins = document.getElementById('drawerSliderValDayMins');
+
+  const selectDiscount = document.getElementById('drawerSelectDiscount');
+  const labelDiscount = document.getElementById('drawerValDiscount');
+
+  if (sliderCalls) {
     sliderCalls.value = customer.serviceCalls;
-    sliderValueCalls.textContent = customer.serviceCalls;
+    if (labelCalls) labelCalls.textContent = customer.serviceCalls;
+  }
 
-    sliderCalls.oninput = async () => {
-      const newCalls = parseInt(sliderCalls.value);
-      sliderValueCalls.textContent = newCalls;
+  if (sliderDayMins) {
+    sliderDayMins.value = Math.min(400, Math.round(customer.dayMinutes || 180));
+    if (labelDayMins) labelDayMins.textContent = `${sliderDayMins.value}m`;
+  }
 
-      // Run live simulation prediction
-      try {
-        const res = await fetch('/api/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            state: customer.state,
-            account_length: customer.accountLength,
-            area_code: 415,
-            international_plan: customer.intlPlan,
-            customer_service_calls: newCalls,
-            total_day_minutes: customer.dayMinutes
-          })
-        });
+  if (selectDiscount) {
+    selectDiscount.value = "15";
+    if (labelDiscount) labelDiscount.textContent = "15% Off";
+  }
 
-        const data = await res.json();
-        if (data.success && simProbBadge) {
-          simProbBadge.textContent = `${data.churn_probability}% Risk (${data.risk_level})`;
-          simProbBadge.className = data.is_churn ? 'badge badge-danger' : 'badge badge-success';
+  const runDrawerSimulation = async () => {
+    const svcCalls = sliderCalls ? parseInt(sliderCalls.value) : customer.serviceCalls;
+    const dayMins = sliderDayMins ? parseFloat(sliderDayMins.value) : customer.dayMinutes;
+    const discount = selectDiscount ? parseFloat(selectDiscount.value) : 15;
+
+    if (labelCalls) labelCalls.textContent = svcCalls;
+    if (labelDayMins) labelDayMins.textContent = `${Math.round(dayMins)}m`;
+    if (labelDiscount) labelDiscount.textContent = `${discount}% Off`;
+
+    try {
+      const res = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: customer.state,
+          account_length: customer.accountLength,
+          area_code: 415,
+          international_plan: customer.intlPlan,
+          customer_service_calls: svcCalls,
+          total_day_minutes: dayMins,
+          discount_percent: discount,
+          original_probability: customer.churnProbability
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const simBadge = document.getElementById('drawerSimProbBadge');
+        if (simBadge) {
+          const delta = data.delta_probability;
+          if (delta <= 0) {
+            simBadge.textContent = `⬇️ ${Math.abs(delta).toFixed(1)}% Risk Reduced`;
+            simBadge.className = 'badge badge-success';
+          } else {
+            simBadge.textContent = `⬆️ +${delta.toFixed(1)}% Risk Increase`;
+            simBadge.className = 'badge badge-danger';
+          }
         }
-      } catch (e) {
-        console.error('Simulation error:', e);
+
+        // Update probability display
+        const drawerProb = document.getElementById('drawerProb');
+        const drawerRisk = document.getElementById('drawerRisk');
+        if (drawerProb) drawerProb.textContent = `${data.churn_probability}%`;
+        if (drawerRisk) drawerRisk.textContent = data.risk_level;
+
+        // Update AI Campaign Voucher Box
+        if (data.campaign) {
+          currentCampaignData = data.campaign;
+          const codeBadge = document.getElementById('drawerVoucherCodeBadge');
+          const titleEl = document.getElementById('drawerCampaignTitle');
+          const detailsEl = document.getElementById('drawerCampaignDetails');
+
+          if (codeBadge) codeBadge.textContent = data.campaign.voucher_code;
+          if (titleEl) titleEl.textContent = data.campaign.title;
+          if (detailsEl) detailsEl.textContent = `${data.campaign.details} (${data.campaign.discount_offer})`;
+        }
       }
+    } catch (e) {
+      console.error('Drawer simulation error:', e);
+    }
+  };
+
+  if (sliderCalls) sliderCalls.oninput = runDrawerSimulation;
+  if (sliderDayMins) sliderDayMins.oninput = runDrawerSimulation;
+  if (selectDiscount) selectDiscount.onchange = runDrawerSimulation;
+
+  // Voucher Copy & Download Brief Action Event Listeners
+  const btnCopy = document.getElementById('btnCopyVoucher');
+  const btnDownload = document.getElementById('btnDownloadBrief');
+
+  if (btnCopy) {
+    btnCopy.onclick = () => {
+      const code = currentCampaignData ? currentCampaignData.voucher_code : 'LOYALTY-HERO-15';
+      navigator.clipboard.writeText(code);
+      showToast(`Voucher Code "${code}" copied to clipboard!`, 'success');
     };
   }
+
+  if (btnDownload) {
+    btnDownload.onclick = () => {
+      downloadCampaignBrief(customer, currentCampaignData);
+    };
+  }
+
+  // Initial simulation run
+  runDrawerSimulation();
 
   backdrop.classList.add('active');
 }
@@ -376,6 +454,47 @@ function openCustomerDrawer(customer) {
 function closeCustomerDrawer() {
   const backdrop = document.getElementById('drawerBackdrop');
   if (backdrop) backdrop.classList.remove('active');
+}
+
+function downloadCampaignBrief(customer, campaign) {
+  const code = campaign ? campaign.voucher_code : 'LOYALTY-HERO-15';
+  const title = campaign ? campaign.title : 'Customer Retention Brief';
+  const copyText = campaign ? campaign.campaign_copy : 'Standard retention voucher.';
+
+  const briefContent = `
+============================================================
+AadiBI CUSTOMER RETENTION CAMPAIGN BRIEF
+============================================================
+Generated: ${new Date().toLocaleString()}
+Target Customer ID: #${customer.id} (State: ${customer.state})
+Tenure: ${customer.accountLength} months
+Base Churn Risk: ${customer.churnProbability}% (${customer.risk})
+
+RETAINMENT PACKAGE OVERVIEW
+------------------------------------------------------------
+Campaign Package: ${title}
+Voucher Code: ${code}
+Actionable Strategy: ${customer.action}
+
+AUTOMATED MARKETING & RETENTION COPY
+------------------------------------------------------------
+${copyText}
+
+============================================================
+AadiBI Intelligence System - Confidential Retention Document
+============================================================
+  `.trim();
+
+  const blob = new Blob([briefContent], { type: 'text/plain;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `AadiBI_Retention_Brief_Cust_${customer.id}_${code}.txt`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast(`Downloaded Retention Campaign Brief for Customer #${customer.id}!`, 'success');
 }
 
 /* ============================================================
@@ -570,6 +689,30 @@ function renderPredictionResult(res) {
 
   if (recommendationBox) {
     recommendationBox.textContent = res.recommendation;
+  }
+
+  // Update AI Campaign Voucher Code
+  const predictVoucherCode = document.getElementById('predictVoucherCode');
+  const btnCopyPredictVoucher = document.getElementById('btnCopyPredictVoucher');
+  const btnDownloadPredictBrief = document.getElementById('btnDownloadPredictBrief');
+
+  const code = (res.risk_level === 'HIGH') ? 'PRIORITY-VIP-CARE' : ((res.risk_level === 'MEDIUM') ? 'DAYTIME-SAVER-15' : 'LOYALTY-HERO-10');
+  if (predictVoucherCode) predictVoucherCode.textContent = code;
+
+  if (btnCopyPredictVoucher) {
+    btnCopyPredictVoucher.onclick = () => {
+      navigator.clipboard.writeText(code);
+      showToast(`Voucher code "${code}" copied to clipboard!`, 'success');
+    };
+  }
+
+  if (btnDownloadPredictBrief) {
+    btnDownloadPredictBrief.onclick = () => {
+      downloadCampaignBrief(
+        { id: 'PREDICT-ACC', state: 'US', accountLength: 12, churnProbability: res.churn_probability, risk: res.risk_level, action: res.recommendation },
+        { voucher_code: code, title: 'Single Account Retention Brief', campaign_copy: `Voucher Code: ${code}\nRecommended Action: ${res.recommendation}` }
+      );
+    };
   }
 }
 
