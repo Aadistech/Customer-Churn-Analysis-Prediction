@@ -677,22 +677,51 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: #4B5563;
 }
 
-/* Print Styles */
+/* Executive Print & PDF Export Styles */
 @media print {
   body {
     background: #FFFFFF !important;
-    color: #000000 !important;
+    color: #111827 !important;
+    background-image: none !important;
   }
-  .navbar, .footer, .table-controls, .btn, .pagination-container {
+  .navbar, .footer, .table-controls, .btn, .pagination-container, #drawerBackdrop, .no-print {
     display: none !important;
+  }
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   .card {
     background: #FFFFFF !important;
-    border: 1px solid #CCC !important;
+    border: 1px solid #E5E7EB !important;
     box-shadow: none !important;
-    color: #000000 !important;
+    color: #111827 !important;
+    page-break-inside: avoid;
+    margin-bottom: 1.5rem !important;
   }
-  h1, h2, h3, h4 { color: #000000 !important; }
+  .kpi-title {
+    color: #4B5563 !important;
+  }
+  .kpi-value {
+    color: #111827 !important;
+  }
+  .section-title {
+    color: #111827 !important;
+  }
+  .section-title::before {
+    background: #3B82F6 !important;
+  }
+  p, span, h1, h2, h3, h4, th, td {
+    color: #111827 !important;
+  }
+  table, th, td {
+    border-color: #E5E7EB !important;
+  }
+  th {
+    background-color: #F3F4F6 !important;
+    color: #374151 !important;
+  }
 }
 
 /* Animations */

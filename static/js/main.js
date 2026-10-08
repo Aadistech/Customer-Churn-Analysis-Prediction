@@ -5,6 +5,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 AadiBI Churn Intelligence Advanced Frontend Initialized.');
 
+  // Initialize Animated KPI Counters
+  initAnimatedCounters();
+
   // Initialize Data Table System (Search, Filtering, Sorting, Pagination, Drawer)
   initAdvancedTableSystem();
 
@@ -23,6 +26,95 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Model Retrain Action Handler
   initModelRetrainHandler();
 });
+
+/* ============================================================
+   ANIMATED KPI STAT COUNTERS
+   ============================================================ */
+function initAnimatedCounters() {
+  const kpiValues = document.querySelectorAll('.kpi-value');
+  kpiValues.forEach(el => {
+    const rawText = el.textContent.trim();
+    if (!rawText) return;
+
+    if (rawText.startsWith('$')) {
+      const num = parseFloat(rawText.replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return;
+      animateNumber(el, num, (val) => '$' + Math.round(val).toLocaleString());
+    } else if (rawText.endsWith('%')) {
+      const num = parseFloat(rawText.replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return;
+      animateNumber(el, num, (val) => val.toFixed(1) + '%');
+    } else {
+      const num = parseInt(rawText.replace(/[^0-9]/g, ''));
+      if (isNaN(num)) return;
+      animateNumber(el, num, (val) => Math.round(val).toLocaleString());
+    }
+  });
+
+  function animateNumber(element, targetNum, formatFn) {
+    const duration = 1000;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const current = targetNum * easeOut;
+
+      element.textContent = formatFn(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+}
+
+/* ============================================================
+   EXECUTIVE EXPORT STUDIO (PDF & FILTERED CSV EXPORT)
+   ============================================================ */
+window.exportExecutivePDF = function() {
+  showToast('Preparing Executive PDF Summary Report...', 'info');
+  setTimeout(() => {
+    window.print();
+  }, 300);
+};
+
+window.exportFilteredCSV = function() {
+  const filteredData = window.activeFilteredData || [];
+  if (filteredData.length === 0) {
+    showToast('No customer records available to export.', 'warning');
+    return;
+  }
+
+  const headers = ["ID", "State", "Tenure (months)", "Intl Plan", "Service Calls", "Total Day Mins", "Churn Probability (%)", "Risk Level", "Risk Signals", "Recommended Action"];
+  const rows = filteredData.map(item => [
+    item.id,
+    `"${item.state}"`,
+    item.accountLength,
+    `"${item.intlPlan}"`,
+    item.serviceCalls,
+    item.dayMinutes,
+    item.churnProbability,
+    `"${item.risk}"`,
+    `"${(item.signals || '').replace(/"/g, '""')}"`,
+    `"${(item.action || '').replace(/"/g, '""')}"`
+  ]);
+
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `AadiBI_Filtered_Customer_Churn_Report_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast(`Successfully exported ${filteredData.length} filtered customer records to CSV!`, 'success');
+};
 
 /* ============================================================
    ADVANCED DATA TABLE SYSTEM (SEARCH, FILTER, SORT, PAGINATION)
@@ -80,9 +172,14 @@ function initAdvancedTableSystem() {
       else if (currentFilter === 'LOW') matchesFilter = (item.risk === 'LOW');
       else if (currentFilter === 'CHURN') matchesFilter = (item.prediction === 'CHURN');
       else if (currentFilter === 'STAY') matchesFilter = (item.prediction === 'STAY');
+      else if (currentFilter === 'SVC_CALLS') matchesFilter = (item.serviceCalls >= 3);
+      else if (currentFilter === 'HIGH_DAY') matchesFilter = (item.dayMinutes >= 200);
 
       return matchesSearch && matchesFilter;
     });
+
+    // Save active filtered data for export
+    window.activeFilteredData = filtered;
 
     // 2. Sort rows
     filtered.sort((a, b) => {
@@ -109,11 +206,22 @@ function initAdvancedTableSystem() {
 
     // Render tbody
     tbody.innerHTML = '';
-    paginatedItems.forEach(item => {
-      tbody.appendChild(item.element);
-      // Re-attach drawer click listener
-      item.element.onclick = () => openCustomerDrawer(item);
-    });
+    if (paginatedItems.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            🔍 <strong>No matching customer accounts found</strong>${currentSearch ? ` matching "${currentSearch}"` : ''}.<br>
+            <span style="font-size: 0.82rem; opacity: 0.8; margin-top: 0.35rem; display: block;">Try clearing your search query or selecting a different filter pill.</span>
+          </td>
+        </tr>
+      `;
+    } else {
+      paginatedItems.forEach(item => {
+        tbody.appendChild(item.element);
+        // Re-attach drawer click listener
+        item.element.onclick = () => openCustomerDrawer(item);
+      });
+    }
 
     // Update Counter & Pagination Controls
     if (recordsCounter) {

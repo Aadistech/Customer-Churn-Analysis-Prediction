@@ -228,8 +228,14 @@
 
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                 <input type="text" id="tableSearchInput" class="form-control search-input" placeholder="🔍 Search state, risk, driver...">
+                <button onclick="window.exportFilteredCSV()" class="btn btn-outline btn-sm">
+                    📥 Export Filtered (.csv)
+                </button>
+                <button onclick="window.exportExecutivePDF()" class="btn btn-primary btn-sm">
+                    📄 Executive PDF
+                </button>
                 <a href="{{ url_for('download_results') }}" class="btn btn-outline btn-sm">
-                    📥 Download CSV
+                    💾 Full CSV
                 </a>
             </div>
         </div>
@@ -243,6 +249,8 @@
                 <button class="filter-pill" data-filter="LOW">✅ Low Risk (&lt;40%)</button>
                 <button class="filter-pill" data-filter="CHURN">Will Churn</button>
                 <button class="filter-pill" data-filter="STAY">Will Stay</button>
+                <button class="filter-pill" data-filter="SVC_CALLS">🚨 Svc Calls &ge; 3</button>
+                <button class="filter-pill" data-filter="HIGH_DAY">📈 High Day &ge; 200m</button>
             </div>
         </div>
 
