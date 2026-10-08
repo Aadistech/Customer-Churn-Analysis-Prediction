@@ -36,10 +36,10 @@ function initAnimatedCounters() {
     const rawText = el.textContent.trim();
     if (!rawText) return;
 
-    if (rawText.startsWith('$')) {
+    if (rawText.startsWith('$') || rawText.startsWith('₹')) {
       const num = parseFloat(rawText.replace(/[^0-9.]/g, ''));
       if (isNaN(num)) return;
-      animateNumber(el, num, (val) => '$' + Math.round(val).toLocaleString());
+      animateNumber(el, num, (val) => '₹' + Math.round(val).toLocaleString('en-IN'));
     } else if (rawText.endsWith('%')) {
       const num = parseFloat(rawText.replace(/[^0-9.]/g, ''));
       if (isNaN(num)) return;

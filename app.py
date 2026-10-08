@@ -281,8 +281,8 @@ def analyze_customers(source_df):
     churn_rate = round((churned_customers / total_customers) * 100, 2)
     high_risk_rate = round((high_risk_customers / total_customers) * 100, 2)
 
-    # Estimate ARR / Monthly Revenue at Risk ($65 per churned account)
-    est_rev_at_risk = churned_customers * 65
+    # Estimate ARR / Monthly Revenue at Risk (₹5,400 per churned account)
+    est_rev_at_risk = churned_customers * 5400
 
     table_data = []
     for idx, (_, row) in enumerate(result_df.iterrows()):
