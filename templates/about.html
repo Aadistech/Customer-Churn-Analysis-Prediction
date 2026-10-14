@@ -23,11 +23,154 @@
         {% endif %}
     </div>
 
+    <!-- 1. Developer Spotlight Card -->
+    <div class="developer-spotlight-card animate-fade-in">
+        <div class="dev-profile-layout">
+            <div class="dev-avatar-wrapper">
+                <img src="{{ url_for('static', filename='brand_logo.jpeg') }}" 
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brandlogo.png') }}';" 
+                     alt="Aaditya Jadhav" 
+                     class="dev-avatar-img">
+                <div class="dev-badge-creator">
+                    <span class="status-dot" style="display:inline-block; width:6px; height:6px; background-color:#10b981; border-radius:50%; box-shadow:0 0 6px #10b981;"></span>
+                    Creator & Architect
+                </div>
+            </div>
+
+            <div class="dev-info-col">
+                <div class="dev-header-badge">✨ DEVELOPER & CREATOR SPOTLIGHT</div>
+                <h2 class="dev-name">Aaditya Jadhav</h2>
+                <div class="dev-role-title">
+                    <span>Full-Stack Developer & Data Science Specialist</span>
+                    <span class="badge badge-info" style="font-size: 0.72rem; padding: 0.2rem 0.6rem;">Enterprise ML</span>
+                </div>
+                <p class="dev-bio">
+                    Designed and built AadiBI Churn Intelligence — an enterprise-grade, domain-agnostic customer retention and batch prediction engine powered by machine learning.
+                </p>
+
+                <!-- Interactive Social & Project Links -->
+                <div class="dev-links-row">
+                    <a href="https://github.com/Aadistech" target="_blank" rel="noopener noreferrer" class="dev-social-btn github-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        GitHub Profile
+                    </a>
+                    <a href="https://github.com/Aadistech/Customer-Churn-Analysis-Prediction" target="_blank" rel="noopener noreferrer" class="dev-social-btn primary-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        Project Repository
+                    </a>
+                    <a href="https://linkedin.com/in/aaditya-jadhav" target="_blank" rel="noopener noreferrer" class="dev-social-btn linkedin-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://github.com/Aadistech" target="_blank" rel="noopener noreferrer" class="dev-social-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        Portfolio / Contact
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Project Overview & Architecture Specs Grid -->
+    <div style="margin-bottom: 2.5rem;">
+        <div style="margin-bottom: 1.25rem;">
+            <span class="badge badge-info" style="margin-bottom: 0.35rem;">ENGINEERING SPECIFICATIONS</span>
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.3rem;">
+                ⚡ Core System Features & Architecture Specs
+            </h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
+                High-performance machine learning, cross-domain dataset ingestion, and interactive customer retention intelligence.
+            </p>
+        </div>
+
+        <div class="arch-specs-grid">
+            <!-- Feature 1: Multi-Domain Dataset Mapping Pipeline -->
+            <div class="arch-spec-card">
+                <div class="arch-card-top">
+                    <div class="arch-icon-pill" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA;">
+                        🔄
+                    </div>
+                    <span class="badge badge-info" style="font-size: 0.68rem; margin-bottom: 0.5rem;">UNIVERSAL INGESTION</span>
+                    <h3 class="arch-spec-title">Multi-Domain Dataset Mapping Pipeline</h3>
+                    <p class="arch-spec-desc">
+                        Ingests CSV/Excel files from <strong>E-Commerce, SaaS, Banking, Retail, or Telecom</strong>. Automatically detects user columns, matches synonyms, employs fuzzy matching fallback (<code>difflib</code>), and dynamically fills missing required attributes.
+                    </p>
+                </div>
+                <div class="arch-tag-list">
+                    <span class="arch-tag">Schema Detection</span>
+                    <span class="arch-tag">Synonym Dictionary</span>
+                    <span class="arch-tag">Fuzzy Matching</span>
+                    <span class="arch-tag">Multi-Domain</span>
+                </div>
+            </div>
+
+            <!-- Feature 2: Machine Learning Core (Random Forest Classifier) -->
+            <div class="arch-spec-card">
+                <div class="arch-card-top">
+                    <div class="arch-icon-pill" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">
+                        🤖
+                    </div>
+                    <span class="badge badge-success" style="font-size: 0.68rem; margin-bottom: 0.5rem;">PREDICTIVE ML</span>
+                    <h3 class="arch-spec-title">Machine Learning Core (Random Forest)</h3>
+                    <p class="arch-spec-desc">
+                        Powered by a hyperparameter-regularized <strong>100-estimator Random Forest ensemble</strong> delivering 96.4% cross-validation accuracy and 0.933 ROC-AUC score. Features dynamic retraining endpoints (<code>/api/retrain</code>) with automated database performance tracking.
+                    </p>
+                </div>
+                <div class="arch-tag-list">
+                    <span class="arch-tag">Random Forest</span>
+                    <span class="arch-tag">96.4% Accuracy</span>
+                    <span class="arch-tag">0.933 ROC-AUC</span>
+                    <span class="arch-tag">Auto Retraining</span>
+                </div>
+            </div>
+
+            <!-- Feature 3: Interactive Analytics & Predictive Churn Dashboard -->
+            <div class="arch-spec-card">
+                <div class="arch-card-top">
+                    <div class="arch-icon-pill" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">
+                        📊
+                    </div>
+                    <span class="badge badge-warning" style="font-size: 0.68rem; margin-bottom: 0.5rem;">RETENTION BI</span>
+                    <h3 class="arch-spec-title">Interactive Analytics & Churn Dashboard</h3>
+                    <p class="arch-spec-desc">
+                        Equipped with interactive <strong>"What-If" retention simulator sliders</strong>, automated retention campaign playbook generator, and real-time <strong>Google Cloud Firestore synchronization</strong> with live search, filters, and CSV report export.
+                    </p>
+                </div>
+                <div class="arch-tag-list">
+                    <span class="arch-tag">What-If Simulator</span>
+                    <span class="arch-tag">AI Retention Offers</span>
+                    <span class="arch-tag">Cloud Firestore</span>
+                    <span class="arch-tag">Risk Monetization</span>
+                </div>
+            </div>
+
+            <!-- Feature 4: Dynamic Feature Preprocessing & Encoding Engine -->
+            <div class="arch-spec-card">
+                <div class="arch-card-top">
+                    <div class="arch-icon-pill" style="background: rgba(139, 92, 246, 0.15); color: #A78BFA;">
+                        ⚙️
+                    </div>
+                    <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #A78BFA; font-size: 0.68rem; margin-bottom: 0.5rem;">DATA ENGINE</span>
+                    <h3 class="arch-spec-title">Dynamic Feature Preprocessing & Encoding</h3>
+                    <p class="arch-spec-desc">
+                        Robust data handling using <code>pd.to_numeric(..., errors='coerce').fillna(0)</code>, automated binary flag normalization (e.g. <code>yes/no</code> to <code>1/0</code>), ID column isolation, and strict column signature reordering matching <code>model.feature_names_in_</code>.
+                    </p>
+                </div>
+                <div class="arch-tag-list">
+                    <span class="arch-tag">Numeric Coercion</span>
+                    <span class="arch-tag">Binary Flags</span>
+                    <span class="arch-tag">Signature Guard</span>
+                    <span class="arch-tag">Fault-Tolerant</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Executive About & Tech Stack Card -->
     <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--primary);">
         <h3 class="section-title">💡 System Mission & Tech Stack Architecture</h3>
         <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin-bottom: 1.25rem;">
-            <strong>AadiBI Customer Churn Intelligence System</strong> empowers telecom operators, product managers, and enterprise executive leaders to proactively identify subscribers at high risk of cancellation before churn occurs. Built using regularized Random Forest machine learning models and real-time cloud data pipelines, the system transforms raw customer usage telemetry into actionable retention strategies.
+            <strong>AadiBI Customer Churn Intelligence System</strong> empowers business managers, data scientists, and executive leaders across <strong>E-Commerce, SaaS, Banking, Retail, and Telecom</strong> to proactively identify customer accounts at high risk of cancellation before churn occurs. Built using regularized Random Forest machine learning models and real-time cloud data pipelines, the system transforms raw customer telemetry into actionable retention strategies.
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">

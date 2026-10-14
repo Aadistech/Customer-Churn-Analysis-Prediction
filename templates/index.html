@@ -455,6 +455,31 @@
                 <div id="drawerAction" style="font-size: 0.85rem; color: var(--text-main); line-height: 1.5;"></div>
             </div>
             </div>
+    <!-- Developer & Creator Spotlight Banner -->
+    <div class="developer-spotlight-card" style="margin-top: 2rem; padding: 1.5rem 1.75rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <img src="{{ url_for('static', filename='brand_logo.jpeg') }}" 
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brandlogo.png') }}';" 
+                     alt="Aaditya Jadhav" 
+                     style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);">
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Designed & Developed By</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main);">Aaditya Jadhav</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">Full-Stack Developer & Data Science Specialist</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+                <a href="{{ url_for('about') }}" class="btn btn-outline btn-sm">
+                    ℹ️ About & System Specs
+                </a>
+                <a href="https://github.com/Aadistech" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                    🐙 GitHub
+                </a>
+                <a href="https://github.com/Aadistech/Customer-Churn-Analysis-Prediction" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                    ⭐ Project Repo
+                </a>
+            </div>
         </div>
     </div>
 </div>

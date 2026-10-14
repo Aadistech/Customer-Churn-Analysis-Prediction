@@ -1758,5 +1758,330 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border: 1px solid #FDE68A !important;
 }
 
+/* ==========================================================================
+   Developer Spotlight & Architecture Specifications Styles
+   ========================================================================== */
+.developer-spotlight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 2.25rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.developer-spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--primary) 0%, #06B6D4 100%);
+}
+
+.dev-profile-layout {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.dev-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dev-avatar-img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+  background: var(--bg-surface);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.dev-avatar-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.5);
+}
+
+.dev-avatar-fallback {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+}
+
+.dev-badge-creator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.75rem;
+}
+
+.dev-info-col {
+  flex: 1;
+  min-width: 280px;
+}
+
+.dev-header-badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.dev-name {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.15;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.dev-role-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #818CF8;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dev-bio {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  max-width: 820px;
+}
+
+.dev-links-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dev-social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.dev-social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dev-social-btn.primary-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, #6366F1 100%);
+  color: #FFFFFF !important;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.dev-social-btn.primary-btn:hover {
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.5);
+  color: #FFFFFF !important;
+}
+
+.dev-social-btn.github-btn:hover {
+  background: #24292E;
+  color: #FFFFFF !important;
+  border-color: #3F4448;
+}
+
+.dev-social-btn.linkedin-btn:hover {
+  background: #0A66C2;
+  color: #FFFFFF !important;
+  border-color: #0A66C2;
+}
+
+/* Architecture Specs Grid */
+.arch-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.arch-spec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.arch-spec-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-highlight);
+  box-shadow: var(--shadow-glow);
+}
+
+.arch-card-top {
+  margin-bottom: 1rem;
+}
+
+.arch-icon-pill {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 0.85rem;
+}
+
+.arch-spec-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.arch-spec-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+
+.arch-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.arch-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+/* Light Mode Overrides for Developer Spotlight & Architecture Specs */
+[data-theme="light"] .developer-spotlight-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .dev-name {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .dev-role-title {
+  color: #4F46E5 !important;
+}
+
+[data-theme="light"] .dev-bio {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .dev-social-btn {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #1E293B !important;
+}
+
+[data-theme="light"] .dev-social-btn:hover {
+  background: #EEF2FF !important;
+  border-color: #818CF8 !important;
+  color: #4F46E5 !important;
+}
+
+[data-theme="light"] .dev-social-btn.primary-btn {
+  background: #4F46E5 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .dev-social-btn.github-btn:hover {
+  background: #0F172A !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .dev-social-btn.linkedin-btn:hover {
+  background: #0A66C2 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .arch-spec-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .arch-spec-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+  border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] .arch-spec-title {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .arch-spec-desc {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .arch-tag {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #475569 !important;
+}
+
 
 
