@@ -7,7 +7,7 @@
     <!-- Page Header -->
     <div style="margin-bottom: 2rem; text-align: center;">
         <span class="badge badge-info" style="margin-bottom: 0.5rem;">ADMINISTRATOR BATCH SUITE</span>
-        <h1 style="font-size: 2rem; font-weight: 800; color: #FFF;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main);">
             Batch Customer <span class="text-gradient">Dataset Scoring Hub</span>
         </h1>
         <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 600px; margin: 0.5rem auto 0;">
@@ -21,7 +21,7 @@
             
             <div class="dropzone" id="uploadDropzone">
                 <div class="dropzone-icon">📂</div>
-                <h3 style="font-size: 1.2rem; color: #FFF; margin-bottom: 0.5rem;">
+                <h3 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 0.5rem;">
                     Drag & Drop your customer dataset here
                 </h3>
                 <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
@@ -59,7 +59,7 @@
                     Retrain the Random Forest Classifier on the latest dataset, regenerate Seaborn evaluation plots, and log metrics to MySQL.
                 </p>
             </div>
-            <button id="btnTriggerRetrainBulk" class="btn btn-outline" style="border-color: #8B5CF6; color: #C084FC;">
+            <button id="btnTriggerRetrainBulk" class="btn btn-outline btn-retrain">
                 ⚡ Retrain ML Model Now
             </button>
         </div>

@@ -63,6 +63,10 @@ function initThemeToggle() {
         toggleText.textContent = 'Dark';
       }
     }
+
+    if (window.AadiCharts && typeof window.AadiCharts.updateTheme === 'function') {
+      window.AadiCharts.updateTheme();
+    }
   }
 }
 
@@ -720,7 +724,7 @@ function renderPredictionResult(res) {
 
   if (driversContainer) {
     driversContainer.innerHTML = res.drivers.map(driver => `
-      <div style="background: rgba(255,255,255,0.04); padding: 0.5rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.85rem; color: #E5E7EB;">
+      <div class="driver-tag">
         ${driver}
       </div>
     `).join('');

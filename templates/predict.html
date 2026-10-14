@@ -7,7 +7,7 @@
     <!-- Page Header -->
     <div style="margin-bottom: 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h1 style="font-size: 1.8rem; font-weight: 800; color: #FFF; line-height: 1.2;">
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">
                 Individual Account <span class="text-gradient">Risk Scoring Studio</span>
             </h1>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Live Prediction Gauge Result Card (Rendered via AJAX or Form Post) -->
-    <div id="liveResultCard" class="card" style="display: {% if has_result %}block{% else %}none{% endif %}; margin-bottom: 2rem; border-top: 4px solid {% if is_churn %}var(--danger){% else %}var(--success){% endif %}; background: linear-gradient(135deg, rgba(31,41,55,0.95) 0%, rgba(17,24,39,0.95) 100%);">
+    <div id="liveResultCard" class="card result-card-banner" style="display: {% if has_result %}block{% else %}none{% endif %}; margin-bottom: 2rem; border-top: 4px solid {% if is_churn %}var(--danger){% else %}var(--success){% endif %};">
         <div style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center;">
             <!-- Circular Gauge / Dial -->
             <div style="text-align: center;">
@@ -63,7 +63,7 @@
                 <div id="resDriversContainer" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
                     {% if drivers %}
                     {% for driver in drivers %}
-                    <div style="background: rgba(255,255,255,0.04); padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.85rem; color: #E5E7EB;">
+                    <div class="driver-tag">
                         {{ driver }}
                     </div>
                     {% endfor %}
@@ -74,7 +74,7 @@
                     <div style="font-size: 0.82rem; text-transform: uppercase; color: #60A5FA; font-weight: 700; margin-bottom: 0.35rem;">
                         Recommended Actionable Retention Strategy
                     </div>
-                    <p id="resRecommendationBox" style="font-size: 0.92rem; color: #FFF; line-height: 1.5; font-weight: 500;">
+                    <p id="resRecommendationBox" style="font-size: 0.92rem; color: var(--text-main); line-height: 1.5; font-weight: 500;">
                         {{ recommendation|default('Ready to compute retention playbook.') }}
                     </p>
                 </div>
