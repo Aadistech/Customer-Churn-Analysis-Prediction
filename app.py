@@ -17,6 +17,7 @@ from flask import (
     Response,
 )
 import pandas as pd
+import numpy as np
 import joblib
 
 # Import Python Services & Schema Mapper
@@ -836,6 +837,320 @@ def api_upload_preview():
         return jsonify({"success": False, "error": str(e)}), 400
 
 
+# ============================================================
+# CROSS-DOMAIN MAPPED PREDICTION ENGINE (/predict-mapped)
+# ============================================================
+
+def process_mapped_features(source_df: pd.DataFrame, mapping: dict = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Transforms any incoming dataset (E-Commerce, SaaS, Banking, Retail, etc.)
+    into the exact feature layout aligned strictly with model.feature_names_in_.
+
+    1. Categorical Feature Cleaning & Encoding:
+       - Automatically converts text flags ('yes'/'no', 'true'/'false', 1/0) to binary integers (1/0).
+       - Ignores/drops non-feature identifiers (e.g., 'customer_id') and raw 'state' during feature vector construction.
+       - One-hot encodes state columns (State_AK through State_WY).
+    2. Numerical Safe Parsing:
+       - Parses numeric columns ('tenure_months', 'monthly_spend', 'order_count', 'support_tickets')
+         using pd.to_numeric(..., errors='coerce').fillna(0).
+    3. Feature Reordering & Fallbacks:
+       - Strictly aligns DataFrame columns with model.feature_names_in_.
+       - Fills any missing model features with 0 or the training default values.
+    """
+    if source_df.empty:
+        raise ValueError("Input dataset is empty.")
+
+    original_df = source_df.copy()
+    feature_names = list(model.feature_names_in_) if hasattr(model, "feature_names_in_") else model_features
+
+    # Training default values
+    training_defaults = {
+        "Account length": 100,
+        "Area code": 415,
+        "International plan": 0,
+        "Voice mail plan": 0,
+        "Number vmail messages": 0,
+        "Total day minutes": 180.0,
+        "Total day calls": 100,
+        "Total day charge": 30.60,
+        "Total eve minutes": 200.0,
+        "Total eve calls": 100,
+        "Total eve charge": 17.00,
+        "Total night minutes": 200.0,
+        "Total night calls": 100,
+        "Total night charge": 9.00,
+        "Total intl minutes": 10.0,
+        "Total intl calls": 3,
+        "Total intl charge": 2.70,
+        "Customer service calls": 1,
+    }
+
+    # Normalize user mapping (supports both Canonical->User and User->Canonical keys)
+    resolved_mapping = {}
+    if mapping:
+        for k, v in mapping.items():
+            if not v or v in {"__NONE__", "__SKIP__"}:
+                continue
+            if k in schema_mapper.CANONICAL_TARGET_FEATURES and v in source_df.columns:
+                resolved_mapping[k] = v
+            elif k in source_df.columns and v in schema_mapper.CANONICAL_TARGET_FEATURES:
+                resolved_mapping[v] = k
+            elif k in schema_mapper.CANONICAL_TARGET_FEATURES:
+                resolved_mapping[k] = v
+
+    # Automatic fuzzy/synonym matching fallback for any unmapped target features
+    auto_matches = schema_mapper.fuzzy_match_columns(source_df.columns.tolist())["mapped"]
+    for canon_key, user_col in auto_matches.items():
+        if canon_key not in resolved_mapping and user_col in source_df.columns:
+            resolved_mapping[canon_key] = user_col
+
+    # Construct the numeric feature matrix (ignoring non-feature columns like customer_id)
+    feature_df = pd.DataFrame(index=source_df.index)
+
+    # 1. Categorical Cleaning & 2. Numerical Safe Parsing
+    for canon_feature, spec in schema_mapper.CANONICAL_TARGET_FEATURES.items():
+        if canon_feature == "State":
+            continue
+
+        user_col = resolved_mapping.get(canon_feature)
+        default_val = training_defaults.get(canon_feature, spec.get("default", 0))
+
+        if user_col and user_col in source_df.columns:
+            series = source_df[user_col]
+            if spec.get("type") == "boolean":
+                # Categorical text flag cleaning (e.g. vip_member: 'yes'/'no', 'true'/'false', 1/0)
+                cleaned = series.astype(str).str.strip().str.lower()
+                feature_df[canon_feature] = (
+                    cleaned.map({
+                        "yes": 1, "y": 1, "true": 1, "t": 1, "1": 1, "active": 1, "vip": 1, "premium": 1,
+                        "no": 0, "n": 0, "false": 0, "f": 0, "0": 0, "inactive": 0
+                    })
+                    .fillna(pd.to_numeric(series, errors="coerce"))
+                    .fillna(default_val)
+                    .astype(int)
+                )
+            else:
+                # Numerical safe parsing with pd.to_numeric(..., errors='coerce').fillna(0)
+                feature_df[canon_feature] = pd.to_numeric(series, errors="coerce").fillna(default_val)
+        else:
+            feature_df[canon_feature] = default_val
+
+    # Cross-derivation: If monthly spend (Total day charge) is provided but minutes are missing
+    if "Total day charge" in feature_df.columns:
+        day_mins_col = resolved_mapping.get("Total day minutes")
+        if not day_mins_col or day_mins_col not in source_df.columns:
+            derived_mins = (feature_df["Total day charge"] / 0.17).round(1)
+            feature_df["Total day minutes"] = np.where(derived_mins > 0, derived_mins, 180.0)
+
+    # State One-Hot Encoding (ignoring raw 'state' and 'customer_id' from feature vector)
+    state_col = resolved_mapping.get("State")
+    if not state_col:
+        for c in ["state", "State", "region", "Region", "province"]:
+            if c in source_df.columns:
+                state_col = c
+                break
+
+    raw_states = (
+        source_df[state_col].astype(str).str.strip().str.upper()
+        if (state_col and state_col in source_df.columns)
+        else pd.Series(["KS"] * len(source_df), index=source_df.index)
+    )
+
+    state_columns = [col for col in feature_names if col.startswith("State_")]
+    for col in state_columns:
+        state_code = col.replace("State_", "")
+        feature_df[col] = (raw_states == state_code).astype(int)
+
+    # 3. Feature Reordering & Fallbacks:
+    # Strictly align columns with model.feature_names_in_ and fill missing with default values
+    feature_df = feature_df.reindex(columns=feature_names)
+    for col in feature_names:
+        if col not in feature_df.columns or feature_df[col].isna().all():
+            feature_df[col] = training_defaults.get(col, 0)
+        else:
+            feature_df[col] = feature_df[col].fillna(training_defaults.get(col, 0))
+
+    feature_df = feature_df.apply(pd.to_numeric, errors="coerce").fillna(0)
+    feature_df = feature_df[feature_names]
+
+    return feature_df, original_df
+
+
+@app.route("/predict-mapped", methods=["POST"])
+@app.route("/api/predict-mapped", methods=["POST"])
+def predict_mapped():
+    """
+    Direct Prediction Handler for Mapped Datasets (E-Commerce, SaaS, Banking, Retail, etc.).
+    Supports:
+    - Direct JSON list of customer dicts: [{'customer_id': '101', 'tenure_months': 24, ...}]
+    - Wrapped JSON object: {"data": [...], "mapping": {...}}
+    - Temporary uploaded session: {"temp_file_id": "...", "mapping": {...}}
+    - Multipart file upload: CSV or XLSX file
+    """
+    try:
+        mapping = {}
+        source_df = None
+
+        # Case A: File upload
+        if request.files and ("dataset" in request.files or "file" in request.files):
+            file = request.files.get("dataset") or request.files.get("file")
+            filename = file.filename.lower()
+            if filename.endswith(".csv"):
+                try:
+                    source_df = pd.read_csv(file)
+                except UnicodeDecodeError:
+                    file.seek(0)
+                    source_df = pd.read_csv(file, encoding="latin1")
+            elif filename.endswith(".xlsx") or filename.endswith(".xls"):
+                source_df = pd.read_excel(file)
+            else:
+                return jsonify({"success": False, "error": "Unsupported file format. Please upload .csv or .xlsx"}), 400
+
+            raw_mapping = request.form.get("mapping")
+            if raw_mapping:
+                try:
+                    mapping = json.loads(raw_mapping)
+                except Exception:
+                    mapping = {}
+
+        # Case B: JSON payload
+        elif request.is_json or request.get_json(silent=True):
+            payload = request.get_json(silent=True) or {}
+
+            # Sub-case: temp_file_id
+            if isinstance(payload, dict) and "temp_file_id" in payload:
+                temp_file_id = payload["temp_file_id"]
+                mapping = payload.get("mapping", {})
+                found_file = None
+                for fname in os.listdir(UPLOAD_FOLDER):
+                    if fname.startswith(temp_file_id):
+                        found_file = os.path.join(UPLOAD_FOLDER, fname)
+                        break
+                if not found_file or not os.path.exists(found_file):
+                    return jsonify({"success": False, "error": "Uploaded session file not found or expired."}), 404
+
+                ext = os.path.splitext(found_file)[1].lower()
+                if ext == ".csv":
+                    try:
+                        source_df = pd.read_csv(found_file)
+                    except UnicodeDecodeError:
+                        source_df = pd.read_csv(found_file, encoding="latin1")
+                else:
+                    source_df = pd.read_excel(found_file)
+
+            # Sub-case: "data" or "records"
+            elif isinstance(payload, dict) and ("data" in payload or "records" in payload):
+                raw_data = payload.get("data") or payload.get("records")
+                mapping = payload.get("mapping", {})
+                source_df = pd.DataFrame(raw_data)
+
+            # Sub-case: directly a list of records
+            elif isinstance(payload, list):
+                source_df = pd.DataFrame(payload)
+                mapping = {}
+
+            # Sub-case: single record object
+            elif isinstance(payload, dict):
+                mapping = payload.get("mapping", {})
+                record_items = {k: v for k, v in payload.items() if k not in {"mapping", "temp_file_id"}}
+                if record_items:
+                    source_df = pd.DataFrame([record_items])
+                else:
+                    return jsonify({"success": False, "error": "No customer records found in payload."}), 400
+        else:
+            return jsonify({"success": False, "error": "No input data provided. Send JSON records or upload a dataset."}), 400
+
+        if source_df is None or source_df.empty:
+            return jsonify({"success": False, "error": "Input dataset is empty."}), 400
+
+        # Execute feature engineering, cleaning, safe parsing, and strict model alignment
+        feature_df, original_df = process_mapped_features(source_df, mapping=mapping)
+
+        # Generate predictions
+        predictions = model.predict(feature_df)
+        probabilities = model.predict_proba(feature_df)
+        churn_index = list(model.classes_).index(1)
+        stay_index = list(model.classes_).index(0)
+
+        churn_probs = (probabilities[:, churn_index] * 100).round(2)
+        stay_probs = (probabilities[:, stay_index] * 100).round(2)
+
+        # Build guidance and results
+        enriched_df = original_df.copy()
+        enriched_df["Prediction"] = [
+            "CUSTOMER WILL CHURN" if p == 1 else "CUSTOMER WILL STAY" for p in predictions
+        ]
+        enriched_df["Churn Probability (%)"] = churn_probs
+        enriched_df["Stay Probability (%)"] = stay_probs
+        enriched_df["Risk Level"] = pd.cut(
+            churn_probs,
+            bins=[-1, 40, 70, 100],
+            labels=["LOW", "MEDIUM", "HIGH"]
+        ).astype(str)
+
+        guidance_list = [
+            customer_guidance(prep_row, prob)
+            for (_, prep_row), prob in zip(feature_df.iterrows(), churn_probs)
+        ]
+        enriched_df["Risk signals"] = ["; ".join(d) for d, _ in guidance_list]
+        enriched_df["Recommended action"] = [a for _, a in guidance_list]
+
+        # Update bulk results file for live dashboard sync
+        os.makedirs("data", exist_ok=True)
+        enriched_df.to_csv(BULK_RESULTS_PATH, index=False)
+
+        # Build JSON response
+        records_output = []
+        for idx, row in enriched_df.iterrows():
+            rec = row.to_dict()
+            rec = {k: (None if pd.isna(v) else v) for k, v in rec.items()}
+            rec["is_churn"] = bool(predictions[idx] == 1)
+            rec["prediction"] = "CUSTOMER WILL CHURN" if predictions[idx] == 1 else "CUSTOMER WILL STAY"
+            rec["churn_probability"] = float(churn_probs[idx])
+            rec["stay_probability"] = float(stay_probs[idx])
+            rec["risk_level"] = str(enriched_df.loc[idx, "Risk Level"])
+            rec["drivers"] = guidance_list[idx][0]
+            rec["recommendation"] = guidance_list[idx][1]
+            records_output.append(rec)
+
+        total_customers = len(enriched_df)
+        churned_customers = int((predictions == 1).sum())
+        staying_customers = total_customers - churned_customers
+        churn_rate = round((churned_customers / total_customers) * 100, 2) if total_customers else 0.0
+
+        # Sync high-risk to Firestore if active
+        if is_firebase_active:
+            try:
+                first_col = list(original_df.columns)[0]
+                for rec in records_output[:10]:
+                    if rec["risk_level"] == "HIGH":
+                        sync_prediction_to_firestore({
+                            "source": "predict_mapped",
+                            "account_id": str(rec.get(first_col, "CUST")),
+                            "prediction": rec["prediction"],
+                            "churn_probability": rec["churn_probability"],
+                            "risk_level": "HIGH",
+                            "drivers": rec["drivers"],
+                            "recommendation": rec["recommendation"]
+                        })
+            except Exception as fs_err:
+                print(f"[Warning] Firestore sync: {fs_err}")
+
+        return jsonify({
+            "success": True,
+            "total_records": total_customers,
+            "churn_count": churned_customers,
+            "stay_count": staying_customers,
+            "churn_rate": churn_rate,
+            "predictions": records_output,
+            "results": records_output,
+            "feature_names_in": list(feature_df.columns),
+            "firebase_synced": is_firebase_active
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
 @app.route("/api/process_mapped_dataset", methods=["POST"])
 @login_required
 @admin_required
@@ -844,70 +1159,7 @@ def api_process_mapped_dataset():
     Applies custom or auto schema mapping to uploaded dataset,
     runs model predictions, updates executive store, and returns summary.
     """
-    try:
-        payload = request.get_json() or {}
-        temp_file_id = payload.get("temp_file_id")
-        mapping = payload.get("mapping", {})
-
-        if not temp_file_id:
-            return jsonify({"success": False, "error": "Missing temporary file identifier."}), 400
-
-        # Locate file in UPLOAD_FOLDER
-        found_file = None
-        for fname in os.listdir(UPLOAD_FOLDER):
-            if fname.startswith(temp_file_id):
-                found_file = os.path.join(UPLOAD_FOLDER, fname)
-                break
-
-        if not found_file or not os.path.exists(found_file):
-            return jsonify({"success": False, "error": "Uploaded session file expired or not found. Please re-upload."}), 404
-
-        ext = os.path.splitext(found_file)[1].lower()
-        if ext == ".csv":
-            try:
-                source_df = pd.read_csv(found_file)
-            except UnicodeDecodeError:
-                source_df = pd.read_csv(found_file, encoding="latin1")
-        else:
-            source_df = pd.read_excel(found_file)
-
-        result_df, summary = analyze_customers(source_df, mapping=mapping)
-        os.makedirs("data", exist_ok=True)
-        result_df.to_csv(BULK_RESULTS_PATH, index=False)
-
-        # Sync high-risk accounts to Firestore if active
-        if is_firebase_active:
-            try:
-                high_risk = result_df[result_df["Risk Level"] == "HIGH"].head(10)
-                first_col = list(result_df.columns)[0]
-                for _, hr_row in high_risk.iterrows():
-                    sync_prediction_to_firestore({
-                        "source": "bulk_mapped_upload",
-                        "account_id": str(hr_row.get(first_col, "CUST")),
-                        "prediction": hr_row.get("Prediction", "CUSTOMER WILL CHURN"),
-                        "churn_probability": float(hr_row.get("Churn Probability (%)", 0)),
-                        "risk_level": "HIGH",
-                        "drivers": [hr_row.get("Risk signals", "High churn risk")],
-                        "recommendation": hr_row.get("Recommended action", "Immediate retention intervention"),
-                    })
-            except Exception as fs_err:
-                print(f"[Warning] Firestore bulk sync skipped: {fs_err}")
-
-        total_customers = len(result_df)
-        churned_customers = int((result_df["Prediction"] == "CUSTOMER WILL CHURN").sum())
-        churn_rate = round((churned_customers / total_customers) * 100, 2) if total_customers else 0
-
-        return jsonify({
-            "success": True,
-            "summary": summary,
-            "total_records": total_customers,
-            "churn_count": churned_customers,
-            "stay_count": total_customers - churned_customers,
-            "churn_rate": churn_rate,
-            "firebase_synced": is_firebase_active,
-        })
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
+    return predict_mapped()
 
 
 @app.route("/api/bulk_predict", methods=["POST"])
