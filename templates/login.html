@@ -174,7 +174,7 @@
         } else if (error.code === 'auth/popup-closed-by-user') {
           // User closed sign in window
         } else if (error.code === 'auth/unauthorized-domain') {
-          alert('Firebase Auth Domain Notice: Please ensure 127.0.0.1 or localhost is added to Authorized Domains in Firebase Console.');
+          alert('Firebase Auth Domain Notice: Please add "' + window.location.hostname + '" to Authorized domains in Firebase Console (Authentication -> Settings -> Authorized domains).');
         } else {
           alert('Google Sign-In Notice: ' + error.message);
         }
