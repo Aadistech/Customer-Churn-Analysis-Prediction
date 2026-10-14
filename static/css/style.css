@@ -1378,4 +1378,311 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: #64748B !important;
 }
 
+/* ==========================================================================
+   Universal Dynamic Schema Mapper & Batch Wizard
+   ========================================================================== */
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 2.5rem;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wizard-progress::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: var(--border-color);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.wizard-step-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-dark);
+  padding: 0 0.5rem;
+  cursor: pointer;
+}
+
+.step-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.wizard-step-node.active .step-circle {
+  background: var(--primary);
+  border-color: #818CF8;
+  color: #FFFFFF;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+}
+
+.wizard-step-node.completed .step-circle {
+  background: var(--success);
+  border-color: #34D399;
+  color: #FFFFFF;
+}
+
+.step-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.wizard-step-node.active .step-label {
+  color: #FFFFFF;
+}
+
+.wizard-step-node.completed .step-label {
+  color: var(--success);
+}
+
+/* Domain Template Pills */
+.domain-presets-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.domain-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.domain-pill-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #818CF8;
+  transform: translateY(-2px);
+}
+
+/* Schema Mapper Table */
+.schema-mapper-card {
+  border-top: 4px solid #3B82F6;
+}
+
+.schema-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.88rem;
+}
+
+.schema-table th {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.85rem 1rem;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.schema-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.schema-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.schema-select {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.schema-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.schema-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.schema-badge.exact {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.schema-badge.synonym {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.schema-badge.fuzzy {
+  background: rgba(139, 92, 246, 0.15);
+  color: #A78BFA;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.schema-badge.default {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.concept-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: rgba(99, 102, 241, 0.12);
+  color: #818CF8;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Light Theme Overrides for Schema Mapper */
+[data-theme="light"] .wizard-step-node {
+  background: #F8FAFC !important;
+}
+
+[data-theme="light"] .step-circle {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #64748B !important;
+}
+
+[data-theme="light"] .wizard-step-node.active .step-circle {
+  background: #4F46E5 !important;
+  border-color: #6366F1 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .wizard-step-node.completed .step-circle {
+  background: #10B981 !important;
+  border-color: #34D399 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .step-label {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .wizard-step-node.active .step-label {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .domain-pill-btn {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .domain-pill-btn:hover {
+  background: #EEF2FF !important;
+  border-color: #818CF8 !important;
+  color: #4F46E5 !important;
+}
+
+[data-theme="light"] .schema-table th {
+  background: #F1F5F9 !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #CBD5E1 !important;
+}
+
+[data-theme="light"] .schema-table td {
+  border-bottom: 1px solid #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .schema-table tr:hover td {
+  background: #F8FAFC !important;
+}
+
+[data-theme="light"] .schema-select {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .concept-badge {
+  background: #EEF2FF !important;
+  color: #4338CA !important;
+  border: 1px solid #C7D2FE !important;
+}
+
+[data-theme="light"] .schema-badge.exact {
+  background: #ECFDF5 !important;
+  color: #047857 !important;
+  border: 1px solid #A7F3D0 !important;
+}
+
+[data-theme="light"] .schema-badge.synonym {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1px solid #BFDBFE !important;
+}
+
+[data-theme="light"] .schema-badge.fuzzy {
+  background: #F5F3FF !important;
+  color: #6D28D9 !important;
+  border: 1px solid #DDD6FE !important;
+}
+
+[data-theme="light"] .schema-badge.default {
+  background: #FFFBEB !important;
+  color: #B45309 !important;
+  border: 1px solid #FDE68A !important;
+}
+
+
 

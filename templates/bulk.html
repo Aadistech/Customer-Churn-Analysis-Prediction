@@ -1,62 +1,225 @@
 {% extends "base.html" %}
 
-{% block title %}Batch Dataset Analysis - AadiBI Customer Churn Intelligence{% endblock %}
+{% block title %}Universal Batch Dataset Scoring & Schema Mapper - AadiBI{% endblock %}
 
 {% block content %}
-<div class="animate-fade-in" style="max-width: 900px; margin: 0 auto;">
+<div class="animate-fade-in" style="max-width: 1000px; margin: 0 auto;">
     <!-- Page Header -->
     <div style="margin-bottom: 2rem; text-align: center;">
-        <span class="badge badge-info" style="margin-bottom: 0.5rem;">ADMINISTRATOR BATCH SUITE</span>
-        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main);">
-            Batch Customer <span class="text-gradient">Dataset Scoring Hub</span>
+        <span class="badge badge-info" style="margin-bottom: 0.5rem;">UNIVERSAL BATCH SUITE</span>
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-main);">
+            Universal Customer <span class="text-gradient">Dataset Scoring & Schema Mapper</span>
         </h1>
-        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 600px; margin: 0.5rem auto 0;">
-            Upload subscriber telemetry files in <strong>CSV</strong> or <strong>XLSX</strong> format to batch score accounts and update executive analytics in real time.
+        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 680px; margin: 0.5rem auto 0;">
+            Batch score customer churn across <strong>E-Commerce, SaaS, Banking, Retail, or Telecom</strong> datasets. 
+            Upload any CSV or XLSX file — our dynamic schema mapper detects your columns and auto-aligns them with zero hassle.
         </p>
     </div>
 
-    <!-- Dropzone & Upload Card -->
-    <div class="card" style="padding: 2.5rem; margin-bottom: 2rem; border-top: 4px solid var(--primary);">
-        <form id="bulkUploadForm" action="{{ url_for('api_bulk_predict') }}" method="POST" enctype="multipart/form-data">
-            
-            <div class="dropzone" id="uploadDropzone">
-                <div class="dropzone-icon">📂</div>
-                <h3 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                    Drag & Drop your customer dataset here
-                </h3>
-                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
-                    Supports <strong>.csv</strong>, <strong>.xlsx</strong>, and <strong>.xls</strong> files up to 50MB.
-                </p>
-                
-                <label for="datasetFileInput" class="btn btn-outline" style="cursor: pointer;">
-                    📁 Browse Local Files
-                </label>
-                <input type="file" id="datasetFileInput" name="dataset" accept=".csv, .xlsx, .xls" style="display: none;" required>
+    <!-- Domain Sample Download Bar -->
+    <div class="card" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: rgba(79, 70, 229, 0.08); border-color: rgba(99, 102, 241, 0.25);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <strong style="color: var(--text-main); font-size: 0.9rem;">📥 Test With Sample Cross-Domain Datasets:</strong>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.2rem 0 0;">Download ready-to-test CSV templates designed for different business models.</p>
             </div>
-
-            <div id="selectedFileName" style="display: none; margin-top: 1rem; padding: 0.85rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #60A5FA; font-size: 0.9rem;">
-                <!-- Selected filename will render here via JS -->
-            </div>
-
-            <div style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                <a href="{{ url_for('api_sample_csv') }}" class="btn btn-outline btn-sm">
-                    📥 Download Standard CSV Template
+            <div class="domain-presets-bar" style="margin: 0;">
+                <a href="{{ url_for('api_sample_csv', domain='ecommerce') }}" class="domain-pill-btn" title="Download E-Commerce customer order & spend dataset">
+                    🛒 E-Commerce CSV
                 </a>
-
-                <button type="submit" id="btnSubmitBulkUpload" class="btn btn-primary" style="padding: 0.8rem 1.8rem;">
-                    📊 Run Batch Dataset Analytics
-                </button>
+                <a href="{{ url_for('api_sample_csv', domain='saas') }}" class="domain-pill-btn" title="Download SaaS recurring subscription & MRR dataset">
+                    💻 SaaS / Cloud CSV
+                </a>
+                <a href="{{ url_for('api_sample_csv', domain='banking') }}" class="domain-pill-btn" title="Download Banking deposit & transaction dataset">
+                    🏦 Banking CSV
+                </a>
+                <a href="{{ url_for('api_sample_csv', domain='telecom') }}" class="domain-pill-btn" title="Download Standard Telecom telemetry dataset">
+                    📞 Telecom CSV
+                </a>
             </div>
-        </form>
+        </div>
     </div>
 
-    <!-- Machine Learning Retraining Suite Card -->
+    <!-- 3-Step Wizard Navigation -->
+    <div class="wizard-progress">
+        <div class="wizard-step-node active" id="wizardNode1" onclick="switchWizardStep(1)">
+            <div class="step-circle" id="circleStep1">1</div>
+            <div class="step-label">1. Upload Dataset</div>
+        </div>
+        <div class="wizard-step-node" id="wizardNode2" onclick="switchWizardStep(2)">
+            <div class="step-circle" id="circleStep2">2</div>
+            <div class="step-label">2. Map Schema</div>
+        </div>
+        <div class="wizard-step-node" id="wizardNode3">
+            <div class="step-circle" id="circleStep3">3</div>
+            <div class="step-label">3. Scored Results</div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- STEP 1: UPLOAD DATASET & DETECT SCHEMA                                    -->
+    <!-- ========================================================================= -->
+    <div id="step1Container" class="card" style="padding: 2.5rem; margin-bottom: 2rem; border-top: 4px solid var(--primary);">
+        <div class="dropzone" id="uploadDropzone">
+            <div class="dropzone-icon">📂</div>
+            <h3 style="font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                Drag & Drop your customer dataset here
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+                Supports <strong>.csv</strong>, <strong>.xlsx</strong>, and <strong>.xls</strong> files up to 50MB (Any industry or column structure).
+            </p>
+            
+            <label for="datasetFileInput" class="btn btn-outline" style="cursor: pointer;">
+                📁 Browse Local Files
+            </label>
+            <input type="file" id="datasetFileInput" name="dataset" accept=".csv, .xlsx, .xls" style="display: none;" required>
+        </div>
+
+        <div id="selectedFileInfoBox" style="display: none; margin-top: 1.25rem; padding: 1rem 1.25rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="color: #60A5FA; font-size: 0.92rem; font-weight: 600;" id="fileInfoText">
+                    📄 <strong>Selected File:</strong> ready to scan
+                </div>
+                <span class="badge badge-info" id="fileSizeBadge">0 KB</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                ✨ Automatically matches synonyms like <em>tenure, spend, MRR, tickets, calls</em>.
+            </div>
+
+            <button type="button" id="btnUploadAndDetect" class="btn btn-primary" style="padding: 0.8rem 2rem; font-size: 0.95rem;">
+                ⚡ Upload & Auto-Detect Schema →
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- STEP 2: INTERACTIVE SCHEMA MAPPER & DATA PREVIEW                         -->
+    <!-- ========================================================================= -->
+    <div id="step2Container" class="card schema-mapper-card" style="display: none; margin-bottom: 2rem; padding: 2rem;">
+        <!-- Header & Detection Summary -->
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+            <div>
+                <span class="badge badge-success" style="margin-bottom: 0.5rem;">STEP 2: VERIFY SCHEMA ALIGNMENT</span>
+                <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                    AI Dynamic Schema Mapper
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem;" id="schemaDetectionSummary">
+                    Review how your uploaded columns map to canonical predictive features. Missing columns will be cleanly imputed with domain defaults.
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="button" id="btnResetToAutoMatch" class="btn btn-outline btn-sm" title="Re-apply automatic fuzzy matching">
+                    🔄 Reset Auto-Match
+                </button>
+                <button type="button" id="btnTogglePreview" class="btn btn-outline btn-sm">
+                    👁️ Preview Data (First 5 Rows)
+                </button>
+            </div>
+        </div>
+
+        <!-- Collapsible Data Preview Drawer -->
+        <div id="previewTableContainer" style="display: none; margin-bottom: 1.75rem; padding: 1rem; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-size: 0.82rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Raw Dataset Sample (5 Rows):</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);" id="previewRowCount">5 of N rows</span>
+            </div>
+            <div style="overflow-x: auto; max-height: 240px;">
+                <table class="table" id="previewTable" style="margin: 0; font-size: 0.8rem;">
+                    <thead id="previewTableHead"></thead>
+                    <tbody id="previewTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Schema Mapping Form Table -->
+        <div style="overflow-x: auto; margin-bottom: 2rem;">
+            <table class="schema-table" id="schemaMappingTable">
+                <thead>
+                    <tr>
+                        <th style="width: 32%;">Model Predictive Feature</th>
+                        <th style="width: 36%;">Your Dataset Column</th>
+                        <th style="width: 18%;">Match Status</th>
+                        <th style="width: 14%;">Fallback Default</th>
+                    </tr>
+                </thead>
+                <tbody id="schemaMappingBody">
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Step 2 Footer Navigation -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <button type="button" id="btnBackToStep1" class="btn btn-outline">
+                ← Re-Upload File
+            </button>
+
+            <button type="button" id="btnRunMappedPredictions" class="btn btn-primary" style="padding: 0.85rem 2.2rem; font-size: 0.95rem;">
+                🚀 Run Predictions & Analytics →
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- STEP 3: BATCH SCORING RESULTS & EXPORT                                    -->
+    <!-- ========================================================================= -->
+    <div id="step3Container" class="card" style="display: none; padding: 2.5rem; margin-bottom: 2rem; border-top: 4px solid var(--success);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 2px solid #10B981; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 1rem;">
+                ✓
+            </div>
+            <h2 style="font-size: 1.7rem; font-weight: 800; color: var(--text-main);">
+                Batch Customer <span class="text-gradient">Scoring Complete!</span>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 600px; margin: 0.5rem auto 0;">
+                Predictions and risk drivers have been successfully generated for all customer accounts while preserving your original dataset columns.
+            </p>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="card card-sub-box" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total Records</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;" id="resTotalRecords">0</div>
+            </div>
+            <div class="card card-sub-box" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Predicted Churn Rate</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #EF4444; margin-top: 0.35rem;" id="resChurnRate">0.0%</div>
+            </div>
+            <div class="card card-sub-box" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Churning Accounts</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #F59E0B; margin-top: 0.35rem;" id="resChurnCount">0</div>
+            </div>
+            <div class="card card-sub-box" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Revenue at Risk</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #60A5FA; margin-top: 0.35rem;" id="resRevenueRisk">₹0</div>
+            </div>
+        </div>
+
+        <!-- Export & Action Buttons -->
+        <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <a href="{{ url_for('download_results') }}" class="btn btn-success" style="padding: 0.85rem 1.8rem;">
+                📥 Download Scored CSV (Preserves Original Columns)
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="padding: 0.85rem 1.8rem;">
+                📊 View Executive Analytics Dashboard
+            </a>
+            <button type="button" id="btnScoreAnother" class="btn btn-outline" style="padding: 0.85rem 1.5rem;">
+                🔄 Score Another Dataset
+            </button>
+        </div>
+    </div>
+
+    <!-- Scikit-Learn Model Retraining Suite Card -->
     <div class="card" style="margin-bottom: 2rem; border-top: 4px solid #8B5CF6;">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h3 class="section-title" style="margin: 0;">🔄 Scikit-Learn Model Retraining Suite</h3>
                 <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.35rem;">
-                    Retrain the Random Forest Classifier on the latest dataset, regenerate Seaborn evaluation plots, and log metrics to MySQL.
+                    Retrain the Random Forest Classifier on the latest dataset, regenerate evaluation plots, and log metrics.
                 </p>
             </div>
             <button id="btnTriggerRetrainBulk" class="btn btn-outline btn-retrain">
@@ -69,20 +232,29 @@
         </div>
     </div>
 
-    <!-- Data Formatting Specifications Card -->
+    <!-- Supported Schema Reference Card -->
     <div class="card">
-        <h3 class="section-title">Required Dataset Schema Specifications</h3>
+        <h3 class="section-title">Universal Feature Alignment Architecture</h3>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Your CSV file should contain customer telemetry features matching the standard schema:
+            The model accepts datasets from any industry by mapping key business concepts to canonical telemetry signals:
         </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; font-size: 0.82rem;" class="mono">
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">State</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">Account length</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">Area code</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">International plan</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">Voice mail plan</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">Total day minutes</div>
-            <div style="background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">Customer service calls</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; font-size: 0.84rem;">
+            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="color: #60A5FA; font-weight: 700;">Account Length / Tenure</div>
+                <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Months active, tenure, account age, subscription period.</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="color: #34D399; font-weight: 700;">Support / Inquiries</div>
+                <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Customer service calls, support tickets, complaints, inquiries.</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="color: #FBBF24; font-weight: 700;">Monthly Spend / Revenue</div>
+                <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Day charge, monthly bill, MRR, purchase amount, spend.</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="color: #A78BFA; font-weight: 700;">Usage Volume & Activity</div>
+                <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Day minutes, active hours, screen time, session duration.</div>
+            </div>
         </div>
     </div>
 </div>

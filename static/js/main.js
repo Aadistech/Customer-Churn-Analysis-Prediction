@@ -760,25 +760,91 @@ function renderPredictionResult(res) {
 }
 
 /* ============================================================
-   DRAG AND DROP BULK UPLOADER
+   UNIVERSAL DATASET SCHEMA MAPPER & BATCH WIZARD
    ============================================================ */
+let uploadWizardState = {
+  tempFileId: null,
+  filename: '',
+  columns: [],
+  preview: [],
+  suggestedMapping: {},
+  confidenceScores: {},
+  matchDetails: {},
+  canonicalFeatures: {},
+  results: null
+};
+
+window.switchWizardStep = function(step) {
+  const step1 = document.getElementById('step1Container');
+  const step2 = document.getElementById('step2Container');
+  const step3 = document.getElementById('step3Container');
+  const node1 = document.getElementById('wizardNode1');
+  const node2 = document.getElementById('wizardNode2');
+  const node3 = document.getElementById('wizardNode3');
+
+  if (!step1) return;
+
+  if (step === 2 && !uploadWizardState.tempFileId) {
+    showToast('Please upload a dataset file in Step 1 first.', 'warning');
+    return;
+  }
+  if (step === 3 && !uploadWizardState.results) {
+    showToast('Please run predictions in Step 2 first.', 'warning');
+    return;
+  }
+
+  // Update Containers
+  if (step === 1) {
+    step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (step3) step3.style.display = 'none';
+
+    if (node1) { node1.className = 'wizard-step-node active'; }
+    if (node2) { node2.className = 'wizard-step-node' + (uploadWizardState.tempFileId ? ' completed' : ''); }
+    if (node3) { node3.className = 'wizard-step-node' + (uploadWizardState.results ? ' completed' : ''); }
+  } else if (step === 2) {
+    if (step1) step1.style.display = 'none';
+    step2.style.display = 'block';
+    if (step3) step3.style.display = 'none';
+
+    if (node1) { node1.className = 'wizard-step-node completed'; }
+    if (node2) { node2.className = 'wizard-step-node active'; }
+    if (node3) { node3.className = 'wizard-step-node' + (uploadWizardState.results ? ' completed' : ''); }
+  } else if (step === 3) {
+    if (step1) step1.style.display = 'none';
+    if (step2) step2.style.display = 'none';
+    step3.style.display = 'block';
+
+    if (node1) { node1.className = 'wizard-step-node completed'; }
+    if (node2) { node2.className = 'wizard-step-node completed'; }
+    if (node3) { node3.className = 'wizard-step-node active completed'; }
+  }
+};
+
 function initDragAndDrop() {
   const dropzone = document.getElementById('uploadDropzone');
   const fileInput = document.getElementById('datasetFileInput');
-  const fileNameDisplay = document.getElementById('selectedFileName');
-  const uploadForm = document.getElementById('bulkUploadForm');
-  const uploadBtn = document.getElementById('btnSubmitBulkUpload');
+  const fileInfoBox = document.getElementById('selectedFileInfoBox');
+  const fileInfoText = document.getElementById('fileInfoText');
+  const fileSizeBadge = document.getElementById('fileSizeBadge');
+  const btnUploadAndDetect = document.getElementById('btnUploadAndDetect');
+
+  const btnResetToAutoMatch = document.getElementById('btnResetToAutoMatch');
+  const btnTogglePreview = document.getElementById('btnTogglePreview');
+  const previewTableContainer = document.getElementById('previewTableContainer');
+  const btnBackToStep1 = document.getElementById('btnBackToStep1');
+  const btnRunMappedPredictions = document.getElementById('btnRunMappedPredictions');
+  const btnScoreAnother = document.getElementById('btnScoreAnother');
 
   if (!dropzone || !fileInput) return;
 
+  // Drag & Drop event bindings
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, preventDefaults, false);
+    dropzone.addEventListener(eventName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
   });
-
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
 
   ['dragenter', 'dragover'].forEach(eventName => {
     dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
@@ -790,63 +856,338 @@ function initDragAndDrop() {
 
   dropzone.addEventListener('drop', (e) => {
     const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files.length > 0) {
-      fileInput.files = files;
-      updateFileName(files[0].name);
+    if (dt && dt.files && dt.files.length > 0) {
+      fileInput.files = dt.files;
+      handleFileSelected(dt.files[0]);
     }
   });
 
   fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-      updateFileName(fileInput.files[0].name);
+    if (fileInput.files && fileInput.files.length > 0) {
+      handleFileSelected(fileInput.files[0]);
     }
   });
 
-  function updateFileName(name) {
-    if (fileNameDisplay) {
-      fileNameDisplay.innerHTML = `📄 <strong>Selected File:</strong> ${name}`;
-      fileNameDisplay.style.display = 'block';
+  function handleFileSelected(file) {
+    if (fileInfoBox && fileInfoText && fileSizeBadge) {
+      fileInfoText.innerHTML = `📄 <strong>Selected:</strong> ${file.name}`;
+      const sizeKb = (file.size / 1024).toFixed(1);
+      fileSizeBadge.textContent = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(2)} MB` : `${sizeKb} KB`;
+      fileInfoBox.style.display = 'block';
     }
   }
 
-  if (uploadForm) {
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  // Step 1: Upload & Auto-Detect Schema
+  if (btnUploadAndDetect) {
+    btnUploadAndDetect.addEventListener('click', async () => {
       if (!fileInput.files || fileInput.files.length === 0) {
-        showToast('Please select a dataset file before submitting.', 'warning');
+        showToast('Please select or drop a dataset file first.', 'warning');
         return;
       }
 
-      if (uploadBtn) {
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '⌛ Analyzing Dataset & Calculating Churn Metrics...';
-      }
+      btnUploadAndDetect.disabled = true;
+      btnUploadAndDetect.innerHTML = '⌛ Scanning & Auto-Matching Columns...';
 
-      const formData = new FormData(uploadForm);
+      const formData = new FormData();
+      formData.append('dataset', fileInput.files[0]);
+
       try {
-        const response = await fetch('/api/bulk_predict', {
+        const response = await fetch('/api/upload_preview', {
           method: 'POST',
           body: formData
         });
 
         const res = await response.json();
-        if (res.success) {
-          showToast('Dataset analyzed successfully! Redirecting to dashboard...', 'success');
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 1200);
-        } else {
-          showToast(res.error || 'Dataset analysis failed.', 'error');
+        if (!res.success) {
+          showToast(res.error || 'Failed to parse dataset schema.', 'error');
+          return;
         }
+
+        // Store state
+        uploadWizardState.tempFileId = res.temp_file_id;
+        uploadWizardState.filename = res.filename;
+        uploadWizardState.columns = res.columns || [];
+        uploadWizardState.preview = res.preview || [];
+        uploadWizardState.suggestedMapping = res.suggested_mapping || {};
+        uploadWizardState.confidenceScores = res.confidence_scores || {};
+        uploadWizardState.matchDetails = res.match_details || {};
+        uploadWizardState.canonicalFeatures = res.canonical_features || {};
+
+        // Render Schema Mapper Table
+        renderSchemaMapperTable();
+
+        // Render Data Preview
+        renderDataPreview();
+
+        // Update Step 2 Summary text
+        const summaryEl = document.getElementById('schemaDetectionSummary');
+        if (summaryEl) {
+          const matchedCount = Object.keys(uploadWizardState.suggestedMapping).length;
+          const totalTargets = Object.keys(uploadWizardState.canonicalFeatures).length;
+          summaryEl.innerHTML = `Scanned <strong>${res.filename}</strong> (${res.row_count} records, ${res.columns.length} columns). <strong>${matchedCount} of ${totalTargets}</strong> predictive signals auto-aligned.`;
+        }
+
+        showToast('Dataset columns successfully detected & auto-matched!', 'success');
+        switchWizardStep(2);
       } catch (err) {
-        showToast('Error uploading dataset.', 'error');
+        console.error(err);
+        showToast('Error uploading dataset to schema mapper.', 'error');
       } finally {
-        if (uploadBtn) {
-          uploadBtn.disabled = false;
-          uploadBtn.innerHTML = '📊 Run Batch Dataset Analytics';
-        }
+        btnUploadAndDetect.disabled = false;
+        btnUploadAndDetect.innerHTML = '⚡ Upload & Auto-Detect Schema →';
       }
+    });
+  }
+
+  // Render Mapping Table
+  function renderSchemaMapperTable() {
+    const tbody = document.getElementById('schemaMappingBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    const userCols = uploadWizardState.columns;
+    const canonical = uploadWizardState.canonicalFeatures;
+    const suggested = uploadWizardState.suggestedMapping;
+
+    Object.keys(canonical).forEach(featureKey => {
+      const feat = canonical[featureKey];
+      const tr = document.createElement('tr');
+
+      // Column 1: Feature Target + Concept
+      const tdTarget = document.createElement('td');
+      tdTarget.innerHTML = `
+        <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${feat.display_name || featureKey}</div>
+        <div class="concept-badge">${feat.domain_concept || 'Canonical Feature'}</div>
+        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.2rem;">${feat.description || ''}</div>
+      `;
+
+      // Column 2: User Column Selector
+      const tdSelect = document.createElement('td');
+      const select = document.createElement('select');
+      select.className = 'schema-select';
+      select.setAttribute('data-canonical-key', featureKey);
+
+      // Option: None / Fallback default
+      const optNone = document.createElement('option');
+      optNone.value = '__NONE__';
+      optNone.textContent = `(None / Use Default: ${feat.default})`;
+      select.appendChild(optNone);
+
+      // Add all user CSV columns
+      const matchedUserCol = suggested[featureKey];
+      userCols.forEach(uc => {
+        const opt = document.createElement('option');
+        opt.value = uc;
+        opt.textContent = uc;
+        if (matchedUserCol && matchedUserCol === uc) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+
+      tdSelect.appendChild(select);
+
+      // Column 3: Match Badge
+      const tdBadge = document.createElement('td');
+      tdBadge.id = `badge-${featureKey.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      updateBadgeElement(tdBadge, featureKey, select.value);
+
+      // When user changes select dropdown
+      select.addEventListener('change', () => {
+        updateBadgeElement(tdBadge, featureKey, select.value);
+      });
+
+      // Column 4: Fallback Default
+      const tdDefault = document.createElement('td');
+      tdDefault.style.fontSize = '0.82rem';
+      tdDefault.style.color = 'var(--text-muted)';
+      tdDefault.innerHTML = `<span class="mono">${feat.default}</span>`;
+
+      tr.appendChild(tdTarget);
+      tr.appendChild(tdSelect);
+      tr.appendChild(tdBadge);
+      tr.appendChild(tdDefault);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateBadgeElement(badgeCell, featureKey, selectedValue) {
+    const details = uploadWizardState.matchDetails[featureKey];
+    if (selectedValue === '__NONE__') {
+      badgeCell.innerHTML = `<span class="schema-badge default">Default Fallback</span>`;
+    } else if (details && details.user_col === selectedValue) {
+      if (details.match_type === 'exact') {
+        badgeCell.innerHTML = `<span class="schema-badge exact">✓ Exact (100%)</span>`;
+      } else if (details.match_type === 'synonym') {
+        badgeCell.innerHTML = `<span class="schema-badge synonym">⚡ Synonym (${Math.round(details.confidence * 100)}%)</span>`;
+      } else {
+        badgeCell.innerHTML = `<span class="schema-badge fuzzy">≈ Fuzzy (${Math.round(details.confidence * 100)}%)</span>`;
+      }
+    } else {
+      badgeCell.innerHTML = `<span class="schema-badge exact">✎ User Mapped</span>`;
+    }
+  }
+
+  // Render Data Preview
+  function renderDataPreview() {
+    const head = document.getElementById('previewTableHead');
+    const body = document.getElementById('previewTableBody');
+    const countEl = document.getElementById('previewRowCount');
+    if (!head || !body) return;
+
+    head.innerHTML = '';
+    body.innerHTML = '';
+
+    const cols = uploadWizardState.columns;
+    const rows = uploadWizardState.preview;
+
+    if (countEl) {
+      countEl.textContent = `Showing ${rows.length} sample rows (${cols.length} columns)`;
+    }
+
+    // Header row
+    const trHead = document.createElement('tr');
+    cols.forEach(c => {
+      const th = document.createElement('th');
+      th.style.padding = '0.5rem 0.75rem';
+      th.style.whiteSpace = 'nowrap';
+      th.textContent = c;
+      trHead.appendChild(th);
+    });
+    head.appendChild(trHead);
+
+    // Body rows
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      cols.forEach(c => {
+        const td = document.createElement('td');
+        td.style.padding = '0.45rem 0.75rem';
+        td.style.whiteSpace = 'nowrap';
+        td.textContent = r[c] !== null && r[c] !== undefined ? r[c] : '—';
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+  }
+
+  // Step 2 Action: Toggle Preview Drawer
+  if (btnTogglePreview && previewTableContainer) {
+    btnTogglePreview.addEventListener('click', () => {
+      const isVisible = previewTableContainer.style.display !== 'none';
+      previewTableContainer.style.display = isVisible ? 'none' : 'block';
+      btnTogglePreview.textContent = isVisible ? '👁️ Preview Data (First 5 Rows)' : '▲ Hide Data Preview';
+    });
+  }
+
+  // Step 2 Action: Reset Auto Match
+  if (btnResetToAutoMatch) {
+    btnResetToAutoMatch.addEventListener('click', () => {
+      const selects = document.querySelectorAll('.schema-select');
+      const suggested = uploadWizardState.suggestedMapping;
+      selects.forEach(sel => {
+        const featKey = sel.getAttribute('data-canonical-key');
+        if (suggested[featKey]) {
+          sel.value = suggested[featKey];
+        } else {
+          sel.value = '__NONE__';
+        }
+        const badgeCell = document.getElementById(`badge-${featKey.replace(/[^a-zA-Z0-9]/g, '_')}`);
+        if (badgeCell) updateBadgeElement(badgeCell, featKey, sel.value);
+      });
+      showToast('Reset all columns to AI auto-match values.', 'info');
+    });
+  }
+
+  // Step 2 Action: Back to Step 1
+  if (btnBackToStep1) {
+    btnBackToStep1.addEventListener('click', () => {
+      switchWizardStep(1);
+    });
+  }
+
+  // Step 2 Action: Run Mapped Predictions
+  if (btnRunMappedPredictions) {
+    btnRunMappedPredictions.addEventListener('click', async () => {
+      if (!uploadWizardState.tempFileId) {
+        showToast('No active uploaded file session.', 'error');
+        return;
+      }
+
+      // Collect user mapping
+      const mapping = {};
+      const selects = document.querySelectorAll('.schema-select');
+      selects.forEach(sel => {
+        const featKey = sel.getAttribute('data-canonical-key');
+        if (sel.value && sel.value !== '__NONE__') {
+          mapping[featKey] = sel.value;
+        }
+      });
+
+      btnRunMappedPredictions.disabled = true;
+      btnRunMappedPredictions.innerHTML = '⌛ Generating Predictions & Risk Signals...';
+
+      try {
+        const response = await fetch('/api/process_mapped_dataset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            temp_file_id: uploadWizardState.tempFileId,
+            mapping: mapping
+          })
+        });
+
+        const res = await response.json();
+        if (!res.success) {
+          showToast(res.error || 'Failed to process dataset scoring.', 'error');
+          return;
+        }
+
+        uploadWizardState.results = res;
+
+        // Populate Step 3 KPI results
+        const totalEl = document.getElementById('resTotalRecords');
+        const churnRateEl = document.getElementById('resChurnRate');
+        const churnCountEl = document.getElementById('resChurnCount');
+        const revRiskEl = document.getElementById('resRevenueRisk');
+
+        if (totalEl) totalEl.textContent = res.total_records.toLocaleString();
+        if (churnRateEl) churnRateEl.textContent = `${res.churn_rate}%`;
+        if (churnCountEl) churnCountEl.textContent = res.churn_count.toLocaleString();
+        if (revRiskEl) {
+          const revVal = res.churn_count * 5400;
+          revRiskEl.textContent = '₹' + revVal.toLocaleString('en-IN');
+        }
+
+        showToast('Batch predictions complete! Results ready for export.', 'success');
+        switchWizardStep(3);
+      } catch (err) {
+        console.error(err);
+        showToast('Error scoring mapped dataset.', 'error');
+      } finally {
+        btnRunMappedPredictions.disabled = false;
+        btnRunMappedPredictions.innerHTML = '🚀 Run Predictions & Analytics →';
+      }
+    });
+  }
+
+  // Step 3 Action: Score Another Dataset
+  if (btnScoreAnother) {
+    btnScoreAnother.addEventListener('click', () => {
+      uploadWizardState = {
+        tempFileId: null,
+        filename: '',
+        columns: [],
+        preview: [],
+        suggestedMapping: {},
+        confidenceScores: {},
+        matchDetails: {},
+        canonicalFeatures: {},
+        results: null
+      };
+      if (fileInput) fileInput.value = '';
+      if (fileInfoBox) fileInfoBox.style.display = 'none';
+      switchWizardStep(1);
+      showToast('Wizard reset. Select a new dataset to begin.', 'info');
     });
   }
 }

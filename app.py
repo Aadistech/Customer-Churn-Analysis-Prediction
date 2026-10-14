@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import uuid
 from datetime import datetime
 from functools import wraps
 from flask import (
@@ -18,7 +19,8 @@ from flask import (
 import pandas as pd
 import joblib
 
-# Import Python Services
+# Import Python Services & Schema Mapper
+import schema_mapper
 from services.firebase_service import (
     is_firebase_active,
     sync_prediction_to_firestore,
@@ -77,6 +79,8 @@ MODEL_PATH = os.path.join("models", "random_forest_model.pkl")
 CLEANED_DATA_PATH = os.path.join("data", "cleaned_customer_churn.csv")
 RAW_DATA_PATH = os.path.join("data", "customer_churn.csv")
 BULK_RESULTS_PATH = os.path.join("data", "bulk_prediction_results.csv")
+UPLOAD_FOLDER = os.path.join("data", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 try:
     model = joblib.load(MODEL_PATH)
@@ -220,31 +224,43 @@ def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=1
     }
 
 
-def analyze_customers(source_df):
-    """Score a customer dataframe and compute executive analytics."""
+def analyze_customers(source_df, mapping=None):
+    """
+    Score a customer dataframe and compute executive analytics.
+    Supports flexible cross-domain schema mapping (E-commerce, SaaS, Banking, Telecom).
+    """
     if source_df.empty:
         raise ValueError("The dataset does not contain any customer records.")
 
-    original = source_df.copy()
-    data = source_df.drop(columns=["Churn"], errors="ignore").copy()
-    state_columns = [col for col in model_features if col.startswith("State_")]
+    # Check if dataset has canonical features or requires schema mapping
+    has_telecom_core = {"Account length", "Total day minutes", "Customer service calls"}.issubset(set(source_df.columns))
 
-    for col in ("International plan", "Voice mail plan"):
-        if col in data.columns:
-            values = data[col].astype(str).str.strip().str.lower()
-            data[col] = values.map({"yes": 1, "no": 0}).fillna(
-                pd.to_numeric(data[col], errors="coerce")
-            )
+    if mapping is not None or not has_telecom_core:
+        if mapping is None:
+            auto = schema_mapper.fuzzy_match_columns(source_df.columns.tolist())
+            mapping = auto["mapped"]
+        data, original = schema_mapper.transform_mapped_dataset(source_df, mapping, model_features)
+    else:
+        original = source_df.copy()
+        data = source_df.drop(columns=["Churn"], errors="ignore").copy()
+        state_columns = [col for col in model_features if col.startswith("State_")]
 
-    state_values = data["State"].astype(str).str.strip().str.upper() if "State" in data else ""
-    for col in state_columns:
-        state_name = col.replace("State_", "")
-        data[col] = state_values.eq(state_name).astype(int) if "State" in data else 0
+        for col in ("International plan", "Voice mail plan"):
+            if col in data.columns:
+                values = data[col].astype(str).str.strip().str.lower()
+                data[col] = values.map({"yes": 1, "no": 0}).fillna(
+                    pd.to_numeric(data[col], errors="coerce")
+                )
 
-    data = data.drop(columns=["State"], errors="ignore").reindex(
-        columns=model_features, fill_value=0
-    )
-    data = data.apply(pd.to_numeric, errors="coerce").fillna(0)
+        state_values = data["State"].astype(str).str.strip().str.upper() if "State" in data else ""
+        for col in state_columns:
+            state_name = col.replace("State_", "")
+            data[col] = state_values.eq(state_name).astype(int) if "State" in data else 0
+
+        data = data.drop(columns=["State"], errors="ignore").reindex(
+            columns=model_features, fill_value=0
+        )
+        data = data.apply(pd.to_numeric, errors="coerce").fillna(0)
 
     predictions = model.predict(data)
     probabilities = model.predict_proba(data)
@@ -265,8 +281,8 @@ def analyze_customers(source_df):
     ).astype(str)
 
     guidance = [
-        customer_guidance(row, prob)
-        for (_, row), prob in zip(result_df.iterrows(), result_df["Churn Probability (%)"])
+        customer_guidance(prep_row, prob)
+        for (_, prep_row), prob in zip(data.iterrows(), result_df["Churn Probability (%)"])
     ]
     result_df["Risk signals"] = ["; ".join(d) for d, _ in guidance]
     result_df["Recommended action"] = [a for _, a in guidance]
@@ -286,14 +302,14 @@ def analyze_customers(source_df):
 
     table_data = []
     for idx, (_, row) in enumerate(result_df.iterrows()):
-        state_val = str(row.get("State", "N/A"))
-        acc_len = row.get("Account length", "N/A")
-        area_code = row.get("Area code", "N/A")
-        intl_plan = str(row.get("International plan", "no")).capitalize()
-        vmail_plan = str(row.get("Voice mail plan", "no")).capitalize()
-        svc_calls = row.get("Customer service calls", 0)
-        day_mins = row.get("Total day minutes", 0)
-        day_charge = row.get("Total day charge", 0)
+        state_val = str(row.get("State", row.get("_Normalized_State", "KS")))
+        acc_len = int(data.loc[idx, "Account length"]) if "Account length" in data.columns else int(row.get("Account length", 0))
+        area_code = int(data.loc[idx, "Area code"]) if "Area code" in data.columns else int(row.get("Area code", 415))
+        intl_plan = "Yes" if (data.loc[idx, "International plan"] == 1 if "International plan" in data.columns else False) else "No"
+        vmail_plan = "Yes" if (data.loc[idx, "Voice mail plan"] == 1 if "Voice mail plan" in data.columns else False) else "No"
+        svc_calls = int(data.loc[idx, "Customer service calls"]) if "Customer service calls" in data.columns else int(row.get("Customer service calls", 0))
+        day_mins = float(data.loc[idx, "Total day minutes"]) if "Total day minutes" in data.columns else float(row.get("Total day minutes", 0))
+        day_charge = float(data.loc[idx, "Total day charge"]) if "Total day charge" in data.columns else float(row.get("Total day charge", 0))
 
         table_data.append({
             "id": idx + 1,
@@ -313,16 +329,9 @@ def analyze_customers(source_df):
             "action": row["Recommended action"],
         })
 
-    # Prepare chart metrics
-    analysis_churn = (
-        result_df.get("Churn", pd.Series(predictions, index=result_df.index))
-        .astype(str).str.strip().str.lower()
-        .map({"true": 1, "false": 0, "yes": 1, "no": 0, "1": 1, "0": 0})
-        .fillna(pd.Series(predictions, index=result_df.index))
-        .astype(int)
-    )
-    analysis_data = result_df.copy()
-    analysis_data["_churn_rate"] = analysis_churn
+    # Prepare chart metrics using standardized prepared features
+    analysis_data = data.copy()
+    analysis_data["_churn_rate"] = predictions
 
     def churn_series(column, labels=None):
         if column not in analysis_data.columns:
@@ -760,11 +769,152 @@ def api_predict():
         return jsonify({"success": False, "error": str(e)}), 400
 
 
+@app.route("/api/upload_preview", methods=["POST"])
+@login_required
+@admin_required
+def api_upload_preview():
+    """
+    Reads uploaded dataset, extracts headers & preview rows,
+    and performs fuzzy auto-mapping against canonical features.
+    """
+    try:
+        if "dataset" not in request.files:
+            return jsonify({"success": False, "error": "No file uploaded. Please select a CSV or XLSX file."}), 400
+
+        file = request.files["dataset"]
+        if file.filename == "":
+            return jsonify({"success": False, "error": "No file selected."}), 400
+
+        filename = file.filename.lower()
+        ext = os.path.splitext(filename)[1]
+        if ext not in [".csv", ".xlsx", ".xls"]:
+            return jsonify({"success": False, "error": "Unsupported file format. Please upload .csv, .xlsx, or .xls"}), 400
+
+        temp_file_id = str(uuid.uuid4())
+        saved_filename = f"{temp_file_id}{ext}"
+        saved_path = os.path.join(UPLOAD_FOLDER, saved_filename)
+        file.save(saved_path)
+
+        # Parse file into DataFrame
+        try:
+            if ext == ".csv":
+                try:
+                    df = pd.read_csv(saved_path)
+                except UnicodeDecodeError:
+                    df = pd.read_csv(saved_path, encoding="latin1")
+            else:
+                df = pd.read_excel(saved_path)
+        except Exception as read_err:
+            return jsonify({"success": False, "error": f"Failed to parse dataset: {str(read_err)}"}), 400
+
+        if df.empty:
+            return jsonify({"success": False, "error": "The uploaded dataset contains 0 customer records."}), 400
+
+        user_columns = [str(c).strip() for c in df.columns]
+        # Match against canonical targets
+        match_result = schema_mapper.fuzzy_match_columns(user_columns)
+
+        # First 5 preview rows formatted safely for JSON serialization
+        preview_sample = df.head(5).copy()
+        preview_sample = preview_sample.where(pd.notnull(preview_sample), None)
+        preview_records = preview_sample.to_dict(orient="records")
+
+        return jsonify({
+            "success": True,
+            "temp_file_id": temp_file_id,
+            "filename": file.filename,
+            "row_count": len(df),
+            "columns": user_columns,
+            "preview": preview_records,
+            "suggested_mapping": match_result["mapped"],
+            "confidence_scores": match_result.get("confidence", {}),
+            "match_details": match_result.get("matches", {}),
+            "unmapped_targets": match_result.get("unmapped_targets", []),
+            "canonical_features": schema_mapper.CANONICAL_TARGET_FEATURES,
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/process_mapped_dataset", methods=["POST"])
+@login_required
+@admin_required
+def api_process_mapped_dataset():
+    """
+    Applies custom or auto schema mapping to uploaded dataset,
+    runs model predictions, updates executive store, and returns summary.
+    """
+    try:
+        payload = request.get_json() or {}
+        temp_file_id = payload.get("temp_file_id")
+        mapping = payload.get("mapping", {})
+
+        if not temp_file_id:
+            return jsonify({"success": False, "error": "Missing temporary file identifier."}), 400
+
+        # Locate file in UPLOAD_FOLDER
+        found_file = None
+        for fname in os.listdir(UPLOAD_FOLDER):
+            if fname.startswith(temp_file_id):
+                found_file = os.path.join(UPLOAD_FOLDER, fname)
+                break
+
+        if not found_file or not os.path.exists(found_file):
+            return jsonify({"success": False, "error": "Uploaded session file expired or not found. Please re-upload."}), 404
+
+        ext = os.path.splitext(found_file)[1].lower()
+        if ext == ".csv":
+            try:
+                source_df = pd.read_csv(found_file)
+            except UnicodeDecodeError:
+                source_df = pd.read_csv(found_file, encoding="latin1")
+        else:
+            source_df = pd.read_excel(found_file)
+
+        result_df, summary = analyze_customers(source_df, mapping=mapping)
+        os.makedirs("data", exist_ok=True)
+        result_df.to_csv(BULK_RESULTS_PATH, index=False)
+
+        # Sync high-risk accounts to Firestore if active
+        if is_firebase_active:
+            try:
+                high_risk = result_df[result_df["Risk Level"] == "HIGH"].head(10)
+                first_col = list(result_df.columns)[0]
+                for _, hr_row in high_risk.iterrows():
+                    sync_prediction_to_firestore({
+                        "source": "bulk_mapped_upload",
+                        "account_id": str(hr_row.get(first_col, "CUST")),
+                        "prediction": hr_row.get("Prediction", "CUSTOMER WILL CHURN"),
+                        "churn_probability": float(hr_row.get("Churn Probability (%)", 0)),
+                        "risk_level": "HIGH",
+                        "drivers": [hr_row.get("Risk signals", "High churn risk")],
+                        "recommendation": hr_row.get("Recommended action", "Immediate retention intervention"),
+                    })
+            except Exception as fs_err:
+                print(f"[Warning] Firestore bulk sync skipped: {fs_err}")
+
+        total_customers = len(result_df)
+        churned_customers = int((result_df["Prediction"] == "CUSTOMER WILL CHURN").sum())
+        churn_rate = round((churned_customers / total_customers) * 100, 2) if total_customers else 0
+
+        return jsonify({
+            "success": True,
+            "summary": summary,
+            "total_records": total_customers,
+            "churn_count": churned_customers,
+            "stay_count": total_customers - churned_customers,
+            "churn_rate": churn_rate,
+            "firebase_synced": is_firebase_active,
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
 @app.route("/api/bulk_predict", methods=["POST"])
 @login_required
 @admin_required
 def api_bulk_predict():
-    """Upload dataset & re-run batch scoring."""
+    """Upload dataset & re-run batch scoring with automatic schema mapper fallback."""
     try:
         if "dataset" not in request.files:
             return jsonify({"success": False, "error": "No file uploaded. Please select a CSV or XLSX file."}), 400
@@ -775,7 +925,11 @@ def api_bulk_predict():
 
         filename = file.filename.lower()
         if filename.endswith(".csv"):
-            uploaded_df = pd.read_csv(file)
+            try:
+                uploaded_df = pd.read_csv(file)
+            except UnicodeDecodeError:
+                file.seek(0)
+                uploaded_df = pd.read_csv(file, encoding="latin1")
         elif filename.endswith(".xlsx") or filename.endswith(".xls"):
             uploaded_df = pd.read_excel(file)
         else:
@@ -791,36 +945,20 @@ def api_bulk_predict():
 
 
 @app.route("/api/sample_csv", methods=["GET"])
+@app.route("/api/sample_csv/<domain>", methods=["GET"])
 @login_required
-def api_sample_csv():
-    """Generates a downloadable sample CSV template for users."""
-    sample_df = pd.DataFrame([{
-        "State": "KS",
-        "Account length": 128,
-        "Area code": 415,
-        "International plan": "no",
-        "Voice mail plan": "yes",
-        "Number vmail messages": 25,
-        "Total day minutes": 265.1,
-        "Total day calls": 110,
-        "Total day charge": 45.07,
-        "Total eve minutes": 197.4,
-        "Total eve calls": 99,
-        "Total eve charge": 16.78,
-        "Total night minutes": 244.7,
-        "Total night calls": 91,
-        "Total night charge": 11.01,
-        "Total intl minutes": 10.0,
-        "Total intl calls": 3,
-        "Total intl charge": 2.70,
-        "Customer service calls": 1
-    }])
-    output = io.StringIO()
-    sample_df.to_csv(output, index=False)
+def api_sample_csv(domain="telecom"):
+    """
+    Generates downloadable sample CSV templates across business domains:
+    telecom, ecommerce, saas, banking, retail.
+    """
+    domain_req = request.args.get("domain", domain).strip().lower()
+    csv_content = schema_mapper.generate_sample_domain_csv(domain_req)
+    filename = f"sample_{domain_req}_customer_churn_dataset.csv"
     return Response(
-        output.getvalue(),
+        csv_content,
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=sample_customer_churn_dataset.csv"}
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
 
 
