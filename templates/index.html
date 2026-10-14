@@ -45,6 +45,31 @@
         </div>
     </div>
 
+    <!-- Batch Processing Step-Indicator Component -->
+    <div class="light-stepper-card">
+        <a href="{{ url_for('bulk') }}" class="light-step-item active">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 1</span>
+                <span class="step-title">Upload Dataset</span>
+            </div>
+        </a>
+        <a href="{{ url_for('bulk') }}" class="light-step-item">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 2</span>
+                <span class="step-title">Map Columns</span>
+            </div>
+        </a>
+        <a href="{{ url_for('bulk') }}" class="light-step-item">
+            <div class="step-badge">3</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 3</span>
+                <span class="step-title">Churn Insights</span>
+            </div>
+        </a>
+    </div>
+
     <!-- 5-KPI Summary Cards Ribbon -->
     <div class="grid-5" style="margin-bottom: 2rem;">
         <div class="card kpi-card">

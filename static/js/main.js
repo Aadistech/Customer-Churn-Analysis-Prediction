@@ -793,31 +793,45 @@ window.switchWizardStep = function(step) {
     return;
   }
 
+  // Helper to update stepper node class & badge text
+  function updateStepNode(node, stepNum, state) {
+    if (!node) return;
+    node.className = ('light-step-item wizard-step-node ' + state).trim();
+    const badge = node.querySelector('.step-badge') || node.querySelector('.step-circle');
+    if (badge) {
+      if (state.includes('completed') && !state.includes('active')) {
+        badge.textContent = '✓';
+      } else {
+        badge.textContent = stepNum;
+      }
+    }
+  }
+
   // Update Containers
   if (step === 1) {
     step1.style.display = 'block';
     if (step2) step2.style.display = 'none';
     if (step3) step3.style.display = 'none';
 
-    if (node1) { node1.className = 'wizard-step-node active'; }
-    if (node2) { node2.className = 'wizard-step-node' + (uploadWizardState.tempFileId ? ' completed' : ''); }
-    if (node3) { node3.className = 'wizard-step-node' + (uploadWizardState.results ? ' completed' : ''); }
+    updateStepNode(node1, 1, 'active');
+    updateStepNode(node2, 2, uploadWizardState.tempFileId ? 'completed' : '');
+    updateStepNode(node3, 3, uploadWizardState.results ? 'completed' : '');
   } else if (step === 2) {
     if (step1) step1.style.display = 'none';
     step2.style.display = 'block';
     if (step3) step3.style.display = 'none';
 
-    if (node1) { node1.className = 'wizard-step-node completed'; }
-    if (node2) { node2.className = 'wizard-step-node active'; }
-    if (node3) { node3.className = 'wizard-step-node' + (uploadWizardState.results ? ' completed' : ''); }
+    updateStepNode(node1, 1, 'completed');
+    updateStepNode(node2, 2, 'active');
+    updateStepNode(node3, 3, uploadWizardState.results ? 'completed' : '');
   } else if (step === 3) {
     if (step1) step1.style.display = 'none';
     if (step2) step2.style.display = 'none';
     step3.style.display = 'block';
 
-    if (node1) { node1.className = 'wizard-step-node completed'; }
-    if (node2) { node2.className = 'wizard-step-node completed'; }
-    if (node3) { node3.className = 'wizard-step-node active completed'; }
+    updateStepNode(node1, 1, 'completed');
+    updateStepNode(node2, 2, 'completed');
+    updateStepNode(node3, 3, 'active');
   }
 };
 

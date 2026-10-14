@@ -1379,85 +1379,159 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* ==========================================================================
-   Universal Dynamic Schema Mapper & Batch Wizard
+   Universal Dynamic Schema Mapper & Batch Wizard - Modern Light Stepper
    ========================================================================== */
-.wizard-progress {
+.light-stepper-card {
+  background-color: #ffffff !important;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  margin-bottom: 2.5rem;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.wizard-progress::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 40px;
-  right: 40px;
-  height: 2px;
-  background: var(--border-color);
-  z-index: 1;
-  transform: translateY(-50%);
-}
-
-.wizard-step-node {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--bg-dark);
-  padding: 0 0.5rem;
-  cursor: pointer;
-}
-
-.step-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--bg-surface);
-  border: 2px solid var(--border-color);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
   transition: all 0.3s ease;
 }
 
-.wizard-step-node.active .step-circle {
-  background: var(--primary);
-  border-color: #818CF8;
-  color: #FFFFFF;
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+.light-step-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 220px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none !important;
+  transition: all 0.25s ease;
+  user-select: none;
 }
 
-.wizard-step-node.completed .step-circle {
-  background: var(--success);
-  border-color: #34D399;
-  color: #FFFFFF;
+.light-step-item:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
-.step-label {
-  font-size: 0.82rem;
+.light-step-item .step-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  background-color: #f1f5f9;
+  color: #64748b;
+  transition: all 0.25s ease;
+}
+
+.light-step-item .step-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.light-step-item .step-tracking {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  line-height: 1.1;
+  margin-bottom: 3px;
+  transition: color 0.25s ease;
+}
+
+.light-step-item .step-title {
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-muted);
-  transition: color 0.3s ease;
+  color: #94a3b8;
+  line-height: 1.2;
   white-space: nowrap;
+  transition: color 0.25s ease;
 }
 
-.wizard-step-node.active .step-label {
-  color: #FFFFFF;
+/* Inactive Hover State */
+.light-step-item:not(.active):not(.completed):hover {
+  background-color: #f8fafc;
 }
 
-.wizard-step-node.completed .step-label {
-  color: var(--success);
+.light-step-item:not(.active):not(.completed):hover .step-badge {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.light-step-item:not(.active):not(.completed):hover .step-title {
+  color: #64748b;
+}
+
+/* Active Step (e.g. Step 1) */
+.light-step-item.active {
+  background-color: #eef2ff !important;
+  border: 1px solid #e0e7ff !important;
+}
+
+.light-step-item.active .step-badge {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+}
+
+.light-step-item.active .step-tracking {
+  color: #4f46e5 !important;
+}
+
+.light-step-item.active .step-title {
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+/* Completed Step State */
+.light-step-item.completed:not(.active) {
+  background-color: #f0fdf4 !important;
+  border: 1px solid #dcfce7 !important;
+}
+
+.light-step-item.completed:not(.active) .step-badge {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.light-step-item.completed:not(.active) .step-tracking {
+  color: #10b981 !important;
+}
+
+.light-step-item.completed:not(.active) .step-title {
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+.light-step-item.completed:hover {
+  background-color: #ecfdf5 !important;
+}
+
+/* Backward compatibility aliases */
+.wizard-progress {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .light-stepper-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .light-step-item {
+    min-width: 100%;
+    padding: 10px 14px;
+  }
 }
 
 /* Domain Template Pills */

@@ -40,19 +40,28 @@
         </div>
     </div>
 
-    <!-- 3-Step Wizard Navigation -->
-    <div class="wizard-progress">
-        <div class="wizard-step-node active" id="wizardNode1" onclick="switchWizardStep(1)">
-            <div class="step-circle" id="circleStep1">1</div>
-            <div class="step-label">1. Upload Dataset</div>
+    <!-- Modern Light-Card Stepper Component -->
+    <div class="light-stepper-card">
+        <div class="light-step-item active wizard-step-node" id="wizardNode1" onclick="switchWizardStep(1)" role="button" tabindex="0">
+            <div class="step-badge" id="circleStep1">1</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 1</span>
+                <span class="step-title">Upload Dataset</span>
+            </div>
         </div>
-        <div class="wizard-step-node" id="wizardNode2" onclick="switchWizardStep(2)">
-            <div class="step-circle" id="circleStep2">2</div>
-            <div class="step-label">2. Map Schema</div>
+        <div class="light-step-item wizard-step-node" id="wizardNode2" onclick="switchWizardStep(2)" role="button" tabindex="0">
+            <div class="step-badge" id="circleStep2">2</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 2</span>
+                <span class="step-title">Map Columns</span>
+            </div>
         </div>
-        <div class="wizard-step-node" id="wizardNode3">
-            <div class="step-circle" id="circleStep3">3</div>
-            <div class="step-label">3. Scored Results</div>
+        <div class="light-step-item wizard-step-node" id="wizardNode3" onclick="switchWizardStep(3)" role="button" tabindex="0">
+            <div class="step-badge" id="circleStep3">3</div>
+            <div class="step-content">
+                <span class="step-tracking">STEP 3</span>
+                <span class="step-title">Churn Insights</span>
+            </div>
         </div>
     </div>
 
