@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import datetime
 from flask import has_request_context, session
@@ -12,16 +13,33 @@ except ImportError:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
 
+# Cloud & Local Service Account Credentials Resolution
+firebase_sa_env = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON") or os.environ.get("FIREBASE_CREDENTIALS_JSON")
+
 # Initialize Firebase Admin SDK using Service Account Key
 if firebase_admin and not firebase_admin._apps:
     try:
-        if os.path.exists(KEY_PATH):
+        if firebase_sa_env:
+            stripped = firebase_sa_env.strip()
+            if stripped.startswith("{") and stripped.endswith("}"):
+                cert_dict = json.loads(stripped)
+                cred = credentials.Certificate(cert_dict)
+                firebase_admin.initialize_app(cred)
+                print("[Firebase Admin SDK] Connected via FIREBASE_SERVICE_ACCOUNT_JSON environment variable")
+            elif os.path.exists(stripped):
+                cred = credentials.Certificate(stripped)
+                firebase_admin.initialize_app(cred)
+                print(f"[Firebase Admin SDK] Connected via credential file path: {stripped}")
+            else:
+                firebase_admin.initialize_app()
+                print("[Firebase Admin SDK] Initialized default credentials")
+        elif os.path.exists(KEY_PATH):
             cred = credentials.Certificate(KEY_PATH)
             firebase_admin.initialize_app(cred)
             print(f"[Firebase Admin SDK] Connected to Firebase Console via {KEY_PATH}")
         else:
             firebase_admin.initialize_app()
-            print("[Firebase Admin SDK] Initialized default app")
+            print("[Firebase Admin SDK] Initialized default app (no local key file found)")
     except Exception as e:
         print("[Firebase Admin SDK Notice]:", e)
 

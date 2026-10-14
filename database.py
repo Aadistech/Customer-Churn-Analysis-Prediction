@@ -7,25 +7,50 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # MYSQL & SQLALCHEMY DATABASE LAYER FOR CUSTOMER CHURN SYSTEM
 # ============================================================
 
-# Database Connection URI (MySQL / MariaDB with automatic SQLite fallback)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+SQLITE_PATH = os.path.join(DATA_DIR, "customer_churn.db")
+SQLITE_URI = f"sqlite:///{SQLITE_PATH}"
+
+# Database Connection URI Resolution (DATABASE_URL / MySQL / SQLite fallback)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    # SQLAlchemy 1.4+ compatibility for PostgreSQL URLs
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 MYSQL_USER = os.environ.get("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "root123")
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
 MYSQL_PORT = os.environ.get("MYSQL_PORT", "3306")
 MYSQL_DB = os.environ.get("MYSQL_DB", "customer_churn_db")
-
 MYSQL_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
-SQLITE_URI = "sqlite:///data/customer_churn.db"
 
-# Attempt MySQL connection first, fallback to SQLite if local MySQL is offline
-try:
-    engine = create_engine(MYSQL_URI, pool_pre_ping=True, connect_args={"connect_timeout": 3})
-    # Test connection
-    with engine.connect() as conn:
-        print(f"[OK] Connected to MySQL Database: {MYSQL_DB} on {MYSQL_HOST}")
-    db_type = "MySQL"
-except Exception as e:
-    print(f"[INFO] MySQL server not reachable on {MYSQL_HOST}:{MYSQL_PORT}. Falling back to SQLite database ({SQLITE_URI}).")
+engine = None
+db_type = "SQLite"
+
+# 1. Try cloud DATABASE_URL if provided
+if DATABASE_URL:
+    try:
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+        with engine.connect() as conn:
+            print("[OK] Connected to Cloud Database via DATABASE_URL")
+        db_type = "CloudSQL/Postgres"
+    except Exception as e:
+        print(f"[INFO] Cloud DATABASE_URL connection failed ({e}). Checking alternatives...")
+
+# 2. Try MySQL if configured
+if engine is None and (os.environ.get("MYSQL_HOST") or os.environ.get("MYSQL_USER")):
+    try:
+        engine = create_engine(MYSQL_URI, pool_pre_ping=True, connect_args={"connect_timeout": 3})
+        with engine.connect() as conn:
+            print(f"[OK] Connected to MySQL Database: {MYSQL_DB} on {MYSQL_HOST}")
+        db_type = "MySQL"
+    except Exception as e:
+        print(f"[INFO] MySQL server not reachable on {MYSQL_HOST}:{MYSQL_PORT}. Falling back...")
+
+# 3. Robust SQLite fallback
+if engine is None:
     engine = create_engine(SQLITE_URI, connect_args={"check_same_thread": False})
     db_type = "SQLite"
 
@@ -92,7 +117,7 @@ class ModelRetrainLog(Base):
 
 
 # Create all Database Tables
-os.makedirs("data", exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 Base.metadata.create_all(bind=engine)
 print(f"[OK] Database Schema initialized successfully via {db_type}!")
 

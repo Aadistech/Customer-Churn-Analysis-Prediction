@@ -30,7 +30,7 @@ def send_login_email_alert(recipient_email, display_name, login_time="Just Now",
             "rev_at_risk": "$31,395"
         }
 
-    subject = "🛡️ Security & Churn Intelligence Notification - AadiBI"
+    subject = "[AadiBI] Security & Churn Intelligence Notification"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -104,7 +104,7 @@ def send_login_email_alert(recipient_email, display_name, login_time="Just Now",
 
     # Fallback / Simulated Delivery Log (Guarantees app functionality without requiring manual SMTP setup)
     print("\n==================================================================")
-    print(f"📧 AUTOMATED EMAIL ALERT DISPATCHED TO: {recipient_email}")
+    print(f"[EMAIL SERVICE] AUTOMATED EMAIL ALERT DISPATCHED TO: {recipient_email}")
     print(f"   Subject: {subject}")
     print(f"   Recipient: {display_name} <{recipient_email}>")
     print(f"   Direct Dashboard Link: http://localhost:5000/dashboard")

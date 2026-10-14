@@ -76,11 +76,14 @@ def admin_required(view):
 # ============================================================
 # LOAD MODEL & DATASETS
 # ============================================================
-MODEL_PATH = os.path.join("models", "random_forest_model.pkl")
-CLEANED_DATA_PATH = os.path.join("data", "cleaned_customer_churn.csv")
-RAW_DATA_PATH = os.path.join("data", "customer_churn.csv")
-BULK_RESULTS_PATH = os.path.join("data", "bulk_prediction_results.csv")
-UPLOAD_FOLDER = os.path.join("data", "uploads")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "random_forest_model.pkl")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+CLEANED_DATA_PATH = os.path.join(DATA_DIR, "cleaned_customer_churn.csv")
+RAW_DATA_PATH = os.path.join(DATA_DIR, "customer_churn.csv")
+BULK_RESULTS_PATH = os.path.join(DATA_DIR, "bulk_prediction_results.csv")
+UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 try:
@@ -430,12 +433,15 @@ def login():
                 display_name=username.capitalize()
             )
 
-            # Dispatch Email Alert
-            send_login_email_alert(
-                recipient_email=session["user_email"],
-                display_name=username.capitalize(),
-                login_time=datetime.now().strftime("%b %d, %Y %I:%M %p")
-            )
+            # Dispatch Email Alert (Non-blocking safeguard)
+            try:
+                send_login_email_alert(
+                    recipient_email=session["user_email"],
+                    display_name=username.capitalize(),
+                    login_time=datetime.now().strftime("%b %d, %Y %I:%M %p")
+                )
+            except Exception as mail_err:
+                print(f"[Email Dispatch Warning]: {mail_err}")
 
             flash(f"Welcome back, {username.capitalize()}! Email notification dispatched to {session['user_email']}", "success")
             return redirect(url_for("dashboard"))
@@ -1311,9 +1317,12 @@ def api_simulate():
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1")
     print("\n=======================================================")
-    print("🚀 AadiBI Customer Churn Intelligence System Started!")
-    print(f"   Firebase Status: {'Connected 🔥' if is_firebase_active else 'Offline'}")
-    print("   Access Dashboard: http://127.0.0.1:5000")
+    print("[START] AadiBI Customer Churn Intelligence System Started!")
+    print(f"   Firebase Status: {'Connected' if is_firebase_active else 'Offline'}")
+    print(f"   Mode: {'Debug' if debug else 'Production'}")
+    print(f"   Access Dashboard: http://0.0.0.0:{port}")
     print("=======================================================\n")
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=port, debug=debug)

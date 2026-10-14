@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: customer-churn-intelligence
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: FIREBASE_PROJECT_ID
+        value: customer-churn-analysis-c3be6
