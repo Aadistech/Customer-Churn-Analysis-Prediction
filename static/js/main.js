@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize Model Retrain Action Handler
   initModelRetrainHandler();
+
+  // Initialize Global Interactive Graph Zoom & Lightbox Inspector
+  initGraphZoomViewer();
 });
 
 /* ============================================================
@@ -1314,4 +1317,186 @@ function showToast(message, type = 'info') {
     toast.style.transform = 'translateY(10px)';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
+}
+
+/* ==========================================================================
+   Interactive Graph Zoom & Lightbox System
+   ========================================================================== */
+function initGraphZoomViewer() {
+  const modal = document.getElementById('graphZoomModal');
+  const backdrop = document.getElementById('graphZoomBackdrop');
+  const closeBtn = document.getElementById('btnGraphZoomClose');
+  const imgElement = document.getElementById('graphZoomImage');
+  const titleElement = document.getElementById('graphZoomTitle');
+  const levelElement = document.getElementById('graphZoomLevel');
+  const wrapper = document.getElementById('graphZoomWrapper');
+  const viewport = document.getElementById('graphZoomViewport');
+  const btnZoomIn = document.getElementById('btnGraphZoomIn');
+  const btnZoomOut = document.getElementById('btnGraphZoomOut');
+  const btnReset = document.getElementById('btnGraphZoomReset');
+  const btnDownload = document.getElementById('btnGraphZoomDownload');
+
+  if (!modal || !imgElement || !viewport || !wrapper) return;
+
+  let scale = 1.0;
+  let translateX = 0;
+  let translateY = 0;
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+
+  function updateTransform() {
+    if (scale <= 1.0) {
+      translateX = 0;
+      translateY = 0;
+      wrapper.style.cursor = 'zoom-in';
+    } else {
+      wrapper.style.cursor = isDragging ? 'grabbing' : 'grab';
+    }
+    wrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    if (levelElement) {
+      levelElement.textContent = `${Math.round(scale * 100)}%`;
+    }
+  }
+
+  function setScale(newScale) {
+    scale = Math.max(0.5, Math.min(4.0, Math.round(newScale * 100) / 100));
+    updateTransform();
+  }
+
+  function resetZoom() {
+    scale = 1.0;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  }
+
+  window.openGraphZoom = function(src, title) {
+    if (!src) return;
+    imgElement.src = src;
+    if (titleElement) titleElement.textContent = title || 'Graph Visualization';
+    if (btnDownload) {
+      btnDownload.href = src;
+      const filename = (title || 'graph').toLowerCase().replace(/[^a-z0-9]/g, '_') + '.png';
+      btnDownload.setAttribute('download', filename);
+    }
+    resetZoom();
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeGraphZoom = function() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setTimeout(resetZoom, 200);
+  };
+
+  // Close handlers
+  if (closeBtn) closeBtn.addEventListener('click', window.closeGraphZoom);
+  if (backdrop) backdrop.addEventListener('click', window.closeGraphZoom);
+
+  // Zoom control buttons
+  if (btnZoomIn) {
+    btnZoomIn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setScale(scale + 0.25);
+    });
+  }
+  if (btnZoomOut) {
+    btnZoomOut.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setScale(scale - 0.25);
+    });
+  }
+  if (btnReset) {
+    btnReset.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetZoom();
+    });
+  }
+
+  // Mouse wheel zoom
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 0.15 : -0.15;
+    setScale(scale + zoomFactor);
+  }, { passive: false });
+
+  // Drag & pan interactions when zoomed
+  wrapper.addEventListener('mousedown', (e) => {
+    if (scale <= 1.0) return;
+    isDragging = true;
+    dragStartX = e.clientX - translateX;
+    dragStartY = e.clientY - translateY;
+    wrapper.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    translateX = e.clientX - dragStartX;
+    translateY = e.clientY - dragStartY;
+    updateTransform();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      updateTransform();
+    }
+  });
+
+  // Double click toggles 1x and 2x zoom
+  wrapper.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if (scale > 1.0) {
+      resetZoom();
+    } else {
+      setScale(2.0);
+    }
+  });
+
+  // Keyboard navigation
+  window.addEventListener('keydown', (e) => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape') {
+      window.closeGraphZoom();
+    } else if (e.key === '+' || e.key === '=') {
+      setScale(scale + 0.25);
+    } else if (e.key === '-' || e.key === '_') {
+      setScale(scale - 0.25);
+    } else if (e.key === '0') {
+      resetZoom();
+    }
+  });
+
+  // Auto-bind click to all zoomable images & containers across the app
+  document.querySelectorAll('.zoom-img-container, .zoomable-graph-img, [data-zoomable="true"]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const img = el.tagName === 'IMG' ? el : el.querySelector('img');
+      if (img && img.src) {
+        const title = el.getAttribute('data-graph-title') || img.alt || img.title || 'Graph Plot';
+        openGraphZoom(img.src, title);
+      }
+    });
+  });
+
+  // Also support clicking Chart.js canvas charts to inspect in high resolution
+  document.querySelectorAll('.chart-card canvas, canvas.zoomable-canvas').forEach(canvas => {
+    canvas.style.cursor = 'zoom-in';
+    canvas.title = 'Click to expand & zoom graph';
+    canvas.addEventListener('click', () => {
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const parentCard = canvas.closest('.card');
+        const titleEl = parentCard ? parentCard.querySelector('.section-title, h3, h4') : null;
+        const title = titleEl ? titleEl.textContent.trim() : 'Analytics Chart';
+        openGraphZoom(dataUrl, title);
+      } catch (err) {
+        console.warn('Could not export canvas to image:', err);
+      }
+    });
+  });
 }

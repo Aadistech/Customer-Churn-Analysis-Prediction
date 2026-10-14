@@ -234,21 +234,36 @@
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
             <!-- Confusion Matrix Plot -->
-            <div class="card-sub-box" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+            <div class="card-sub-box zoomable-graph-card" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
                 <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.75rem;">1. Confusion Matrix Heatmap</h4>
-                <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion Matrix" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                <div class="zoom-img-container" data-graph-title="1. Model Confusion Matrix Heatmap">
+                    <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion Matrix" class="zoomable-graph-img" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                    <div class="zoom-badge-overlay">
+                        <span>🔍 Click to expand & zoom</span>
+                    </div>
+                </div>
             </div>
 
             <!-- ROC Curve Plot -->
-            <div class="card-sub-box" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+            <div class="card-sub-box zoomable-graph-card" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
                 <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.75rem;">2. Receiver Operating Characteristic (ROC)</h4>
-                <img src="{{ url_for('static', filename='images/roc_curve.png') }}" alt="ROC Curve" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                <div class="zoom-img-container" data-graph-title="2. Receiver Operating Characteristic (ROC Curve)">
+                    <img src="{{ url_for('static', filename='images/roc_curve.png') }}" alt="ROC Curve" class="zoomable-graph-img" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                    <div class="zoom-badge-overlay">
+                        <span>🔍 Click to expand & zoom</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Feature Importance Plot -->
-            <div class="card-sub-box" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+            <div class="card-sub-box zoomable-graph-card" style="padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
                 <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.75rem;">3. Feature Importance Bar Chart</h4>
-                <img src="{{ url_for('static', filename='images/feature_importance.png') }}" alt="Feature Importance" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                <div class="zoom-img-container" data-graph-title="3. Feature Importance Bar Chart">
+                    <img src="{{ url_for('static', filename='images/feature_importance.png') }}" alt="Feature Importance" class="zoomable-graph-img" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px;">
+                    <div class="zoom-badge-overlay">
+                        <span>🔍 Click to expand & zoom</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
