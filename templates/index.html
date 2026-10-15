@@ -40,10 +40,10 @@
             <div class="revenue-metric-box">
                 <div class="revenue-metric-label">Revenue Protection Metric</div>
                 <div class="revenue-metric-value mono">
-                    {{ "$" if domain_key in ['ecommerce', 'saas', 'banking'] else "₹" }}{{ "{:,.2f}".format(est_rev_at_risk) if domain_key in ['ecommerce', 'saas', 'banking'] else "{:,}".format(est_rev_at_risk|int) }}
+                    ₹{{ "{:,}".format(est_rev_at_risk|int) }}
                 </div>
                 <div class="revenue-metric-subtext">
-                    {{ 'Estimated Revenue Loss at Risk' if domain_key == 'ecommerce' else ('Estimated Annual ARR at Risk' if domain_key == 'saas' else ('Estimated Balance Margin at Risk' if domain_key == 'banking' else 'Estimated Monthly ARR at Risk')) }}
+                    {{ 'Estimated Revenue Loss at Risk (₹ INR)' if domain_key == 'ecommerce' else ('Estimated Annual ARR at Risk (₹ INR)' if domain_key == 'saas' else ('Estimated Balance Margin at Risk (₹ INR)' if domain_key == 'banking' else 'Estimated Monthly ARR at Risk (₹ INR)')) }}
                 </div>
             </div>
         </div>
@@ -60,7 +60,10 @@
         </div>
         
         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-right: 0.25rem;">Switch Dataset:</span>
+            <span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                🇮🇳 Converted to INR (₹83/USD)
+            </span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-left: 0.25rem;">Switch:</span>
             <a href="{{ url_for('api_switch_dataset', domain='ecommerce') }}" class="btn btn-sm {% if domain_key == 'ecommerce' %}btn-primary{% else %}btn-outline{% endif %}" style="display: inline-flex; align-items: center; gap: 0.35rem;">
                 🛒 E-Commerce
             </a>
@@ -364,8 +367,13 @@
                                         {% else %}
                                         <span style="color: var(--text-muted);">{{ val }}</span>
                                         {% endif %}
-                                    {% elif col.prefix == '$' or col.type == 'currency' %}
-                                        <span class="mono">${{ "{:,.2f}".format(val|float) if val is number else val }}</span>
+                                    {% elif col.prefix == '₹' or col.prefix == '$' or col.type == 'currency' or col.type == 'currency_inr' %}
+                                        {% set raw_num = val|float if (val is number or (val is string and val|float != 0)) else 0 %}
+                                        {% set inr_val = raw_num * (83.0 if domain_key in ['ecommerce', 'saas', 'banking'] else 1.0) %}
+                                        <span class="mono" style="font-weight: 700; color: #34D399;">₹{{ "{:,.2f}".format(inr_val) if inr_val < 100000 else "{:,.0f}".format(inr_val) }}</span>
+                                        {% if domain_key in ['ecommerce', 'saas'] and raw_num > 0 %}
+                                        <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">(${{ "{:,.2f}".format(raw_num) }})</span>
+                                        {% endif %}
                                     {% else %}
                                         {{ val }}{{ col.suffix or '' }}
                                     {% endif %}
@@ -444,7 +452,7 @@
                     <strong id="drawerTenure" style="color: var(--text-main);">128 months</strong>
                 </div>
                 <div>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">International Plan</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Plan / Membership</span>
                     <strong id="drawerIntlPlan" style="color: var(--text-main);">No</strong>
                 </div>
                 <div>

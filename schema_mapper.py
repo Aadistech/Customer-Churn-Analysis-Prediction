@@ -268,6 +268,9 @@ CANONICAL_TARGET_FEATURES = {
 # EXPLICIT DOMAIN PROFILES & METADATA
 # ==============================================================================
 
+# Exchange Rate: 1 USD to INR (Standard calibration rate for Dollar to Rupee conversion)
+USD_TO_INR_RATE = 83.0
+
 DOMAIN_PROFILES = {
     "ecommerce": {
         "key": "ecommerce",
@@ -309,10 +312,10 @@ DOMAIN_PROFILES = {
             {"key": "vip_member", "label": "VIP Member", "type": "vip_pill"},
             {"key": "support_tickets", "label": "Support Tickets", "type": "tickets"},
             {"key": "order_count", "label": "Orders", "suffix": " orders"},
-            {"key": "monthly_spend", "label": "Monthly Spend", "prefix": "$"},
+            {"key": "monthly_spend", "label": "Monthly Spend", "prefix": "₹", "type": "currency_inr"},
         ],
         "insight_key": "Support ticket volume & customer service friction are the primary drivers of customer drop-off. Customers lodging 4+ tickets demonstrate an acute >65% churn probability.",
-        "risk_action": "Deploy targeted loyalty perks, expedited support resolution, and $15 checkout voucher codes to high-risk shoppers."
+        "risk_action": "Deploy targeted loyalty perks, expedited support resolution, and ₹1,250 checkout voucher credits to high-risk shoppers."
     },
     "saas": {
         "key": "saas",
@@ -352,14 +355,14 @@ DOMAIN_PROFILES = {
             {"key": "account_id", "label": "Account ID", "type": "mono"},
             {"key": "tier", "label": "Tier", "type": "badge"},
             {"key": "contract_type", "label": "Contract", "type": "badge"},
-            {"key": "monthly_recurring_revenue_mrr", "label": "MRR", "prefix": "$"},
+            {"key": "monthly_recurring_revenue_mrr", "label": "MRR", "prefix": "₹", "type": "currency_inr"},
             {"key": "active_users_count", "label": "Seats", "suffix": " seats"},
             {"key": "support_tickets_opened", "label": "Tickets", "type": "tickets"},
             {"key": "feature_usage_score", "label": "Usage Score", "suffix": "/100"},
             {"key": "days_since_last_login", "label": "Days Inactive", "suffix": " d"},
         ],
         "insight_key": "Unresolved support tickets combined with falling feature usage scores predict 72% of monthly churn events. Annual contracts exhibit 4x higher retention than monthly subscriptions.",
-        "risk_action": "Engage Customer Success managers for accounts with inactivity >14 days; offer 20% annual contract renewal incentives."
+        "risk_action": "Engage Customer Success managers for accounts with inactivity >14 days; offer ₹8,500 annual contract renewal incentives."
     },
     "banking": {
         "key": "banking",
@@ -400,13 +403,13 @@ DOMAIN_PROFILES = {
             {"key": "credit_score", "label": "Credit Score", "type": "mono"},
             {"key": "age", "label": "Age", "suffix": " yrs"},
             {"key": "tenure_years", "label": "Tenure", "suffix": " yrs"},
-            {"key": "account_balance", "label": "Balance", "prefix": "$", "type": "currency"},
+            {"key": "account_balance", "label": "Balance", "prefix": "₹", "type": "currency_inr"},
             {"key": "num_of_products", "label": "Products", "suffix": " prods"},
             {"key": "is_active_member", "label": "Active Member", "type": "bool_pill"},
             {"key": "has_credit_card", "label": "Credit Card", "type": "bool_pill"},
         ],
         "insight_key": "Clients with single accounts or inactive member status represent the primary defection risk. Multi-product banking relationships (2 products) demonstrate the lowest churn.",
-        "risk_action": "Trigger automated high-yield deposit promotion and cross-sell premium card perks to single-product depositors."
+        "risk_action": "Trigger automated high-yield deposit promotion and cross-sell premium card perks with ₹2,500 welcome bonus."
     },
     "telecom": {
         "key": "telecom",
@@ -441,7 +444,7 @@ DOMAIN_PROFILES = {
             {"key": "intl_plan", "label": "Intl Plan", "type": "bool_pill"},
             {"key": "service_calls", "label": "Svc Calls", "type": "tickets"},
             {"key": "day_minutes", "label": "Day Mins", "suffix": " m"},
-            {"key": "day_charge", "label": "Day Charge", "prefix": "$"},
+            {"key": "day_charge", "label": "Day Charge", "prefix": "₹", "type": "currency_inr"},
         ],
         "insight_key": "Customer service calls are the single strongest predictor of churn. Accounts making 4 or more service calls exhibit a 60%+ churn probability regardless of tenure.",
         "risk_action": "Immediate outreach required for accounts with >= 3 customer service calls. Deploy 15% rate credit & VIP care manager."
@@ -738,21 +741,23 @@ def calculate_domain_analytics(
     low_risk_count = int((risk_levels == "LOW").sum())
     high_risk_rate = round((high_risk_count / total_customers) * 100, 2) if total_customers > 0 else 0.0
 
-    # Domain-aware Revenue at Risk
+    # Domain-aware Revenue at Risk (Calibrated in INR ₹)
     if domain_key == "ecommerce":
         spend_col = profile["mapping"].get("Total day charge", "monthly_spend")
         avg_spend = float(source_df[spend_col].mean()) if spend_col in source_df else 45.0
-        est_rev_at_risk = round(churned_customers * avg_spend * 3, 2)  # 3-month LTV loss
+        # Convert Dollar spend to INR using USD_TO_INR_RATE (83.0)
+        est_rev_at_risk = round(churned_customers * (avg_spend * USD_TO_INR_RATE) * 3, 2)  # 3-month LTV loss in INR
     elif domain_key == "saas":
         mrr_col = profile["mapping"].get("Total day charge", "monthly_recurring_revenue_mrr")
         total_mrr = float(source_df[mrr_col].sum()) if mrr_col in source_df else churned_customers * 79.0
-        est_rev_at_risk = round(total_mrr * (churn_rate / 100.0) * 12, 2)  # Annual ARR loss
+        # Convert Dollar MRR to INR using USD_TO_INR_RATE (83.0)
+        est_rev_at_risk = round((total_mrr * USD_TO_INR_RATE) * (churn_rate / 100.0) * 12, 2)  # Annual ARR loss in INR
     elif domain_key == "banking":
         bal_col = profile["mapping"].get("Total day charge", "account_balance")
         avg_bal = float(source_df[bal_col].mean()) if bal_col in source_df else 40000.0
-        est_rev_at_risk = round(churned_customers * (avg_bal * 0.04), 2)  # Net interest margin at risk
+        est_rev_at_risk = round(churned_customers * (avg_bal * 0.04) * USD_TO_INR_RATE, 2)  # Net interest margin in INR
     else:
-        est_rev_at_risk = churned_customers * 5400.0
+        est_rev_at_risk = churned_customers * 5400.0  # Telecom already calibrated in INR ₹
 
     # -------------------------------------------------------------------------
     # CHART 1: Customer Retention Breakdown (Doughnut)
@@ -882,27 +887,31 @@ def calculate_domain_analytics(
         risk = str(risk_levels[idx])
         pred_label = "CHURN" if predictions[idx] == 1 else "STAY"
 
-        # Generate domain-specific signals & action
+        # Generate domain-specific signals & action (with INR currency calibration)
         if domain_key == "ecommerce":
             tickets = int(row.get("support_tickets", 0))
             spend = float(row.get("monthly_spend", 0.0))
+            spend_inr = round(spend * USD_TO_INR_RATE, 2)
             is_vip = str(row.get("vip_member", "no")).lower() in {"yes", "1", "true"}
             signals = []
             if tickets >= 4: signals.append(f"Frequent support tickets ({tickets} issues)")
             elif tickets >= 2: signals.append(f"Recent ticket inquiry ({tickets} calls)")
-            if spend > 50: signals.append(f"High monthly spend (${spend:.1f})")
+            if spend > 50: signals.append(f"High spend (₹{spend_inr:,.0f} / ${spend:.1f})")
             if is_vip: signals.append("VIP Member")
             sig_text = "; ".join(signals) if signals else "Stable shopping pattern"
-            act_text = "Deploy VIP discount & concierge check-in" if prob >= 70 else ("Send loyalty coupon voucher" if prob >= 40 else "Standard catalog updates")
+            act_text = "Deploy VIP discount & concierge check-in" if prob >= 70 else ("Send ₹1,250 loyalty coupon voucher" if prob >= 40 else "Standard catalog updates")
 
         elif domain_key == "saas":
             tickets = int(row.get("support_tickets_opened", 0))
             usage = int(row.get("feature_usage_score", 50))
             days_off = int(row.get("days_since_last_login", 0))
+            mrr = float(row.get("monthly_recurring_revenue_mrr", 0.0))
+            mrr_inr = round(mrr * USD_TO_INR_RATE, 2)
             signals = []
             if tickets >= 4: signals.append(f"Critical tickets open ({tickets})")
             if days_off > 14: signals.append(f"Inactive for {days_off} days")
             if usage < 30: signals.append(f"Low feature usage ({usage}/100)")
+            if mrr >= 100: signals.append(f"High Tier MRR (₹{mrr_inr:,.0f})")
             sig_text = "; ".join(signals) if signals else "Active subscription usage"
             act_text = "Schedule proactive CSM rescue call" if prob >= 70 else ("Send product feature training guide" if prob >= 40 else "Regular product release notes")
 
@@ -910,11 +919,12 @@ def calculate_domain_analytics(
             prods = int(row.get("num_of_products", 1))
             active = int(row.get("is_active_member", 1)) == 1
             bal = float(row.get("account_balance", 0.0))
+            bal_inr = round(bal * USD_TO_INR_RATE, 2)
             signals = []
             if prods in (3, 4): signals.append(f"Multi-product complexity ({prods} prods)")
             elif prods == 1: signals.append("Single product relationship")
             if not active: signals.append("Inactive member status")
-            if bal > 100000: signals.append(f"High balance portfolio (${bal:,.0f})")
+            if bal > 100000: signals.append(f"High balance portfolio (₹{bal_inr:,.0f})")
             sig_text = "; ".join(signals) if signals else "Standard banking relationship"
             act_text = "Offer relationship manager & rate incentive" if prob >= 70 else ("Cross-sell secondary card perk" if prob >= 40 else "Standard quarterly statement")
 
@@ -976,6 +986,8 @@ def calculate_domain_analytics(
         "low_risk_customers": low_risk_count,
         "high_risk_rate": high_risk_rate,
         "est_rev_at_risk": est_rev_at_risk,
+        "usd_to_inr_rate": USD_TO_INR_RATE,
+        "currency_symbol": "₹",
         "table_columns": profile["table_columns"],
         "table_data": table_rows,
         "results": table_rows,
