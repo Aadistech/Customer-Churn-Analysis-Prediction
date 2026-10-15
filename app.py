@@ -77,7 +77,8 @@ def admin_required(view):
 # LOAD MODEL & DATASETS
 # ============================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "random_forest_model.pkl")
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+MODEL_PATH = os.path.join(MODELS_DIR, "random_forest_model.pkl")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 CLEANED_DATA_PATH = os.path.join(DATA_DIR, "cleaned_customer_churn.csv")
@@ -86,8 +87,25 @@ BULK_RESULTS_PATH = os.path.join(DATA_DIR, "bulk_prediction_results.csv")
 UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+DOMAIN_MODELS = {}
+for d_key in ["ecommerce", "saas", "banking", "telecom"]:
+    d_path = os.path.join(MODELS_DIR, f"model_{d_key}.pkl")
+    if os.path.exists(d_path):
+        try:
+            DOMAIN_MODELS[d_key] = joblib.load(d_path)
+            print(f"[OK] {d_key.capitalize()} domain model pipeline loaded.")
+        except Exception as e:
+            print(f"[WARN] Failed to load {d_key} domain model: {e}")
+
 try:
-    model = joblib.load(MODEL_PATH)
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+    else:
+        model = DOMAIN_MODELS.get("telecom")
+
+    if "telecom" not in DOMAIN_MODELS and model is not None:
+        DOMAIN_MODELS["telecom"] = model
+
     df_cleaned = pd.read_csv(CLEANED_DATA_PATH)
     X = df_cleaned.drop("Churn", axis=1, errors="ignore")
     model_features = X.columns.tolist()
@@ -102,122 +120,377 @@ except Exception as e:
 # HELPER INFERENCE & ANALYTICS FUNCTIONS
 # ============================================================
 
-def customer_guidance(customer, churn_probability):
-    """Generate transparent, rule-based risk drivers and retention recommendations."""
-    def numeric(name):
-        return pd.to_numeric(pd.Series([customer.get(name, 0)]), errors="coerce").fillna(0).iloc[0]
+def customer_guidance(customer, churn_probability, domain="telecom"):
+    """Generate transparent, rule-based risk drivers and retention recommendations across multi-domains."""
+    def numeric(name, fallback=0):
+        val = customer.get(name, fallback)
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return float(fallback)
 
     def is_yes(name):
         val = str(customer.get(name, "")).strip().lower()
         return val in {"yes", "1", "true"}
 
+    domain = str(domain).lower()
     drivers = []
-    service_calls = numeric("Customer service calls")
-    day_mins = numeric("Total day minutes")
-    eve_mins = numeric("Total eve minutes")
-    intl_mins = numeric("Total intl minutes")
-    has_intl = is_yes("International plan")
-    has_vmail = is_yes("Voice mail plan")
-    account_len = numeric("Account length")
 
-    if service_calls >= 4:
-        drivers.append("🚨 Frequent customer service calls (≥4 calls)")
-    elif service_calls >= 3:
-        drivers.append("⚠️ Elevated service complaints (3 calls)")
+    if domain == "ecommerce":
+        tickets = numeric("support_tickets")
+        spend = numeric("monthly_spend")
+        orders = numeric("order_count")
+        tenure = numeric("tenure_months")
+        is_vip = is_yes("vip_member")
 
-    if day_mins >= 250:
-        drivers.append("🔥 High daytime usage (≥250 mins)")
-    elif day_mins >= 200:
-        drivers.append("📈 Moderate-high daytime usage")
+        if tickets >= 3:
+            drivers.append("🚨 Frequent customer support complaints (≥3 tickets)")
+        elif tickets == 2:
+            drivers.append("⚠️ Elevated support inquiry count (2 tickets)")
 
-    if has_intl and intl_mins >= 10:
-        drivers.append("🌐 High international plan usage")
-    elif not has_intl and intl_mins >= 10:
-        drivers.append("⚠️ Frequent intl calls without Intl Plan")
+        if orders <= 1:
+            drivers.append("📉 Critical order dormancy (≤1 purchase)")
+        elif orders <= 3:
+            drivers.append("🛒 Low purchase frequency (≤3 orders)")
 
-    if eve_mins >= 280:
-        drivers.append("🌙 High evening billable usage")
+        if tenure <= 3:
+            drivers.append("🆕 Early lifecycle customer (<3 months tenure)")
+        elif tenure >= 24:
+            drivers.append("💎 Long-standing account tenure (>2 years)")
 
-    if account_len <= 12:
-        drivers.append("🆕 New account (<1 year tenure)")
+        if not is_vip:
+            drivers.append("📦 Standard account tier (Non-VIP shopper)")
+        else:
+            drivers.append("⭐ VIP Prime Loyalty member")
 
-    if not has_vmail and service_calls >= 2:
-        drivers.append("📱 No voicemail plan with active service calls")
+        if spend >= 5000:
+            drivers.append("💰 High-spend commercial account")
 
-    if not drivers:
-        drivers.append("✅ Normal customer behavioral indicators")
+        if not drivers:
+            drivers.append("✅ Consistent e-commerce purchasing pattern")
 
-    if churn_probability >= 70:
-        action = "🔥 URGENT: Deploy proactive retention team within 24h. Offer 15% plan discount & priority support."
-    elif churn_probability >= 40:
-        action = "⚠️ MODERATE RISK: Send targeted loyalty perk or free international/data add-on package this week."
-    else:
-        action = "✅ LOW RISK: Maintain standard service, feature announcements, and quarterly check-ins."
+        if churn_probability >= 70:
+            action = "🔥 URGENT: Deploy VIP concierge retention team. Offer 20% cart discount coupon & instant VIP tier upgrade."
+        elif churn_probability >= 40:
+            action = "⚠️ MODERATE RISK: Send targeted re-engagement email with ₹500 store wallet credit and free express shipping."
+        else:
+            action = "✅ LOW RISK: Enroll in seasonal VIP preview sales and early-bird discount perks."
+
+    elif domain == "saas":
+        inactive_days = numeric("days_since_last_login")
+        usage_score = numeric("feature_usage_score")
+        tickets = numeric("support_tickets_opened")
+        tier = str(customer.get("tier", "")).strip().lower()
+        contract = str(customer.get("contract_type", "")).strip().lower()
+
+        if inactive_days >= 14:
+            drivers.append(f"💤 Critical inactivity ({int(inactive_days)} days without login)")
+        elif inactive_days >= 7:
+            drivers.append("⚠️ Declining weekly login frequency")
+
+        if usage_score <= 30:
+            drivers.append(f"📉 Severe feature adoption deficit (Score: {int(usage_score)}/100)")
+        elif usage_score <= 50:
+            drivers.append("📊 Sub-optimal feature utilization (<50 score)")
+
+        if tickets >= 3:
+            drivers.append(f"🚨 Elevated unresolved technical tickets ({int(tickets)} tickets)")
+
+        if contract == "monthly":
+            drivers.append("📅 Monthly renewal commitment friction")
+        elif contract == "annual":
+            drivers.append("🔒 Long-term annual subscription lock-in")
+
+        if tier == "free":
+            drivers.append("⚡ Free tier conversion bottleneck")
+        elif tier == "enterprise":
+            drivers.append("🏢 Enterprise multi-seat account")
+
+        if not drivers:
+            drivers.append("✅ Healthy SaaS platform adoption and user engagement")
+
+        if churn_probability >= 70:
+            action = "🔥 URGENT: Schedule executive Customer Success review. Offer 25% annual lock-in discount and dedicated engineering onboarding."
+        elif churn_probability >= 40:
+            action = "⚠️ MODERATE RISK: Trigger automated in-app guided product tour and offer 1 month free tier upgrade."
+        else:
+            action = "✅ EXPANSION READY: Account engagement is high. Ready for additional seat licenses or enterprise feature upsell."
+
+    elif domain == "banking":
+        credit_score = numeric("credit_score", 650)
+        age = numeric("age", 40)
+        tenure = numeric("tenure_years", 3)
+        balance = numeric("account_balance", 0)
+        num_products = numeric("num_of_products", 1)
+        is_active = is_yes("is_active_member")
+
+        if not is_active:
+            drivers.append("💤 Dormant account status (inactive member)")
+        if credit_score < 600:
+            drivers.append(f"⚠️ Depressed credit score rating ({int(credit_score)})")
+        elif credit_score >= 750:
+            drivers.append("🌟 Prime credit rating (>750 score)")
+
+        if num_products >= 3:
+            drivers.append("💼 Product portfolio dispersion (≥3 products)")
+        elif num_products == 1:
+            drivers.append("⚠️ Single-product account vulnerability")
+
+        if balance == 0:
+            drivers.append("📉 Zero account balance holding")
+        elif balance >= 100000:
+            drivers.append("💰 High-net-worth deposit balance")
+
+        if age >= 55:
+            drivers.append("👥 Senior demographic churn sensitivity")
+        if tenure <= 1:
+            drivers.append("🆕 New banking relationship (<1 year tenure)")
+
+        if not drivers:
+            drivers.append("✅ Well-balanced banking relationship metrics")
+
+        if churn_probability >= 70:
+            action = "🔥 URGENT: Dispatch Senior Relationship Manager. Offer full annual fee waiver and preferential deposit interest rates."
+        elif churn_probability >= 40:
+            action = "⚠️ MODERATE RISK: Offer premium cashback credit card upgrade and complimentary financial planning review."
+        else:
+            action = "✅ LOYAL CLIENT: Introduce tailored wealth management solutions and pre-approved personal credit line."
+
+    else:  # Telecom default
+        service_calls = numeric("Customer service calls")
+        day_mins = numeric("Total day minutes")
+        eve_mins = numeric("Total eve minutes")
+        intl_mins = numeric("Total intl minutes")
+        has_intl = is_yes("International plan")
+        has_vmail = is_yes("Voice mail plan")
+        account_len = numeric("Account length")
+
+        if service_calls >= 4:
+            drivers.append("🚨 Frequent customer service calls (≥4 calls)")
+        elif service_calls >= 3:
+            drivers.append("⚠️ Elevated service complaints (3 calls)")
+
+        if day_mins >= 250:
+            drivers.append("🔥 High daytime usage (≥250 mins)")
+        elif day_mins >= 200:
+            drivers.append("📈 Moderate-high daytime usage")
+
+        if has_intl and intl_mins >= 10:
+            drivers.append("🌐 High international plan usage")
+        elif not has_intl and intl_mins >= 10:
+            drivers.append("⚠️ Frequent intl calls without Intl Plan")
+
+        if eve_mins >= 280:
+            drivers.append("🌙 High evening billable usage")
+
+        if account_len <= 12:
+            drivers.append("🆕 New account (<1 year tenure)")
+
+        if not has_vmail and service_calls >= 2:
+            drivers.append("📱 No voicemail plan with active service calls")
+
+        if not drivers:
+            drivers.append("✅ Normal customer behavioral indicators")
+
+        if churn_probability >= 70:
+            action = "🔥 URGENT: Deploy proactive retention team within 24h. Offer 15% plan discount & priority support."
+        elif churn_probability >= 40:
+            action = "⚠️ MODERATE RISK: Send targeted loyalty perk or free international/data add-on package this week."
+        else:
+            action = "✅ LOW RISK: Maintain standard service, feature announcements, and quarterly check-ins."
 
     return drivers[:3], action
 
 
-def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=15):
-    """Generate personalized AI retention campaign copy and voucher code based on risk signals."""
-    has_svc_calls = any("service" in str(d).lower() for d in drivers)
-    has_high_day = any("daytime" in str(d).lower() or "day" in str(d).lower() for d in drivers)
-    has_intl_issue = any("intl" in str(d).lower() or "international" in str(d).lower() for d in drivers)
-
+def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=15, domain="telecom"):
+    """Generate personalized AI retention campaign copy and voucher code based on risk signals and domain."""
     timestamp_str = datetime.now().strftime("%Y%m")
+    domain = str(domain).lower()
 
-    if has_svc_calls:
-        voucher_code = f"PRIORITY-VIP-{timestamp_str}"
-        title = "VIP Priority Care Pass & Personal Escalation Manager"
-        details = "Priority support call routing with zero wait time + dedicated executive case manager."
-        discount_offer = f"{discount_percent}% Loyalty Discount on monthly bill for 3 cycles"
-        campaign_copy = (
-            f"Subject: Priority Account Care Notice & {discount_percent}% Bill Credit\n\n"
-            f"Dear Subscriber,\n\n"
-            f"We noticed you recently contacted customer support. Your satisfaction is our absolute priority. "
-            f"We have upgraded your account to VIP Priority Support (Voucher: {voucher_code}). "
-            f"You will receive direct access to senior support specialists and a {discount_percent}% credit on your upcoming bills.\n\n"
-            f"Redeem Voucher Code: {voucher_code}\n"
-            f"AadiBI Customer Care Management"
-        )
-    elif has_high_day:
-        voucher_code = f"DAYTIME-SAVER-{discount_percent}"
-        title = "Executive High-Volume Usage Discount Package"
-        details = f"Apply {discount_percent}% rate credit on peak daytime usage charges + free voicemail add-on."
-        discount_offer = f"{discount_percent}% Daytime Minute Bill Credit"
-        campaign_copy = (
-            f"Subject: Special Daytime Saver Offer: Save {discount_percent}% on Your Account\n\n"
-            f"Dear Subscriber,\n\n"
-            f"As one of our power daytime callers, we want to make sure you get the best value possible. "
-            f"Use voucher code {voucher_code} to activate an instant {discount_percent}% credit on all daytime minutes.\n\n"
-            f"Redeem Voucher Code: {voucher_code}\n"
-            f"AadiBI Subscriber Success Team"
-        )
-    elif has_intl_issue:
-        voucher_code = f"GLOBAL-FREEDOM-{timestamp_str}"
-        title = "Global Freedom International Calling Voucher"
-        details = "Complimentary international roaming & 150 international call minutes per month."
-        discount_offer = "Free International Pack Upgrade for 6 Months"
-        campaign_copy = (
-            f"Subject: Complimentary International Freedom Pack Unlocked!\n\n"
-            f"Dear Subscriber,\n\n"
-            f"Enjoy seamless international calling with zero overage worries. We have added the Global Freedom Pack "
-            f"to your account free of charge for 6 months.\n\n"
-            f"Voucher Code: {voucher_code}\n"
-            f"AadiBI Global Connect Team"
-        )
+    if domain == "ecommerce":
+        if churn_probability >= 70:
+            voucher_code = f"VIP-CART-SAVER-{timestamp_str}"
+            title = "VIP Prime Pass & 20% Cart Saver Discount"
+            details = "Instant upgrade to VIP Prime Membership + 20% off upcoming checkout orders."
+            discount_offer = "20% Storewide Cart Discount + Free Express Delivery"
+            campaign_copy = (
+                f"Subject: Exclusive VIP Prime Upgrade & 20% Off Your Next Order\n\n"
+                f"Dear Shopper,\n\n"
+                f"We value your patronage and noticed your recent support inquiry. To make sure you have the best shopping experience, "
+                f"we have upgraded your account to VIP Prime Status (Voucher: {voucher_code}). "
+                f"Enjoy 20% off your next purchase and complimentary express delivery on all orders.\n\n"
+                f"Redeem Voucher: {voucher_code}\n"
+                f"AadiBI Customer Experience Team"
+            )
+        elif churn_probability >= 40:
+            voucher_code = f"STORE-CREDIT-500"
+            title = "₹500 Store Re-Engagement Wallet Credit"
+            details = "₹500 direct credit applied to customer wallet on orders above ₹1,500."
+            discount_offer = "₹500 Store Wallet Credit"
+            campaign_copy = (
+                f"Subject: We Miss You! Here is ₹500 for Your Next Shopping Spree\n\n"
+                f"Dear Shopper,\n\n"
+                f"It's been a little while since your last visit. We've added a ₹500 credit directly to your account. "
+                f"Use voucher code {voucher_code} at checkout.\n\n"
+                f"Redeem Code: {voucher_code}\n"
+                f"AadiBI Store Promotions"
+            )
+        else:
+            voucher_code = f"LOYAL-VIP-PERK"
+            title = "Elite Member Exclusive Seasonal Access"
+            details = "Early access preview to seasonal flash sales and double reward points."
+            discount_offer = "Early Seasonal Access + 2X Loyalty Points"
+            campaign_copy = (
+                f"Subject: You're Invited: Exclusive VIP Early Access & Double Points\n\n"
+                f"Dear Valued Customer,\n\n"
+                f"Thank you for being one of our top customers! You have unlocked early access to our seasonal showcase. "
+                f"Use code {voucher_code} to earn 2X loyalty points on your next order.\n\n"
+                f"Redeem Code: {voucher_code}\n"
+                f"AadiBI Customer Success"
+            )
+
+    elif domain == "saas":
+        if churn_probability >= 70:
+            voucher_code = f"SAAS-CS-CARE-{timestamp_str}"
+            title = "Dedicated CS Manager & 25% Annual Lock-in Discount"
+            details = "Complimentary 1-on-1 workflow optimization consultation and 25% annual renewal discount."
+            discount_offer = "25% Annual Renewal Discount + Priority Technical Support"
+            campaign_copy = (
+                f"Subject: Dedicated Account Review & 25% Annual Subscription Discount\n\n"
+                f"Dear Team Leader,\n\n"
+                f"We want to ensure your team is getting maximum ROI from our platform. "
+                f"We have paired your account with a Senior Solutions Architect and applied code {voucher_code} "
+                f"for a 25% discount when locking in your annual renewal.\n\n"
+                f"Activation Code: {voucher_code}\n"
+                f"AadiBI Enterprise Success Group"
+            )
+        elif churn_probability >= 40:
+            voucher_code = f"PRO-FEATURE-PASS"
+            title = "30-Day Pro Tier Feature Pass & Integration Credits"
+            details = "Unlock all advanced collaboration, automation, and API connectors for 30 days free."
+            discount_offer = "Free 30-Day Pro Feature Upgrade"
+            campaign_copy = (
+                f"Subject: Unlock Pro Platform Features Free for 30 Days\n\n"
+                f"Dear Subscriber,\n\n"
+                f"Boost your team's workflow productivity with our Pro Tier tools. "
+                f"Activate voucher code {voucher_code} to unlock unlimited automations and analytics for 30 days free.\n\n"
+                f"Voucher Code: {voucher_code}\n"
+                f"AadiBI Cloud Platform Team"
+            )
+        else:
+            voucher_code = f"SCALE-BONUS-SEATS"
+            title = "Complimentary Additional Seats & API Credits"
+            details = "5 bonus active user seats added to account for 6 billing cycles."
+            discount_offer = "5 Complimentary Seats for 6 Months"
+            campaign_copy = (
+                f"Subject: Your Team is Growing - Enjoy 5 Free Seat Add-ons!\n\n"
+                f"Dear Admin,\n\n"
+                f"Thank you for your ongoing partnership. As your usage expands, we're granting your organization 5 free additional user seats. "
+                f"Activate using code {voucher_code}.\n\n"
+                f"Code: {voucher_code}\n"
+                f"AadiBI Scale Operations"
+            )
+
+    elif domain == "banking":
+        if churn_probability >= 70:
+            voucher_code = f"RELATIONSHIP-VIP-{timestamp_str}"
+            title = "Senior Relationship Manager & Annual Fee Waiver"
+            details = "Waive all account maintenance and transaction charges for 12 months + priority wealth manager."
+            discount_offer = "100% Account Fee Waiver + Priority Banking Service"
+            campaign_copy = (
+                f"Subject: Important Update Regarding Your Banking Relationship Privileges\n\n"
+                f"Dear Valued Client,\n\n"
+                f"Your financial journey with us is of paramount importance. We have upgraded your relationship status to Priority Banking. "
+                f"All maintenance charges are waived for the next 12 months with code {voucher_code}, and your dedicated Relationship Manager will contact you shortly.\n\n"
+                f"Reference Code: {voucher_code}\n"
+                f"AadiBI Private Banking Group"
+            )
+        elif churn_probability >= 40:
+            voucher_code = f"REWARDS-UPGRADE-5X"
+            title = "Premium Cashback Credit Card Upgrade & 10,000 Bonus Points"
+            details = "Pre-approved card upgrade with zero annual fee and 10,000 welcome reward points."
+            discount_offer = "Zero Fee Card Upgrade + 10,000 Bonus Points"
+            campaign_copy = (
+                f"Subject: Pre-Approved Premium Card Upgrade with 10,000 Bonus Points\n\n"
+                f"Dear Client,\n\n"
+                f"As an appreciated client, you are pre-approved for our Platinum Rewards Card with zero annual fee. "
+                f"Redeem code {voucher_code} online or in-branch to claim 10,000 welcome reward points.\n\n"
+                f"Redeem Code: {voucher_code}\n"
+                f"AadiBI Financial Services"
+            )
+        else:
+            voucher_code = f"WEALTH-PASS-PREFERENTIAL"
+            title = "Preferential Fixed Deposit Rates & Wealth Advisory"
+            details = "Special 0.50% interest rate premium on term deposits and complimentary retirement review."
+            discount_offer = "+0.50% Rate Premium on Term Deposits"
+            campaign_copy = (
+                f"Subject: Exclusive Preferential Deposit Rates Unlocked for Your Account\n\n"
+                f"Dear Client,\n\n"
+                f"Thank you for banking with us. You have qualified for an exclusive +0.50% premium interest rate on new term deposits. "
+                f"Quote reference code {voucher_code} during your next deposit placement.\n\n"
+                f"Reference: {voucher_code}\n"
+                f"AadiBI Wealth Management"
+            )
+
     else:
-        voucher_code = f"LOYALTY-HERO-{discount_percent}"
-        title = "Subscriber Loyalty Appreciation Credit"
-        details = f"General account loyalty bonus: {discount_percent}% statement credit."
-        discount_offer = f"{discount_percent}% Account Credit Voucher"
-        campaign_copy = (
-            f"Subject: Thank You for Your Loyalty - Enjoy a {discount_percent}% Bill Credit!\n\n"
-            f"Dear Subscriber,\n\n"
-            f"Thank you for being part of our network. As a gesture of our appreciation, please accept a "
-            f"{discount_percent}% credit voucher applied to your next monthly statement.\n\n"
-            f"Redeem Code: {voucher_code}\n"
-            f"AadiBI Customer Operations"
-        )
+        # Telecom default
+        has_svc_calls = any("service" in str(d).lower() for d in drivers)
+        has_high_day = any("daytime" in str(d).lower() or "day" in str(d).lower() for d in drivers)
+        has_intl_issue = any("intl" in str(d).lower() or "international" in str(d).lower() for d in drivers)
+
+        if has_svc_calls:
+            voucher_code = f"PRIORITY-VIP-{timestamp_str}"
+            title = "VIP Priority Care Pass & Personal Escalation Manager"
+            details = "Priority support call routing with zero wait time + dedicated executive case manager."
+            discount_offer = f"{discount_percent}% Loyalty Discount on monthly bill for 3 cycles"
+            campaign_copy = (
+                f"Subject: Priority Account Care Notice & {discount_percent}% Bill Credit\n\n"
+                f"Dear Subscriber,\n\n"
+                f"We noticed you recently contacted customer support. Your satisfaction is our absolute priority. "
+                f"We have upgraded your account to VIP Priority Support (Voucher: {voucher_code}). "
+                f"You will receive direct access to senior support specialists and a {discount_percent}% credit on your upcoming bills.\n\n"
+                f"Redeem Voucher Code: {voucher_code}\n"
+                f"AadiBI Customer Care Management"
+            )
+        elif has_high_day:
+            voucher_code = f"DAYTIME-SAVER-{discount_percent}"
+            title = "Executive High-Volume Usage Discount Package"
+            details = f"Apply {discount_percent}% rate credit on peak daytime usage charges + free voicemail add-on."
+            discount_offer = f"{discount_percent}% Daytime Minute Bill Credit"
+            campaign_copy = (
+                f"Subject: Special Daytime Saver Offer: Save {discount_percent}% on Your Account\n\n"
+                f"Dear Subscriber,\n\n"
+                f"As one of our power daytime callers, we want to make sure you get the best value possible. "
+                f"Use voucher code {voucher_code} to activate an instant {discount_percent}% credit on all daytime minutes.\n\n"
+                f"Redeem Voucher Code: {voucher_code}\n"
+                f"AadiBI Subscriber Success Team"
+            )
+        elif has_intl_issue:
+            voucher_code = f"GLOBAL-FREEDOM-{timestamp_str}"
+            title = "Global Freedom International Calling Voucher"
+            details = "Complimentary international roaming & 150 international call minutes per month."
+            discount_offer = "Free International Pack Upgrade for 6 Months"
+            campaign_copy = (
+                f"Subject: Complimentary International Freedom Pack Unlocked!\n\n"
+                f"Dear Subscriber,\n\n"
+                f"Enjoy seamless international calling with zero overage worries. We have added the Global Freedom Pack "
+                f"to your account free of charge for 6 months.\n\n"
+                f"Voucher Code: {voucher_code}\n"
+                f"AadiBI Global Connect Team"
+            )
+        else:
+            voucher_code = f"LOYALTY-HERO-{discount_percent}"
+            title = "Subscriber Loyalty Appreciation Credit"
+            details = f"General account loyalty bonus: {discount_percent}% statement credit."
+            discount_offer = f"{discount_percent}% Account Credit Voucher"
+            campaign_copy = (
+                f"Subject: Thank You for Your Loyalty - Enjoy a {discount_percent}% Bill Credit!\n\n"
+                f"Dear Subscriber,\n\n"
+                f"Thank you for being part of our network. As a gesture of our appreciation, please accept a "
+                f"{discount_percent}% credit voucher applied to your next monthly statement.\n\n"
+                f"Redeem Code: {voucher_code}\n"
+                f"AadiBI Customer Operations"
+            )
 
     return {
         "voucher_code": voucher_code,
@@ -225,6 +498,187 @@ def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=1
         "details": details,
         "discount_offer": discount_offer,
         "campaign_copy": campaign_copy
+    }
+
+
+def score_single_customer_by_domain(domain: str, data: dict):
+    """
+    Score a single customer account against the domain-specific ML pipeline.
+    Returns: dict with (prediction, is_churn, churn_probability, stay_probability, risk_level, drivers, recommendation, playbook)
+    """
+    domain = str(domain or "ecommerce").strip().lower()
+    if domain not in DOMAIN_MODELS:
+        domain = "telecom" if "telecom" in DOMAIN_MODELS else list(DOMAIN_MODELS.keys())[0]
+
+    model_pipeline = DOMAIN_MODELS.get(domain)
+    if model_pipeline is None:
+        raise ValueError(f"No trained ML model available for domain: {domain}")
+
+    if domain == "ecommerce":
+        state = str(data.get("state", "CA")).strip().upper()[:2] or "CA"
+        vip_raw = str(data.get("vip_member", "no")).strip().lower()
+        vip_member = "yes" if vip_raw in {"yes", "1", "true"} else "no"
+        tenure_months = float(data.get("tenure_months", 12))
+        monthly_spend = float(data.get("monthly_spend", 45.0))
+        order_count = int(float(data.get("order_count", 8)))
+        support_tickets = int(float(data.get("support_tickets", 1)))
+
+        df_row = pd.DataFrame([{
+            "state": state,
+            "vip_member": vip_member,
+            "tenure_months": tenure_months,
+            "monthly_spend": monthly_spend,
+            "order_count": order_count,
+            "support_tickets": support_tickets
+        }])
+
+        pred = int(model_pipeline.predict(df_row)[0])
+        probs = model_pipeline.predict_proba(df_row)[0]
+        classes = list(model_pipeline.classes_)
+        churn_idx = classes.index(1) if 1 in classes else 1
+        stay_idx = classes.index(0) if 0 in classes else 0
+
+        churn_prob = round(float(probs[churn_idx]) * 100, 2)
+        stay_prob = round(float(probs[stay_idx]) * 100, 2)
+
+    elif domain == "saas":
+        tier = str(data.get("tier", "Pro")).strip()
+        contract_type = str(data.get("contract_type", "Monthly")).strip()
+        days_since_last_login = float(data.get("days_since_last_login", 3))
+        mrr = float(data.get("monthly_recurring_revenue_mrr", 79.0))
+        active_users_count = int(float(data.get("active_users_count", 5)))
+        feature_usage_score = float(data.get("feature_usage_score", 65))
+        support_tickets_opened = int(float(data.get("support_tickets_opened", 0)))
+
+        df_row = pd.DataFrame([{
+            "tier": tier,
+            "contract_type": contract_type,
+            "days_since_last_login": days_since_last_login,
+            "monthly_recurring_revenue_mrr": mrr,
+            "active_users_count": active_users_count,
+            "feature_usage_score": feature_usage_score,
+            "support_tickets_opened": support_tickets_opened
+        }])
+
+        pred = int(model_pipeline.predict(df_row)[0])
+        probs = model_pipeline.predict_proba(df_row)[0]
+        classes = list(model_pipeline.classes_)
+        churn_idx = classes.index(1) if 1 in classes else 1
+        stay_idx = classes.index(0) if 0 in classes else 0
+
+        churn_prob = round(float(probs[churn_idx]) * 100, 2)
+        stay_prob = round(float(probs[stay_idx]) * 100, 2)
+
+    elif domain == "banking":
+        credit_score = float(data.get("credit_score", 680))
+        age = int(float(data.get("age", 42)))
+        tenure_years = float(data.get("tenure_years", 4))
+        account_balance = float(data.get("account_balance", 45000.0))
+        num_of_products = int(float(data.get("num_of_products", 2)))
+        has_credit_card = 1 if str(data.get("has_credit_card", "1")).lower() in {"1", "yes", "true"} else 0
+        is_active_member = 1 if str(data.get("is_active_member", "1")).lower() in {"1", "yes", "true"} else 0
+        estimated_salary = float(data.get("estimated_salary", 85000.0))
+
+        df_row = pd.DataFrame([{
+            "credit_score": credit_score,
+            "age": age,
+            "tenure_years": tenure_years,
+            "account_balance": account_balance,
+            "num_of_products": num_of_products,
+            "has_credit_card": has_credit_card,
+            "is_active_member": is_active_member,
+            "estimated_salary": estimated_salary
+        }])
+
+        pred = int(model_pipeline.predict(df_row)[0])
+        probs = model_pipeline.predict_proba(df_row)[0]
+        classes = list(model_pipeline.classes_)
+        churn_idx = classes.index(1) if 1 in classes else 1
+        stay_idx = classes.index(0) if 0 in classes else 0
+
+        churn_prob = round(float(probs[churn_idx]) * 100, 2)
+        stay_prob = round(float(probs[stay_idx]) * 100, 2)
+
+    else:  # Telecom
+        state = str(data.get("state", "KS")).strip().upper()[:2]
+        account_length = int(float(data.get("account_length", 100)))
+        area_code = int(float(data.get("area_code", 415)))
+        intl_plan = str(data.get("international_plan", "no")).strip().lower()
+        vmail_plan = str(data.get("voice_mail_plan", "no")).strip().lower()
+        number_vmail_messages = int(float(data.get("number_vmail_messages", 0)))
+
+        total_day_minutes = float(data.get("total_day_minutes", 180.0))
+        total_day_calls = int(float(data.get("total_day_calls", 100)))
+        total_day_charge = float(data.get("total_day_charge", round(total_day_minutes * 0.17, 2)))
+
+        total_eve_minutes = float(data.get("total_eve_minutes", 200.0))
+        total_eve_calls = int(float(data.get("total_eve_calls", 100)))
+        total_eve_charge = float(data.get("total_eve_charge", round(total_eve_minutes * 0.085, 2)))
+
+        total_night_minutes = float(data.get("total_night_minutes", 200.0))
+        total_night_calls = int(float(data.get("total_night_calls", 100)))
+        total_night_charge = float(data.get("total_night_charge", round(total_night_minutes * 0.045, 2)))
+
+        total_intl_minutes = float(data.get("total_intl_minutes", 10.0))
+        total_intl_calls = int(float(data.get("total_intl_calls", 3)))
+        total_intl_charge = float(data.get("total_intl_charge", round(total_intl_minutes * 0.27, 2)))
+
+        customer_service_calls = int(float(data.get("customer_service_calls", 1)))
+
+        df_row = pd.DataFrame({
+            "Account length": [account_length],
+            "Area code": [area_code],
+            "International plan": [1 if intl_plan in {"yes", "1", "true"} else 0],
+            "Voice mail plan": [1 if vmail_plan in {"yes", "1", "true"} else 0],
+            "Number vmail messages": [number_vmail_messages],
+            "Total day minutes": [total_day_minutes],
+            "Total day calls": [total_day_calls],
+            "Total day charge": [total_day_charge],
+            "Total eve minutes": [total_eve_minutes],
+            "Total eve calls": [total_eve_calls],
+            "Total eve charge": [total_eve_charge],
+            "Total night minutes": [total_night_minutes],
+            "Total night calls": [total_night_calls],
+            "Total night charge": [total_night_charge],
+            "Total intl minutes": [total_intl_minutes],
+            "Total intl calls": [total_intl_calls],
+            "Total intl charge": [total_intl_charge],
+            "Customer service calls": [customer_service_calls]
+        })
+
+        state_columns = [col for col in model_features if col.startswith("State_")]
+        for col in state_columns:
+            state_name = col.replace("State_", "")
+            df_row[col] = 1 if state == state_name else 0
+
+        df_row = df_row.reindex(columns=model_features, fill_value=0)
+
+        pred = int(model_pipeline.predict(df_row)[0])
+        probs = model_pipeline.predict_proba(df_row)[0]
+        classes = list(model_pipeline.classes_)
+        churn_idx = classes.index(1) if 1 in classes else 1
+        stay_idx = classes.index(0) if 0 in classes else 0
+
+        churn_prob = round(float(probs[churn_idx]) * 100, 2)
+        stay_prob = round(float(probs[stay_idx]) * 100, 2)
+
+    drivers, recommendation = customer_guidance(df_row.iloc[0], churn_prob, domain=domain)
+    playbook = generate_ai_campaign_playbook(drivers, churn_prob, domain=domain)
+    risk_level = "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW")
+    result_text = "CUSTOMER WILL CHURN" if pred == 1 else "CUSTOMER WILL STAY"
+
+    return {
+        "domain": domain,
+        "prediction": result_text,
+        "is_churn": (pred == 1),
+        "churn_probability": churn_prob,
+        "stay_probability": stay_prob,
+        "risk_level": risk_level,
+        "drivers": drivers,
+        "recommendation": recommendation,
+        "playbook": playbook,
+        "voucher_code": playbook.get("voucher_code", "PRIORITY-VIP-CARE"),
+        "raw_record": df_row.iloc[0].to_dict(),
     }
 
 
@@ -446,97 +900,40 @@ def api_switch_dataset(domain="ecommerce"):
 @login_required
 def predict():
     """Single Customer Interactive Prediction Studio."""
+    selected_domain = request.args.get("domain", "ecommerce").lower()
     if request.method == "GET":
-        return render_template("predict.html")
+        return render_template("predict.html", selected_domain=selected_domain)
 
     try:
         form = request.form
-        state = form.get("state", "KS").strip().upper()
-        account_length = int(form.get("account_length", 100))
-        area_code = int(form.get("area_code", 415))
-        international_plan = form.get("international_plan", "no").strip().lower()
-        voice_mail_plan = form.get("voice_mail_plan", "no").strip().lower()
-        number_vmail_messages = int(form.get("number_vmail_messages", 0))
-
-        total_day_minutes = float(form.get("total_day_minutes", 180.0))
-        total_day_calls = int(form.get("total_day_calls", 100))
-        total_day_charge = float(form.get("total_day_charge", round(total_day_minutes * 0.17, 2)))
-
-        total_eve_minutes = float(form.get("total_eve_minutes", 200.0))
-        total_eve_calls = int(form.get("total_eve_calls", 100))
-        total_eve_charge = float(form.get("total_eve_charge", round(total_eve_minutes * 0.085, 2)))
-
-        total_night_minutes = float(form.get("total_night_minutes", 200.0))
-        total_night_calls = int(form.get("total_night_calls", 100))
-        total_night_charge = float(form.get("total_night_charge", round(total_night_minutes * 0.045, 2)))
-
-        total_intl_minutes = float(form.get("total_intl_minutes", 10.0))
-        total_intl_calls = int(form.get("total_intl_calls", 3))
-        total_intl_charge = float(form.get("total_intl_charge", round(total_intl_minutes * 0.27, 2)))
-
-        customer_service_calls = int(form.get("customer_service_calls", 1))
-
-        new_customer = pd.DataFrame({
-            "Account length": [account_length],
-            "Area code": [area_code],
-            "International plan": [1 if international_plan in {"yes", "1", "true"} else 0],
-            "Voice mail plan": [1 if voice_mail_plan in {"yes", "1", "true"} else 0],
-            "Number vmail messages": [number_vmail_messages],
-            "Total day minutes": [total_day_minutes],
-            "Total day calls": [total_day_calls],
-            "Total day charge": [total_day_charge],
-            "Total eve minutes": [total_eve_minutes],
-            "Total eve calls": [total_eve_calls],
-            "Total eve charge": [total_eve_charge],
-            "Total night minutes": [total_night_minutes],
-            "Total night calls": [total_night_calls],
-            "Total night charge": [total_night_charge],
-            "Total intl minutes": [total_intl_minutes],
-            "Total intl calls": [total_intl_calls],
-            "Total intl charge": [total_intl_charge],
-            "Customer service calls": [customer_service_calls]
-        })
-
-        state_columns = [col for col in model_features if col.startswith("State_")]
-        for col in state_columns:
-            state_name = col.replace("State_", "")
-            new_customer[col] = 1 if state == state_name else 0
-
-        new_customer = new_customer.reindex(columns=model_features, fill_value=0)
-
-        prediction = model.predict(new_customer)[0]
-        probabilities = model.predict_proba(new_customer)[0]
-        churn_index = list(model.classes_).index(1)
-        stay_index = list(model.classes_).index(0)
-
-        churn_prob = round(probabilities[churn_index] * 100, 2)
-        stay_prob = round(probabilities[stay_index] * 100, 2)
-        result_text = "CUSTOMER WILL CHURN" if prediction == 1 else "CUSTOMER WILL STAY"
-
-        drivers, recommendation = customer_guidance(new_customer.iloc[0], churn_prob)
+        domain = form.get("domain", selected_domain).strip().lower()
+        res = score_single_customer_by_domain(domain, form)
 
         # Sync single prediction result to Cloud Firestore
         sync_prediction_to_firestore({
-            "state": state,
-            "account_length": account_length,
-            "prediction": result_text,
-            "churn_probability": churn_prob,
-            "stay_probability": stay_prob,
-            "risk_level": "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
-            "drivers": drivers,
-            "recommendation": recommendation,
+            "domain": res["domain"],
+            "prediction": res["prediction"],
+            "churn_probability": res["churn_probability"],
+            "stay_probability": res["stay_probability"],
+            "risk_level": res["risk_level"],
+            "drivers": res["drivers"],
+            "recommendation": res["recommendation"],
+            "voucher_code": res["voucher_code"],
         })
 
         return render_template(
             "predict.html",
+            selected_domain=res["domain"],
             has_result=True,
-            prediction=result_text,
-            is_churn=(prediction == 1),
-            churn_probability=churn_prob,
-            stay_probability=stay_prob,
-            risk_level="HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
-            drivers=drivers,
-            recommendation=recommendation,
+            prediction=res["prediction"],
+            is_churn=res["is_churn"],
+            churn_probability=res["churn_probability"],
+            stay_probability=res["stay_probability"],
+            risk_level=res["risk_level"],
+            drivers=res["drivers"],
+            recommendation=res["recommendation"],
+            voucher_code=res["voucher_code"],
+            playbook=res["playbook"],
             inputs=form,
         )
 
@@ -609,92 +1006,36 @@ def download_results():
 @app.route("/api/predict", methods=["POST"])
 @login_required
 def api_predict():
-    """AJAX JSON endpoint for real-time customer risk scoring."""
+    """AJAX JSON endpoint for real-time customer risk scoring across multi-domains."""
     try:
         payload = request.get_json() or request.form
-        state = str(payload.get("state", "KS")).strip().upper()
-        account_length = int(payload.get("account_length", 100))
-        area_code = int(payload.get("area_code", 415))
-        intl_plan = str(payload.get("international_plan", "no")).strip().lower()
-        vmail_plan = str(payload.get("voice_mail_plan", "no")).strip().lower()
-        number_vmail_messages = int(payload.get("number_vmail_messages", 0))
-
-        total_day_minutes = float(payload.get("total_day_minutes", 180.0))
-        total_day_calls = int(payload.get("total_day_calls", 100))
-        total_day_charge = float(payload.get("total_day_charge", round(total_day_minutes * 0.17, 2)))
-
-        total_eve_minutes = float(payload.get("total_eve_minutes", 200.0))
-        total_eve_calls = int(payload.get("total_eve_calls", 100))
-        total_eve_charge = float(payload.get("total_eve_charge", round(total_eve_minutes * 0.085, 2)))
-
-        total_night_minutes = float(payload.get("total_night_minutes", 200.0))
-        total_night_calls = int(payload.get("total_night_calls", 100))
-        total_night_charge = float(payload.get("total_night_charge", round(total_night_minutes * 0.045, 2)))
-
-        total_intl_minutes = float(payload.get("total_intl_minutes", 10.0))
-        total_intl_calls = int(payload.get("total_intl_calls", 3))
-        total_intl_charge = float(payload.get("total_intl_charge", round(total_intl_minutes * 0.27, 2)))
-
-        customer_service_calls = int(payload.get("customer_service_calls", 1))
-
-        new_customer = pd.DataFrame({
-            "Account length": [account_length],
-            "Area code": [area_code],
-            "International plan": [1 if intl_plan in {"yes", "1", "true"} else 0],
-            "Voice mail plan": [1 if vmail_plan in {"yes", "1", "true"} else 0],
-            "Number vmail messages": [number_vmail_messages],
-            "Total day minutes": [total_day_minutes],
-            "Total day calls": [total_day_calls],
-            "Total day charge": [total_day_charge],
-            "Total eve minutes": [total_eve_minutes],
-            "Total eve calls": [total_eve_calls],
-            "Total eve charge": [total_eve_charge],
-            "Total night minutes": [total_night_minutes],
-            "Total night calls": [total_night_calls],
-            "Total night charge": [total_night_charge],
-            "Total intl minutes": [total_intl_minutes],
-            "Total intl calls": [total_intl_calls],
-            "Total intl charge": [total_intl_charge],
-            "Customer service calls": [customer_service_calls]
-        })
-
-        state_columns = [col for col in model_features if col.startswith("State_")]
-        for col in state_columns:
-            state_name = col.replace("State_", "")
-            new_customer[col] = 1 if state == state_name else 0
-
-        new_customer = new_customer.reindex(columns=model_features, fill_value=0)
-
-        prediction = model.predict(new_customer)[0]
-        probabilities = model.predict_proba(new_customer)[0]
-        churn_index = list(model.classes_).index(1)
-        stay_index = list(model.classes_).index(0)
-
-        churn_prob = round(probabilities[churn_index] * 100, 2)
-        stay_prob = round(probabilities[stay_index] * 100, 2)
-        drivers, recommendation = customer_guidance(new_customer.iloc[0], churn_prob)
+        domain = payload.get("domain", "ecommerce")
+        res = score_single_customer_by_domain(domain, payload)
 
         # Sync prediction record to Cloud Firestore
         sync_prediction_to_firestore({
-            "state": state,
-            "account_length": account_length,
-            "prediction": "CUSTOMER WILL CHURN" if prediction == 1 else "CUSTOMER WILL STAY",
-            "churn_probability": churn_prob,
-            "stay_probability": stay_prob,
-            "risk_level": "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
-            "drivers": drivers,
-            "recommendation": recommendation,
+            "domain": res["domain"],
+            "prediction": res["prediction"],
+            "churn_probability": res["churn_probability"],
+            "stay_probability": res["stay_probability"],
+            "risk_level": res["risk_level"],
+            "drivers": res["drivers"],
+            "recommendation": res["recommendation"],
+            "voucher_code": res["voucher_code"],
         })
 
         return jsonify({
             "success": True,
-            "prediction": "CUSTOMER WILL CHURN" if prediction == 1 else "CUSTOMER WILL STAY",
-            "is_churn": bool(prediction == 1),
-            "churn_probability": churn_prob,
-            "stay_probability": stay_prob,
-            "risk_level": "HIGH" if churn_prob >= 70 else ("MEDIUM" if churn_prob >= 40 else "LOW"),
-            "drivers": drivers,
-            "recommendation": recommendation,
+            "domain": res["domain"],
+            "prediction": res["prediction"],
+            "is_churn": res["is_churn"],
+            "churn_probability": res["churn_probability"],
+            "stay_probability": res["stay_probability"],
+            "risk_level": res["risk_level"],
+            "drivers": res["drivers"],
+            "recommendation": res["recommendation"],
+            "voucher_code": res["voucher_code"],
+            "playbook": res["playbook"],
             "firebase_synced": is_firebase_active,
         })
     except Exception as e:

@@ -4,28 +4,57 @@
 
 {% block content %}
 <div class="animate-fade-in" style="max-width: 1100px; margin: 0 auto;">
-    <!-- Page Header -->
-    <div style="margin-bottom: 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <!-- Page Header & Presets -->
+    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">
                 Individual Account <span class="text-gradient">Risk Scoring Studio</span>
             </h1>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
-                Enter customer account telemetry or load a preset profile to generate instant ML churn probability scores.
+                Select your industry domain, enter customer telemetry, or load calibrated risk presets to generate instant ML churn scores.
             </p>
         </div>
 
         <!-- Quick Profile Presets -->
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <button id="btnPresetHighRisk" class="btn btn-outline btn-sm" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;">
+            <button id="btnPresetHighRisk" type="button" class="btn btn-outline btn-sm" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;">
                 🚨 Preset: High Risk Account
             </button>
-            <button id="btnPresetLowRisk" class="btn btn-outline btn-sm" style="border-color: rgba(16, 185, 129, 0.4); color: #34D399;">
+            <button id="btnPresetLowRisk" type="button" class="btn btn-outline btn-sm" style="border-color: rgba(16, 185, 129, 0.4); color: #34D399;">
                 ✅ Preset: Loyal Customer
             </button>
-            <button id="btnPresetBorderline" class="btn btn-outline btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #FBBF24;">
+            <button id="btnPresetBorderline" type="button" class="btn btn-outline btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #FBBF24;">
                 ❓ Preset: Borderline Account
             </button>
+        </div>
+    </div>
+
+    <!-- Industry Domain Selector Tabs Ribbon -->
+    <div style="margin-bottom: 1.75rem; background: var(--bg-card); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.85rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                🏢 Industry Domain:
+            </span>
+            <div id="domainTabsContainer" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm domain-tab-btn {% if selected_domain == 'ecommerce' or not selected_domain %}btn-primary active{% else %}btn-outline{% endif %}" data-domain="ecommerce">
+                    🛒 E-Commerce
+                </button>
+                <button type="button" class="btn btn-sm domain-tab-btn {% if selected_domain == 'saas' %}btn-primary active{% else %}btn-outline{% endif %}" data-domain="saas">
+                    ☁️ SaaS / Cloud
+                </button>
+                <button type="button" class="btn btn-sm domain-tab-btn {% if selected_domain == 'banking' %}btn-primary active{% else %}btn-outline{% endif %}" data-domain="banking">
+                    🏦 Banking & Finance
+                </button>
+                <button type="button" class="btn btn-sm domain-tab-btn {% if selected_domain == 'telecom' %}btn-primary active{% else %}btn-outline{% endif %}" data-domain="telecom">
+                    📞 Telecom (Legacy)
+                </button>
+            </div>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+            <span>Active Pipeline:</span>
+            <span id="activeModelBadge" class="badge badge-primary mono" style="font-size: 0.75rem;">
+                model_{{ selected_domain|default('ecommerce') }}.pkl
+            </span>
         </div>
     </div>
 
@@ -86,7 +115,7 @@
                             🎁 AI Personalized Campaign Voucher
                         </div>
                         <span id="predictVoucherCode" class="mono" style="background: #065F46; color: #34D399; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">
-                            PRIORITY-VIP-CARE
+                            {{ voucher_code|default('PRIORITY-VIP-CARE') }}
                         </span>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
@@ -110,131 +139,341 @@
     <!-- Predictor Form Card -->
     <div class="card">
         <form id="individualPredictionForm" action="{{ url_for('predict') }}" method="POST">
-            
-            <!-- Section 1: Customer Profile -->
-            <div style="margin-bottom: 1.75rem;">
-                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span>👤</span> Customer Demographics & Account Metadata
-                </h3>
-                <div class="grid-3">
-                    <div class="form-group">
-                        <label for="state">State Code (2 Letters)</label>
-                        <input type="text" id="state" name="state" class="form-control" placeholder="e.g. KS, NY, CA" value="{{ inputs.get('state', 'KS') if inputs else 'KS' }}" required maxlength="2" style="text-transform: uppercase;">
+            <!-- Hidden input to store active domain -->
+            <input type="hidden" id="activeDomainInput" name="domain" value="{{ selected_domain|default('ecommerce') }}">
+
+            <!-- ==================================================== -->
+            <!-- DOMAIN SECTION 1: E-COMMERCE -->
+            <!-- ==================================================== -->
+            <div id="domainSectionEcommerce" class="domain-fieldset" style="display: {% if selected_domain == 'ecommerce' or not selected_domain %}block{% else %}none{% endif %};">
+                <div style="margin-bottom: 1.75rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🛒</span> E-Commerce Demographics & Account Metadata
+                    </h3>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="ecom_state">State Code (2 Letters)</label>
+                            <input type="text" id="ecom_state" name="state" class="form-control" placeholder="e.g. CA, NY, TX" value="{{ inputs.get('state', 'CA') if inputs and selected_domain == 'ecommerce' else 'CA' }}" required maxlength="2" style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="ecom_tenure">Tenure (Months)</label>
+                            <input type="number" id="ecom_tenure" name="tenure_months" class="form-control" placeholder="e.g. 12" value="{{ inputs.get('tenure_months', '12') if inputs and selected_domain == 'ecommerce' else '12' }}" required min="1" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label for="ecom_vip">VIP Loyalty Member?</label>
+                            <select id="ecom_vip" name="vip_member" class="form-control" required>
+                                <option value="no" {% if inputs and inputs.get('vip_member') == 'no' %}selected{% endif %}>No (Standard Shopper)</option>
+                                <option value="yes" {% if inputs and inputs.get('vip_member') == 'yes' %}selected{% endif %}>Yes (VIP Member)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="account_length">Account Length (Months)</label>
-                        <input type="number" id="account_length" name="account_length" class="form-control" placeholder="e.g. 128" value="{{ inputs.get('account_length', '128') if inputs else '128' }}" required min="1" max="300">
+                </div>
+
+                <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>💳</span> Purchasing Behavior & Support Activity
+                    </h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="ecom_spend">Average Monthly Spend (₹)</label>
+                            <input type="number" step="0.01" id="ecom_spend" name="monthly_spend" class="form-control" placeholder="e.g. 3750.00" value="{{ inputs.get('monthly_spend', '3750.00') if inputs and selected_domain == 'ecommerce' else '3750.00' }}" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="ecom_orders">Total Order Count</label>
+                            <input type="number" id="ecom_orders" name="order_count" class="form-control" placeholder="e.g. 8" value="{{ inputs.get('order_count', '8') if inputs and selected_domain == 'ecommerce' else '8' }}" required min="0" max="200">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="area_code">Area Code</label>
-                        <select id="area_code" name="area_code" class="form-control" required>
-                            <option value="415" {% if inputs and inputs.get('area_code') == '415' %}selected{% endif %}>415 (San Francisco / Bay Area)</option>
-                            <option value="408" {% if inputs and inputs.get('area_code') == '408' %}selected{% endif %}>408 (San Jose / Silicon Valley)</option>
-                            <option value="510" {% if inputs and inputs.get('area_code') == '510' %}selected{% endif %}>510 (Oakland / East Bay)</option>
-                        </select>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="ecom_support_tickets" style="color: #F87171; margin-bottom: 0; font-weight: 600;">
+                                Support Tickets Raised (High Risk Indicator)
+                            </label>
+                            <span id="labelEcomTickets" class="mono" style="color: #F87171; font-weight: 700;">1 Tickets</span>
+                        </div>
+                        <input type="range" id="sliderEcomTickets" min="0" max="10" value="{{ inputs.get('support_tickets', '1') if inputs and selected_domain == 'ecommerce' else '1' }}" style="margin-bottom: 0.5rem;">
+                        <input type="hidden" id="ecom_support_tickets" name="support_tickets" value="{{ inputs.get('support_tickets', '1') if inputs and selected_domain == 'ecommerce' else '1' }}">
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Drag slider to see dynamic ML prediction response.</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 2: Subscriptions & Service Interactions -->
-            <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
-                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span>📱</span> Plan Subscriptions & Customer Service Interactions
-                </h3>
-                <div class="grid-3">
-                    <div class="form-group">
-                        <label for="international_plan">International Plan Subscribed?</label>
-                        <select id="international_plan" name="international_plan" class="form-control" required>
-                            <option value="no" {% if inputs and inputs.get('international_plan') == 'no' %}selected{% endif %}>No (Standard Plan)</option>
-                            <option value="yes" {% if inputs and inputs.get('international_plan') == 'yes' %}selected{% endif %}>Yes (International Add-on)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="voice_mail_plan">Voicemail Plan Subscribed?</label>
-                        <select id="voice_mail_plan" name="voice_mail_plan" class="form-control" required>
-                            <option value="no" {% if inputs and inputs.get('voice_mail_plan') == 'no' %}selected{% endif %}>No (No Voicemail)</option>
-                            <option value="yes" {% if inputs and inputs.get('voice_mail_plan') == 'yes' %}selected{% endif %}>Yes (Voicemail Active)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="number_vmail_messages">Voicemail Messages Stored</label>
-                        <input type="number" id="number_vmail_messages" name="number_vmail_messages" class="form-control" placeholder="e.g. 0 to 50" value="{{ inputs.get('number_vmail_messages', '0') if inputs else '0' }}" required min="0" max="100">
+            <!-- ==================================================== -->
+            <!-- DOMAIN SECTION 2: SAAS / CLOUD -->
+            <!-- ==================================================== -->
+            <div id="domainSectionSaas" class="domain-fieldset" style="display: {% if selected_domain == 'saas' %}block{% else %}none{% endif %};">
+                <div style="margin-bottom: 1.75rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>☁️</span> Subscription Tier & Account Metadata
+                    </h3>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="saas_tier">Subscription Tier</label>
+                            <select id="saas_tier" name="tier" class="form-control" required>
+                                <option value="Free" {% if inputs and inputs.get('tier') == 'Free' %}selected{% endif %}>Free Tier</option>
+                                <option value="Pro" {% if not inputs or inputs.get('tier') == 'Pro' %}selected{% endif %}>Pro Tier (Growth)</option>
+                                <option value="Enterprise" {% if inputs and inputs.get('tier') == 'Enterprise' %}selected{% endif %}>Enterprise Tier</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="saas_contract">Contract Commitment</label>
+                            <select id="saas_contract" name="contract_type" class="form-control" required>
+                                <option value="Monthly" {% if not inputs or inputs.get('contract_type') == 'Monthly' %}selected{% endif %}>Monthly (Flexible)</option>
+                                <option value="Annual" {% if inputs and inputs.get('contract_type') == 'Annual' %}selected{% endif %}>Annual Contract</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="saas_active_users">Active User Seats</label>
+                            <input type="number" id="saas_active_users" name="active_users_count" class="form-control" placeholder="e.g. 5" value="{{ inputs.get('active_users_count', '5') if inputs and selected_domain == 'saas' else '5' }}" required min="1" max="500">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                        <label for="customer_service_calls" style="color: #F87171; margin-bottom: 0;">Customer Service Support Calls (High Churn Predictor)</label>
-                        <span id="labelValSvcCalls" class="mono" style="color: #F87171; font-weight: 700;">1 Calls</span>
+                <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>📈</span> MRR & Platform Telemetry
+                    </h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="saas_mrr">Monthly Recurring Revenue (MRR ₹)</label>
+                            <input type="number" step="0.01" id="saas_mrr" name="monthly_recurring_revenue_mrr" class="form-control" placeholder="e.g. 6500.00" value="{{ inputs.get('monthly_recurring_revenue_mrr', '6500.00') if inputs and selected_domain == 'saas' else '6500.00' }}" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="saas_tickets">Support Tickets Opened</label>
+                            <input type="number" id="saas_tickets" name="support_tickets_opened" class="form-control" placeholder="e.g. 0" value="{{ inputs.get('support_tickets_opened', '0') if inputs and selected_domain == 'saas' else '0' }}" required min="0" max="25">
+                        </div>
                     </div>
-                    <input type="range" id="sliderSvcCalls" min="0" max="9" value="{{ inputs.get('customer_service_calls', '1') if inputs else '1' }}" style="margin-bottom: 0.5rem;">
-                    <input type="hidden" id="customer_service_calls" name="customer_service_calls" value="{{ inputs.get('customer_service_calls', '1') if inputs else '1' }}">
-                    <small style="color: var(--text-muted); font-size: 0.78rem;">Drag slider to see dynamic ML prediction response.</small>
+
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="saas_days_inactive" style="color: #F87171; margin-bottom: 0; font-weight: 600;">
+                                    Days Since Last Login (Inactivity)
+                                </label>
+                                <span id="labelSaasInactive" class="mono" style="color: #F87171; font-weight: 700;">3 Days</span>
+                            </div>
+                            <input type="range" id="sliderSaasInactive" min="0" max="60" value="{{ inputs.get('days_since_last_login', '3') if inputs and selected_domain == 'saas' else '3' }}" style="margin-bottom: 0.5rem;">
+                            <input type="hidden" id="saas_days_inactive" name="days_since_last_login" value="{{ inputs.get('days_since_last_login', '3') if inputs and selected_domain == 'saas' else '3' }}">
+                            <small style="color: var(--text-muted); font-size: 0.78rem;">Accounts with >14 days of inactivity exhibit high churn.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="saas_usage_score" style="color: #60A5FA; margin-bottom: 0; font-weight: 600;">
+                                    Feature Usage Adoption Score (0-100)
+                                </label>
+                                <span id="labelSaasScore" class="mono" style="color: #60A5FA; font-weight: 700;">65 / 100</span>
+                            </div>
+                            <input type="range" id="sliderSaasScore" min="0" max="100" value="{{ inputs.get('feature_usage_score', '65') if inputs and selected_domain == 'saas' else '65' }}" style="margin-bottom: 0.5rem;">
+                            <input type="hidden" id="saas_usage_score" name="feature_usage_score" value="{{ inputs.get('feature_usage_score', '65') if inputs and selected_domain == 'saas' else '65' }}">
+                            <small style="color: var(--text-muted); font-size: 0.78rem;">Score reflects core feature workflows completed.</small>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Section 3: Usage Minutes & Charges -->
-            <div style="margin-bottom: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
-                <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span>⏱️</span> Usage Call Minutes & Billable Charges
-                </h3>
-                <div class="grid-3">
-                    <div class="form-group">
-                        <label for="total_day_minutes">Total Day Minutes</label>
-                        <input type="number" step="0.1" id="total_day_minutes" name="total_day_minutes" class="form-control" placeholder="e.g. 180.0" value="{{ inputs.get('total_day_minutes', '180.0') if inputs else '180.0' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_day_calls">Total Day Calls</label>
-                        <input type="number" id="total_day_calls" name="total_day_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_day_calls', '100') if inputs else '100' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_day_charge">Total Day Charge (₹)</label>
-                        <input type="number" step="0.01" id="total_day_charge" name="total_day_charge" class="form-control" placeholder="e.g. 30.60" value="{{ inputs.get('total_day_charge', '30.60') if inputs else '30.60' }}" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="total_eve_minutes">Total Evening Minutes</label>
-                        <input type="number" step="0.1" id="total_eve_minutes" name="total_eve_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_eve_minutes', '200.0') if inputs else '200.0' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_eve_calls">Total Evening Calls</label>
-                        <input type="number" id="total_eve_calls" name="total_eve_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_eve_calls', '100') if inputs else '100' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_eve_charge">Total Evening Charge (₹)</label>
-                        <input type="number" step="0.01" id="total_eve_charge" name="total_eve_charge" class="form-control" placeholder="e.g. 17.00" value="{{ inputs.get('total_eve_charge', '17.00') if inputs else '17.00' }}" required>
+            <!-- ==================================================== -->
+            <!-- DOMAIN SECTION 3: BANKING & FINANCIAL SERVICES -->
+            <!-- ==================================================== -->
+            <div id="domainSectionBanking" class="domain-fieldset" style="display: {% if selected_domain == 'banking' %}block{% else %}none{% endif %};">
+                <div style="margin-bottom: 1.75rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🏦</span> Client Demographics & Credit Profile
+                    </h3>
+                    <div class="grid-4">
+                        <div class="form-group">
+                            <label for="bank_age">Customer Age (Years)</label>
+                            <input type="number" id="bank_age" name="age" class="form-control" placeholder="e.g. 42" value="{{ inputs.get('age', '42') if inputs and selected_domain == 'banking' else '42' }}" required min="18" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_tenure">Tenure (Years)</label>
+                            <input type="number" id="bank_tenure" name="tenure_years" class="form-control" placeholder="e.g. 4" value="{{ inputs.get('tenure_years', '4') if inputs and selected_domain == 'banking' else '4' }}" required min="0" max="40">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_state">Region / State Code</label>
+                            <input type="text" id="bank_state" name="state" class="form-control" placeholder="e.g. CA, NY" value="{{ inputs.get('state', 'CA') if inputs and selected_domain == 'banking' else 'CA' }}" maxlength="2" style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_salary">Estimated Salary (₹)</label>
+                            <input type="number" step="0.01" id="bank_salary" name="estimated_salary" class="form-control" placeholder="e.g. 85000.00" value="{{ inputs.get('estimated_salary', '85000.00') if inputs and selected_domain == 'banking' else '85000.00' }}" required min="0">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="total_night_minutes">Total Night Minutes</label>
-                        <input type="number" step="0.1" id="total_night_minutes" name="total_night_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_night_minutes', '200.0') if inputs else '200.0' }}" required>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="bank_credit_score" style="color: #60A5FA; margin-bottom: 0; font-weight: 600;">
+                                Credit Score (Rating: 300 - 850)
+                            </label>
+                            <span id="labelBankCredit" class="mono" style="color: #60A5FA; font-weight: 700;">680 Points</span>
+                        </div>
+                        <input type="range" id="sliderBankCredit" min="300" max="850" value="{{ inputs.get('credit_score', '680') if inputs and selected_domain == 'banking' else '680' }}" style="margin-bottom: 0.5rem;">
+                        <input type="hidden" id="bank_credit_score" name="credit_score" value="{{ inputs.get('credit_score', '680') if inputs and selected_domain == 'banking' else '680' }}">
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Higher scores correlate with lower default and churn propensity.</small>
                     </div>
-                    <div class="form-group">
-                        <label for="total_night_calls">Total Night Calls</label>
-                        <input type="number" id="total_night_calls" name="total_night_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_night_calls', '100') if inputs else '100' }}" required>
+                </div>
+
+                <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>💰</span> Account Balances & Product Holdings
+                    </h3>
+                    <div class="grid-4">
+                        <div class="form-group">
+                            <label for="bank_balance">Account Balance (₹)</label>
+                            <input type="number" step="0.01" id="bank_balance" name="account_balance" class="form-control" placeholder="e.g. 45000.00" value="{{ inputs.get('account_balance', '45000.00') if inputs and selected_domain == 'banking' else '45000.00' }}" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_products">Number of Bank Products</label>
+                            <select id="bank_products" name="num_of_products" class="form-control" required>
+                                <option value="1" {% if inputs and inputs.get('num_of_products') == '1' %}selected{% endif %}>1 Product</option>
+                                <option value="2" {% if not inputs or inputs.get('num_of_products') == '2' %}selected{% endif %}>2 Products (Balanced)</option>
+                                <option value="3" {% if inputs and inputs.get('num_of_products') == '3' %}selected{% endif %}>3 Products</option>
+                                <option value="4" {% if inputs and inputs.get('num_of_products') == '4' %}selected{% endif %}>4 Products</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_card">Has Active Credit Card?</label>
+                            <select id="bank_card" name="has_credit_card" class="form-control" required>
+                                <option value="1" {% if not inputs or inputs.get('has_credit_card') == '1' %}selected{% endif %}>Yes (Credit Card Active)</option>
+                                <option value="0" {% if inputs and inputs.get('has_credit_card') == '0' %}selected{% endif %}>No Card</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_active">Is Active Member?</label>
+                            <select id="bank_active" name="is_active_member" class="form-control" required>
+                                <option value="1" {% if not inputs or inputs.get('is_active_member') == '1' %}selected{% endif %}>Yes (Active Member)</option>
+                                <option value="0" {% if inputs and inputs.get('is_active_member') == '0' %}selected{% endif %}>No (Inactive / Dormant)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="total_night_charge">Total Night Charge (₹)</label>
-                        <input type="number" step="0.01" id="total_night_charge" name="total_night_charge" class="form-control" placeholder="e.g. 9.00" value="{{ inputs.get('total_night_charge', '9.00') if inputs else '9.00' }}" required>
+                </div>
+            </div>
+
+            <!-- ==================================================== -->
+            <!-- DOMAIN SECTION 4: TELECOM (LEGACY) -->
+            <!-- ==================================================== -->
+            <div id="domainSectionTelecom" class="domain-fieldset" style="display: {% if selected_domain == 'telecom' %}block{% else %}none{% endif %};">
+                <div style="margin-bottom: 1.75rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>👤</span> Customer Demographics & Account Metadata
+                    </h3>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="state">State Code (2 Letters)</label>
+                            <input type="text" id="state" name="state" class="form-control" placeholder="e.g. KS, NY, CA" value="{{ inputs.get('state', 'KS') if inputs and selected_domain == 'telecom' else 'KS' }}" required maxlength="2" style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="account_length">Account Length (Months)</label>
+                            <input type="number" id="account_length" name="account_length" class="form-control" placeholder="e.g. 128" value="{{ inputs.get('account_length', '128') if inputs and selected_domain == 'telecom' else '128' }}" required min="1" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label for="area_code">Area Code</label>
+                            <select id="area_code" name="area_code" class="form-control" required>
+                                <option value="415" {% if inputs and inputs.get('area_code') == '415' %}selected{% endif %}>415 (San Francisco / Bay Area)</option>
+                                <option value="408" {% if inputs and inputs.get('area_code') == '408' %}selected{% endif %}>408 (San Jose / Silicon Valley)</option>
+                                <option value="510" {% if inputs and inputs.get('area_code') == '510' %}selected{% endif %}>510 (Oakland / East Bay)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>📱</span> Plan Subscriptions & Customer Service Interactions
+                    </h3>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="international_plan">International Plan Subscribed?</label>
+                            <select id="international_plan" name="international_plan" class="form-control" required>
+                                <option value="no" {% if inputs and inputs.get('international_plan') == 'no' %}selected{% endif %}>No (Standard Plan)</option>
+                                <option value="yes" {% if inputs and inputs.get('international_plan') == 'yes' %}selected{% endif %}>Yes (International Add-on)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="voice_mail_plan">Voicemail Plan Subscribed?</label>
+                            <select id="voice_mail_plan" name="voice_mail_plan" class="form-control" required>
+                                <option value="no" {% if inputs and inputs.get('voice_mail_plan') == 'no' %}selected{% endif %}>No (No Voicemail)</option>
+                                <option value="yes" {% if inputs and inputs.get('voice_mail_plan') == 'yes' %}selected{% endif %}>Yes (Voicemail Active)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="number_vmail_messages">Voicemail Messages Stored</label>
+                            <input type="number" id="number_vmail_messages" name="number_vmail_messages" class="form-control" placeholder="e.g. 0 to 50" value="{{ inputs.get('number_vmail_messages', '0') if inputs and selected_domain == 'telecom' else '0' }}" required min="0" max="100">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="total_intl_minutes">Total Intl Minutes</label>
-                        <input type="number" step="0.1" id="total_intl_minutes" name="total_intl_minutes" class="form-control" placeholder="e.g. 10.0" value="{{ inputs.get('total_intl_minutes', '10.0') if inputs else '10.0' }}" required>
+                    <div class="form-group" style="margin-top: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="customer_service_calls" style="color: #F87171; margin-bottom: 0;">Customer Service Support Calls (High Churn Predictor)</label>
+                            <span id="labelValSvcCalls" class="mono" style="color: #F87171; font-weight: 700;">1 Calls</span>
+                        </div>
+                        <input type="range" id="sliderSvcCalls" min="0" max="9" value="{{ inputs.get('customer_service_calls', '1') if inputs and selected_domain == 'telecom' else '1' }}" style="margin-bottom: 0.5rem;">
+                        <input type="hidden" id="customer_service_calls" name="customer_service_calls" value="{{ inputs.get('customer_service_calls', '1') if inputs and selected_domain == 'telecom' else '1' }}">
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Drag slider to see dynamic ML prediction response.</small>
                     </div>
-                    <div class="form-group">
-                        <label for="total_intl_calls">Total Intl Calls</label>
-                        <input type="number" id="total_intl_calls" name="total_intl_calls" class="form-control" placeholder="e.g. 3" value="{{ inputs.get('total_intl_calls', '3') if inputs else '3' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_intl_charge">Total Intl Charge (₹)</label>
-                        <input type="number" step="0.01" id="total_intl_charge" name="total_intl_charge" class="form-control" placeholder="e.g. 2.70" value="{{ inputs.get('total_intl_charge', '2.70') if inputs else '2.70' }}" required>
+                </div>
+
+                <div style="margin-bottom: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>⏱️</span> Usage Call Minutes & Billable Charges
+                    </h3>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label for="total_day_minutes">Total Day Minutes</label>
+                            <input type="number" step="0.1" id="total_day_minutes" name="total_day_minutes" class="form-control" placeholder="e.g. 180.0" value="{{ inputs.get('total_day_minutes', '180.0') if inputs and selected_domain == 'telecom' else '180.0' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_day_calls">Total Day Calls</label>
+                            <input type="number" id="total_day_calls" name="total_day_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_day_calls', '100') if inputs and selected_domain == 'telecom' else '100' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_day_charge">Total Day Charge (₹)</label>
+                            <input type="number" step="0.01" id="total_day_charge" name="total_day_charge" class="form-control" placeholder="e.g. 30.60" value="{{ inputs.get('total_day_charge', '30.60') if inputs and selected_domain == 'telecom' else '30.60' }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="total_eve_minutes">Total Evening Minutes</label>
+                            <input type="number" step="0.1" id="total_eve_minutes" name="total_eve_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_eve_minutes', '200.0') if inputs and selected_domain == 'telecom' else '200.0' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_eve_calls">Total Evening Calls</label>
+                            <input type="number" id="total_eve_calls" name="total_eve_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_eve_calls', '100') if inputs and selected_domain == 'telecom' else '100' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_eve_charge">Total Evening Charge (₹)</label>
+                            <input type="number" step="0.01" id="total_eve_charge" name="total_eve_charge" class="form-control" placeholder="e.g. 17.00" value="{{ inputs.get('total_eve_charge', '17.00') if inputs and selected_domain == 'telecom' else '17.00' }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="total_night_minutes">Total Night Minutes</label>
+                            <input type="number" step="0.1" id="total_night_minutes" name="total_night_minutes" class="form-control" placeholder="e.g. 200.0" value="{{ inputs.get('total_night_minutes', '200.0') if inputs and selected_domain == 'telecom' else '200.0' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_night_calls">Total Night Calls</label>
+                            <input type="number" id="total_night_calls" name="total_night_calls" class="form-control" placeholder="e.g. 100" value="{{ inputs.get('total_night_calls', '100') if inputs and selected_domain == 'telecom' else '100' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_night_charge">Total Night Charge (₹)</label>
+                            <input type="number" step="0.01" id="total_night_charge" name="total_night_charge" class="form-control" placeholder="e.g. 9.00" value="{{ inputs.get('total_night_charge', '9.00') if inputs and selected_domain == 'telecom' else '9.00' }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="total_intl_minutes">Total Intl Minutes</label>
+                            <input type="number" step="0.1" id="total_intl_minutes" name="total_intl_minutes" class="form-control" placeholder="e.g. 10.0" value="{{ inputs.get('total_intl_minutes', '10.0') if inputs and selected_domain == 'telecom' else '10.0' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_intl_calls">Total Intl Calls</label>
+                            <input type="number" id="total_intl_calls" name="total_intl_calls" class="form-control" placeholder="e.g. 3" value="{{ inputs.get('total_intl_calls', '3') if inputs and selected_domain == 'telecom' else '3' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_intl_charge">Total Intl Charge (₹)</label>
+                            <input type="number" step="0.01" id="total_intl_charge" name="total_intl_charge" class="form-control" placeholder="e.g. 2.70" value="{{ inputs.get('total_intl_charge', '2.70') if inputs and selected_domain == 'telecom' else '2.70' }}" required>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Submit Button Bar -->
-            <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button type="submit" id="btnSubmitPrediction" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
                     ⚡ Run Predictive Risk Scoring
                 </button>
@@ -245,29 +484,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const sliderCalls = document.getElementById('sliderSvcCalls');
-    const labelCalls = document.getElementById('labelValSvcCalls');
-    const hiddenCalls = document.getElementById('customer_service_calls');
-    const form = document.getElementById('individualPredictionForm');
-
-    if (sliderCalls && labelCalls && hiddenCalls) {
-        sliderCalls.addEventListener('input', () => {
-            const val = sliderCalls.value;
-            labelCalls.textContent = `${val} Calls`;
-            hiddenCalls.value = val;
-            
-            // Trigger automatic debounced submit
-            clearTimeout(window.sliderDebounceTimer);
-            window.sliderDebounceTimer = setTimeout(() => {
-                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            }, 300);
-        });
-    }
-});
-</script>
 {% endblock %}

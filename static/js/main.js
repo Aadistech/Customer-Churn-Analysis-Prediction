@@ -14,8 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Data Table System (Search, Filtering, Sorting, Pagination, Drawer)
   initAdvancedTableSystem();
 
+  // Initialize Predictor Industry Domain Switcher
+  initPredictorDomainSwitcher();
+
   // Initialize Predictor Presets & Live Slider Simulator
   initPredictorPresets();
+
+  // Initialize Dynamic Multi-Domain Sliders
+  initPredictorSliders();
 
   // Initialize AJAX Real-Time Risk Scoring
   initAjaxPredictor();
@@ -559,29 +565,226 @@ AadiBI Intelligence System - Confidential Retention Document
 }
 
 /* ============================================================
-   PREDICTOR FORM QUICK PRESETS
+   PREDICTOR INDUSTRY DOMAIN SWITCHER TABS
+   ============================================================ */
+function initPredictorDomainSwitcher() {
+  const container = document.getElementById('domainTabsContainer');
+  const activeInput = document.getElementById('activeDomainInput');
+  const activeBadge = document.getElementById('activeModelBadge');
+  const form = document.getElementById('individualPredictionForm');
+  if (!container || !activeInput) return;
+
+  const buttons = container.querySelectorAll('.domain-tab-btn');
+  const sections = {
+    ecommerce: document.getElementById('domainSectionEcommerce'),
+    saas: document.getElementById('domainSectionSaas'),
+    banking: document.getElementById('domainSectionBanking'),
+    telecom: document.getElementById('domainSectionTelecom'),
+  };
+
+  function activateDomain(domain) {
+    if (!domain) domain = 'ecommerce';
+    domain = domain.toLowerCase();
+
+    // 1. Update tab styling
+    buttons.forEach(btn => {
+      const btnDom = (btn.dataset.domain || '').toLowerCase();
+      if (btnDom === domain) {
+        btn.className = 'btn btn-sm domain-tab-btn btn-primary active';
+      } else {
+        btn.className = 'btn btn-sm domain-tab-btn btn-outline';
+      }
+    });
+
+    // 2. Update hidden domain input
+    activeInput.value = domain;
+
+    // 3. Update active model badge
+    if (activeBadge) {
+      activeBadge.textContent = `model_${domain}.pkl`;
+    }
+
+    // 4. Toggle sections and disable inactive inputs
+    Object.keys(sections).forEach(key => {
+      const sec = sections[key];
+      if (!sec) return;
+      if (key === domain) {
+        sec.style.display = 'block';
+        sec.querySelectorAll('input, select, textarea').forEach(el => {
+          el.disabled = false;
+        });
+      } else {
+        sec.style.display = 'none';
+        sec.querySelectorAll('input, select, textarea').forEach(el => {
+          el.disabled = true;
+        });
+      }
+    });
+
+    // 5. Trigger auto-prediction update for active domain
+    if (form) {
+      clearTimeout(window.sliderDebounceTimer);
+      window.sliderDebounceTimer = setTimeout(() => {
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }, 150);
+    }
+  }
+
+  // Hook tab click events
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activateDomain(btn.dataset.domain);
+    });
+  });
+
+  // Ensure initial domain inputs are properly enabled/disabled
+  activateDomain(activeInput.value || 'ecommerce');
+}
+
+/* ============================================================
+   PREDICTOR DYNAMIC SLIDERS (MULTI-DOMAIN)
+   ============================================================ */
+function initPredictorSliders() {
+  const form = document.getElementById('individualPredictionForm');
+  if (!form) return;
+
+  function bindSlider(sliderId, labelId, hiddenId, formatFn) {
+    const slider = document.getElementById(sliderId);
+    const label = document.getElementById(labelId);
+    const hidden = document.getElementById(hiddenId);
+    if (!slider) return;
+
+    slider.addEventListener('input', () => {
+      const val = slider.value;
+      if (label) label.textContent = formatFn ? formatFn(val) : val;
+      if (hidden) hidden.value = val;
+
+      clearTimeout(window.sliderDebounceTimer);
+      window.sliderDebounceTimer = setTimeout(() => {
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }, 250);
+    });
+  }
+
+  // E-Commerce
+  bindSlider('sliderEcomTickets', 'labelEcomTickets', 'ecom_support_tickets', v => `${v} Tickets`);
+
+  // SaaS
+  bindSlider('sliderSaasInactive', 'labelSaasInactive', 'saas_days_inactive', v => `${v} Days`);
+  bindSlider('sliderSaasScore', 'labelSaasScore', 'saas_usage_score', v => `${v} / 100`);
+
+  // Banking
+  bindSlider('sliderBankCredit', 'labelBankCredit', 'bank_credit_score', v => `${v} Points`);
+
+  // Telecom
+  bindSlider('sliderSvcCalls', 'labelValSvcCalls', 'customer_service_calls', v => `${v} Calls`);
+}
+
+/* ============================================================
+   PREDICTOR FORM QUICK PRESETS (MULTI-DOMAIN)
    ============================================================ */
 function initPredictorPresets() {
   const presetHighRisk = document.getElementById('btnPresetHighRisk');
   const presetLowRisk = document.getElementById('btnPresetLowRisk');
   const presetBorderline = document.getElementById('btnPresetBorderline');
   const form = document.getElementById('individualPredictionForm');
+  const activeInput = document.getElementById('activeDomainInput');
 
   if (!form) return;
 
-  function setFormValues(data) {
-    Object.keys(data).forEach(key => {
-      const field = form.querySelector(`[name="${key}"]`);
-      if (field) {
-        field.value = data[key];
+  const domainPresets = {
+    ecommerce: {
+      high_risk: {
+        state: 'NY',
+        tenure_months: 2,
+        vip_member: 'no',
+        monthly_spend: 1250.00,
+        order_count: 1,
+        support_tickets: 5
+      },
+      loyal: {
+        state: 'CA',
+        tenure_months: 28,
+        vip_member: 'yes',
+        monthly_spend: 8500.00,
+        order_count: 16,
+        support_tickets: 0
+      },
+      borderline: {
+        state: 'TX',
+        tenure_months: 7,
+        vip_member: 'no',
+        monthly_spend: 3200.00,
+        order_count: 4,
+        support_tickets: 2
       }
-    });
-    showToast('Loaded preset profile parameters into form.', 'info');
-  }
-
-  if (presetHighRisk) {
-    presetHighRisk.addEventListener('click', () => {
-      setFormValues({
+    },
+    saas: {
+      high_risk: {
+        tier: 'Free',
+        contract_type: 'Monthly',
+        active_users_count: 1,
+        monthly_recurring_revenue_mrr: 0.00,
+        support_tickets_opened: 4,
+        days_since_last_login: 38,
+        feature_usage_score: 18
+      },
+      loyal: {
+        tier: 'Enterprise',
+        contract_type: 'Annual',
+        active_users_count: 28,
+        monthly_recurring_revenue_mrr: 24900.00,
+        support_tickets_opened: 0,
+        days_since_last_login: 1,
+        feature_usage_score: 94
+      },
+      borderline: {
+        tier: 'Pro',
+        contract_type: 'Monthly',
+        active_users_count: 5,
+        monthly_recurring_revenue_mrr: 4900.00,
+        support_tickets_opened: 2,
+        days_since_last_login: 12,
+        feature_usage_score: 48
+      }
+    },
+    banking: {
+      high_risk: {
+        age: 56,
+        tenure_years: 1,
+        state: 'NY',
+        estimated_salary: 45000.00,
+        credit_score: 510,
+        account_balance: 145000.00,
+        num_of_products: 3,
+        has_credit_card: 0,
+        is_active_member: 0
+      },
+      loyal: {
+        age: 38,
+        tenure_years: 8,
+        state: 'CA',
+        estimated_salary: 115000.00,
+        credit_score: 790,
+        account_balance: 75000.00,
+        num_of_products: 2,
+        has_credit_card: 1,
+        is_active_member: 1
+      },
+      borderline: {
+        age: 46,
+        tenure_years: 3,
+        state: 'IL',
+        estimated_salary: 62000.00,
+        credit_score: 640,
+        account_balance: 38000.00,
+        num_of_products: 1,
+        has_credit_card: 1,
+        is_active_member: 0
+      }
+    },
+    telecom: {
+      high_risk: {
         state: 'NJ',
         account_length: 137,
         area_code: 415,
@@ -601,13 +804,8 @@ function initPredictorPresets() {
         total_intl_calls: 4,
         total_intl_charge: 3.65,
         customer_service_calls: 5
-      });
-    });
-  }
-
-  if (presetLowRisk) {
-    presetLowRisk.addEventListener('click', () => {
-      setFormValues({
+      },
+      loyal: {
         state: 'CA',
         account_length: 95,
         area_code: 408,
@@ -627,13 +825,8 @@ function initPredictorPresets() {
         total_intl_calls: 2,
         total_intl_charge: 2.21,
         customer_service_calls: 0
-      });
-    });
-  }
-
-  if (presetBorderline) {
-    presetBorderline.addEventListener('click', () => {
-      setFormValues({
+      },
+      borderline: {
         state: 'KS',
         account_length: 128,
         area_code: 510,
@@ -653,9 +846,67 @@ function initPredictorPresets() {
         total_intl_calls: 3,
         total_intl_charge: 2.97,
         customer_service_calls: 3
-      });
+      }
+    }
+  };
+
+  function applyPreset(presetType) {
+    const domain = (activeInput ? activeInput.value : 'ecommerce') || 'ecommerce';
+    const presetsForDomain = domainPresets[domain] || domainPresets.ecommerce;
+    const data = presetsForDomain[presetType];
+
+    if (!data) return;
+
+    // Apply values to inputs inside form
+    Object.keys(data).forEach(key => {
+      const field = form.querySelector(`[name="${key}"]`);
+      if (field) {
+        field.value = data[key];
+      }
     });
+
+    // Update corresponding sliders and labels
+    if (data.support_tickets !== undefined) {
+      const sl = document.getElementById('sliderEcomTickets');
+      const lb = document.getElementById('labelEcomTickets');
+      if (sl) sl.value = data.support_tickets;
+      if (lb) lb.textContent = `${data.support_tickets} Tickets`;
+    }
+    if (data.days_since_last_login !== undefined) {
+      const sl = document.getElementById('sliderSaasInactive');
+      const lb = document.getElementById('labelSaasInactive');
+      if (sl) sl.value = data.days_since_last_login;
+      if (lb) lb.textContent = `${data.days_since_last_login} Days`;
+    }
+    if (data.feature_usage_score !== undefined) {
+      const sl = document.getElementById('sliderSaasScore');
+      const lb = document.getElementById('labelSaasScore');
+      if (sl) sl.value = data.feature_usage_score;
+      if (lb) lb.textContent = `${data.feature_usage_score} / 100`;
+    }
+    if (data.credit_score !== undefined) {
+      const sl = document.getElementById('sliderBankCredit');
+      const lb = document.getElementById('labelBankCredit');
+      if (sl) sl.value = data.credit_score;
+      if (lb) lb.textContent = `${data.credit_score} Points`;
+    }
+    if (data.customer_service_calls !== undefined) {
+      const sl = document.getElementById('sliderSvcCalls');
+      const lb = document.getElementById('labelValSvcCalls');
+      if (sl) sl.value = data.customer_service_calls;
+      if (lb) lb.textContent = `${data.customer_service_calls} Calls`;
+    }
+
+    const typeNames = { high_risk: 'High Risk Account', loyal: 'Loyal Customer', borderline: 'Borderline Account' };
+    showToast(`Loaded ${typeNames[presetType] || presetType} preset for ${domain.toUpperCase()}.`, 'info');
+
+    // Trigger instant prediction submit
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   }
+
+  if (presetHighRisk) presetHighRisk.addEventListener('click', () => applyPreset('high_risk'));
+  if (presetLowRisk) presetLowRisk.addEventListener('click', () => applyPreset('loyal'));
+  if (presetBorderline) presetBorderline.addEventListener('click', () => applyPreset('borderline'));
 }
 
 /* ============================================================
@@ -757,7 +1008,7 @@ function renderPredictionResult(res) {
   const btnCopyPredictVoucher = document.getElementById('btnCopyPredictVoucher');
   const btnDownloadPredictBrief = document.getElementById('btnDownloadPredictBrief');
 
-  const code = (res.risk_level === 'HIGH') ? 'PRIORITY-VIP-CARE' : ((res.risk_level === 'MEDIUM') ? 'DAYTIME-SAVER-15' : 'LOYALTY-HERO-10');
+  const code = res.voucher_code || (res.risk_level === 'HIGH' ? 'PRIORITY-VIP-CARE' : (res.risk_level === 'MEDIUM' ? 'DAYTIME-SAVER-15' : 'LOYALTY-HERO-10'));
   if (predictVoucherCode) predictVoucherCode.textContent = code;
 
   if (btnCopyPredictVoucher) {
@@ -769,9 +1020,13 @@ function renderPredictionResult(res) {
 
   if (btnDownloadPredictBrief) {
     btnDownloadPredictBrief.onclick = () => {
+      const copyText = (res.playbook && res.playbook.campaign_copy)
+        ? res.playbook.campaign_copy
+        : `Voucher Code: ${code}\nRecommended Action: ${res.recommendation}`;
+
       downloadCampaignBrief(
-        { id: 'PREDICT-ACC', state: 'US', accountLength: 12, churnProbability: res.churn_probability, risk: res.risk_level, action: res.recommendation },
-        { voucher_code: code, title: 'Single Account Retention Brief', campaign_copy: `Voucher Code: ${code}\nRecommended Action: ${res.recommendation}` }
+        { id: `PREDICT-${(res.domain || 'ACC').toUpperCase()}`, state: 'ACTIVE', accountLength: 12, churnProbability: res.churn_probability, risk: res.risk_level, action: res.recommendation },
+        { voucher_code: code, title: `${(res.domain || 'Single Account').toUpperCase()} Retention Brief`, campaign_copy: copyText }
       );
     };
   }
