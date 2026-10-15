@@ -228,48 +228,33 @@ def generate_ai_campaign_playbook(drivers, churn_probability, discount_percent=1
     }
 
 
-def analyze_customers(source_df, mapping=None):
+def analyze_customers(source_df, mapping=None, domain_key=None):
     """
-    Score a customer dataframe and compute executive analytics.
+    Score a customer dataframe and compute domain-aware executive analytics.
     Supports flexible cross-domain schema mapping (E-commerce, SaaS, Banking, Telecom).
     """
     if source_df.empty:
         raise ValueError("The dataset does not contain any customer records.")
 
+    # Detect domain from dataset if not explicitly specified
+    detected_domain = domain_key or schema_mapper.detect_dataset_domain(source_df)
+    profile = schema_mapper.get_domain_profile(detected_domain)
+
     # Check if dataset has canonical features or requires schema mapping
     has_telecom_core = {"Account length", "Total day minutes", "Customer service calls"}.issubset(set(source_df.columns))
 
-    if mapping is not None or not has_telecom_core:
-        if mapping is None:
-            auto = schema_mapper.fuzzy_match_columns(source_df.columns.tolist())
-            mapping = auto["mapped"]
-        data, original = schema_mapper.transform_mapped_dataset(source_df, mapping, model_features)
-    else:
-        original = source_df.copy()
-        data = source_df.drop(columns=["Churn"], errors="ignore").copy()
-        state_columns = [col for col in model_features if col.startswith("State_")]
+    if mapping is None and not has_telecom_core:
+        auto = schema_mapper.fuzzy_match_columns(source_df.columns.tolist())
+        mapping = {**profile.get("mapping", {}), **auto.get("mapped", {})}
+    elif mapping is None:
+        mapping = profile.get("mapping", {})
 
-        for col in ("International plan", "Voice mail plan"):
-            if col in data.columns:
-                values = data[col].astype(str).str.strip().str.lower()
-                data[col] = values.map({"yes": 1, "no": 0}).fillna(
-                    pd.to_numeric(data[col], errors="coerce")
-                )
+    prep_data, original = schema_mapper.transform_mapped_dataset(source_df, mapping, model_features)
 
-        state_values = data["State"].astype(str).str.strip().str.upper() if "State" in data else ""
-        for col in state_columns:
-            state_name = col.replace("State_", "")
-            data[col] = state_values.eq(state_name).astype(int) if "State" in data else 0
-
-        data = data.drop(columns=["State"], errors="ignore").reindex(
-            columns=model_features, fill_value=0
-        )
-        data = data.apply(pd.to_numeric, errors="coerce").fillna(0)
-
-    predictions = model.predict(data)
-    probabilities = model.predict_proba(data)
-    churn_index = list(model.classes_).index(1)
-    stay_index = list(model.classes_).index(0)
+    predictions = model.predict(prep_data)
+    probabilities = model.predict_proba(prep_data)
+    churn_index = list(model.classes_).index(1) if hasattr(model, "classes_") else 1
+    stay_index = list(model.classes_).index(0) if hasattr(model, "classes_") else 0
 
     result_df = original.copy()
     result_df["Prediction"] = [
@@ -284,125 +269,18 @@ def analyze_customers(source_df, mapping=None):
         labels=["LOW", "MEDIUM", "HIGH"],
     ).astype(str)
 
-    guidance = [
-        customer_guidance(prep_row, prob)
-        for (_, prep_row), prob in zip(data.iterrows(), result_df["Churn Probability (%)"])
-    ]
-    result_df["Risk signals"] = ["; ".join(d) for d, _ in guidance]
-    result_df["Recommended action"] = [a for _, a in guidance]
-
-    total_customers = len(result_df)
-    churned_customers = int((predictions == 1).sum())
-    staying_customers = total_customers - churned_customers
-    high_risk_customers = int((result_df["Risk Level"] == "HIGH").sum())
-    medium_risk_customers = int((result_df["Risk Level"] == "MEDIUM").sum())
-    low_risk_customers = int((result_df["Risk Level"] == "LOW").sum())
-
-    churn_rate = round((churned_customers / total_customers) * 100, 2)
-    high_risk_rate = round((high_risk_customers / total_customers) * 100, 2)
-
-    # Estimate ARR / Monthly Revenue at Risk (₹5,400 per churned account)
-    est_rev_at_risk = churned_customers * 5400
-
-    table_data = []
-    for idx, (_, row) in enumerate(result_df.iterrows()):
-        state_val = str(row.get("State", row.get("_Normalized_State", "KS")))
-        acc_len = int(data.loc[idx, "Account length"]) if "Account length" in data.columns else int(row.get("Account length", 0))
-        area_code = int(data.loc[idx, "Area code"]) if "Area code" in data.columns else int(row.get("Area code", 415))
-        intl_plan = "Yes" if (data.loc[idx, "International plan"] == 1 if "International plan" in data.columns else False) else "No"
-        vmail_plan = "Yes" if (data.loc[idx, "Voice mail plan"] == 1 if "Voice mail plan" in data.columns else False) else "No"
-        svc_calls = int(data.loc[idx, "Customer service calls"]) if "Customer service calls" in data.columns else int(row.get("Customer service calls", 0))
-        day_mins = float(data.loc[idx, "Total day minutes"]) if "Total day minutes" in data.columns else float(row.get("Total day minutes", 0))
-        day_charge = float(data.loc[idx, "Total day charge"]) if "Total day charge" in data.columns else float(row.get("Total day charge", 0))
-
-        table_data.append({
-            "id": idx + 1,
-            "state": state_val,
-            "account_length": acc_len,
-            "area_code": area_code,
-            "intl_plan": intl_plan,
-            "vmail_plan": vmail_plan,
-            "service_calls": svc_calls,
-            "day_minutes": day_mins,
-            "day_charge": day_charge,
-            "prediction": "CHURN" if row["Prediction"] == "CUSTOMER WILL CHURN" else "STAY",
-            "churn_probability": float(row["Churn Probability (%)"]),
-            "stay_probability": float(row["Stay Probability (%)"]),
-            "risk": row["Risk Level"],
-            "signals": row["Risk signals"],
-            "action": row["Recommended action"],
-        })
-
-    # Prepare chart metrics using standardized prepared features
-    analysis_data = data.copy()
-    analysis_data["_churn_rate"] = predictions
-
-    def churn_series(column, labels=None):
-        if column not in analysis_data.columns:
-            return []
-        grouped = analysis_data.groupby(column, observed=False)["_churn_rate"].mean()
-        return [
-            {
-                "label": labels.get(str(k), str(k)) if labels else str(k),
-                "value": round(float(v) * 100, 1),
-            }
-            for k, v in grouped.items()
-            if pd.notna(k)
-        ]
-
-    service_bands = pd.cut(
-        pd.to_numeric(analysis_data.get("Customer service calls", pd.Series(dtype=float)), errors="coerce"),
-        bins=[-1, 0, 1, 2, 3, float("inf")],
-        labels=["0 Calls", "1 Call", "2 Calls", "3 Calls", "4+ Calls"],
+    # Calculate domain-aware analytics, charts, feature importances, and formatted rows
+    summary = schema_mapper.calculate_domain_analytics(
+        source_df=original,
+        prepared_features=prep_data,
+        predictions=predictions,
+        probabilities=probabilities,
+        model=model,
+        domain_key=detected_domain
     )
-    day_bands = pd.cut(
-        pd.to_numeric(analysis_data.get("Total day minutes", pd.Series(dtype=float)), errors="coerce"),
-        bins=[-1, 150, 200, 250, float("inf")],
-        labels=["0–150 mins", "151–200 mins", "201–250 mins", "250+ mins"],
-    )
-    analysis_data["Service calls band"] = service_bands
-    analysis_data["Day minutes band"] = day_bands
 
-    charts = {
-        "international": churn_series(
-            "International plan", {"Yes": "With Intl Plan", "No": "No Intl Plan", "1": "With Intl Plan", "0": "No Intl Plan"}
-        ),
-        "voicemail": churn_series(
-            "Voice mail plan", {"Yes": "With Voicemail", "No": "No Voicemail", "1": "With Voicemail", "0": "No Voicemail"}
-        ),
-        "service_calls": churn_series("Service calls band"),
-        "day_minutes": churn_series("Day minutes band"),
-        "feature_importance": [
-            {"feature": "Customer Service Calls", "importance": 28.4},
-            {"feature": "Total Day Minutes", "importance": 24.1},
-            {"feature": "Total Day Charge", "importance": 18.2},
-            {"feature": "International Plan", "importance": 12.5},
-            {"feature": "Total Eve Minutes", "importance": 8.7},
-            {"feature": "Total Intl Minutes", "importance": 5.1},
-            {"feature": "Voice Mail Plan", "importance": 3.0},
-        ],
-    }
-
-    summary = {
-        "total_customers": total_customers,
-        "churn_count": churned_customers,
-        "churned_customers": churned_customers,
-        "stay_count": staying_customers,
-        "staying_customers": staying_customers,
-        "churn_rate": churn_rate,
-        "stay_rate": round(100 - churn_rate, 2),
-        "high_risk": high_risk_customers,
-        "high_risk_customers": high_risk_customers,
-        "medium_risk_customers": medium_risk_customers,
-        "low_risk_customers": low_risk_customers,
-        "high_risk_rate": high_risk_rate,
-        "est_rev_at_risk": est_rev_at_risk,
-        "table_data": table_data,
-        "results": table_data,
-        "charts": charts,
-        "download_available": True,
-        "firebase_active": is_firebase_active,
-    }
+    summary["download_available"] = True
+    summary["firebase_active"] = is_firebase_active
 
     # Sync summary metrics to Firebase Cloud Firestore
     sync_analytics_to_firestore(summary)
@@ -498,16 +376,37 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    """Executive Dashboard view with customer dataset analytics."""
+    """Executive Dashboard view with customer dataset analytics supporting E-Commerce, SaaS, Banking, Telecom."""
     try:
+        domain_req = request.args.get("domain", session.get("active_domain")).strip().lower() if (request.args.get("domain") or session.get("active_domain")) else None
+
+        # Case 1: Explicit domain switch requested (e.g. /dashboard?domain=ecommerce)
+        if domain_req and domain_req in schema_mapper.DOMAIN_PROFILES:
+            target_file = os.path.join(DATA_DIR, schema_mapper.DOMAIN_PROFILES[domain_req]["default_file"])
+            if os.path.exists(target_file):
+                df = pd.read_csv(target_file)
+                result_df, summary = analyze_customers(df, domain_key=domain_req)
+                result_df.to_csv(BULK_RESULTS_PATH, index=False)
+                session["active_domain"] = domain_req
+                return render_template("index.html", **summary)
+
+        # Case 2: Read active bulk results if available
         if os.path.exists(BULK_RESULTS_PATH):
             df = pd.read_csv(BULK_RESULTS_PATH)
-            _, summary = analyze_customers(df)
+            detected_domain = session.get("active_domain") or schema_mapper.detect_dataset_domain(df)
+            _, summary = analyze_customers(df, domain_key=detected_domain)
+            session["active_domain"] = detected_domain
+        # Case 3: Default to E-Commerce Dataset if present
+        elif os.path.exists(os.path.join(DATA_DIR, "data_ecommerce_customer_churn.csv")):
+            df = pd.read_csv(os.path.join(DATA_DIR, "data_ecommerce_customer_churn.csv"))
+            result_df, summary = analyze_customers(df, domain_key="ecommerce")
+            result_df.to_csv(BULK_RESULTS_PATH, index=False)
+            session["active_domain"] = "ecommerce"
         elif os.path.exists(RAW_DATA_PATH):
             df = pd.read_csv(RAW_DATA_PATH)
-            result_df, summary = analyze_customers(df)
-            os.makedirs("data", exist_ok=True)
+            result_df, summary = analyze_customers(df, domain_key="telecom")
             result_df.to_csv(BULK_RESULTS_PATH, index=False)
+            session["active_domain"] = "telecom"
         else:
             raise FileNotFoundError("Customer dataset not found.")
 
@@ -515,6 +414,32 @@ def dashboard():
     except Exception as e:
         print(f"[ERROR] Dashboard loading error: {e}")
         return render_template("error.html", title="Dashboard Unavailable", message=str(e)), 400
+
+
+@app.route("/api/switch_dataset/<domain>", methods=["GET", "POST"])
+@login_required
+def api_switch_dataset(domain="ecommerce"):
+    """Switch active dataset and re-score live across E-Commerce, SaaS, Banking, Telecom."""
+    domain = (domain or "ecommerce").strip().lower()
+    if domain not in schema_mapper.DOMAIN_PROFILES:
+        domain = "ecommerce"
+
+    profile = schema_mapper.get_domain_profile(domain)
+    target_file = os.path.join(DATA_DIR, profile["default_file"])
+
+    if os.path.exists(target_file):
+        df = pd.read_csv(target_file)
+    else:
+        df = schema_mapper.generate_sample_domain_df(domain)
+        df.to_csv(target_file, index=False)
+
+    result_df, summary = analyze_customers(df, domain_key=domain)
+    result_df.to_csv(BULK_RESULTS_PATH, index=False)
+    session["active_domain"] = domain
+
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": True, "domain": domain, "summary": summary})
+    return redirect(url_for("dashboard", domain=domain))
 
 
 @app.route("/predict", methods=["GET", "POST"])
@@ -1102,8 +1027,10 @@ def predict_mapped():
         enriched_df["Recommended action"] = [a for _, a in guidance_list]
 
         # Update bulk results file for live dashboard sync
-        os.makedirs("data", exist_ok=True)
+        os.makedirs(DATA_DIR, exist_ok=True)
         enriched_df.to_csv(BULK_RESULTS_PATH, index=False)
+        detected_domain = schema_mapper.detect_dataset_domain(source_df)
+        session["active_domain"] = detected_domain
 
         # Build JSON response
         records_output = []
@@ -1204,6 +1131,8 @@ def api_bulk_predict():
 
 @app.route("/api/sample_csv", methods=["GET"])
 @app.route("/api/sample_csv/<domain>", methods=["GET"])
+@app.route("/api/sample-csv", methods=["GET"])
+@app.route("/api/sample-csv/<domain>", methods=["GET"])
 @login_required
 def api_sample_csv(domain="telecom"):
     """
@@ -1211,8 +1140,19 @@ def api_sample_csv(domain="telecom"):
     telecom, ecommerce, saas, banking, retail.
     """
     domain_req = request.args.get("domain", domain).strip().lower()
+    profile = schema_mapper.get_domain_profile(domain_req)
+    target_path = os.path.join(DATA_DIR, profile["default_file"])
+
+    if os.path.exists(target_path):
+        return send_file(
+            target_path,
+            as_attachment=True,
+            download_name=profile["default_file"],
+            mimetype="text/csv"
+        )
+
     csv_content = schema_mapper.generate_sample_domain_csv(domain_req)
-    filename = f"sample_{domain_req}_customer_churn_dataset.csv"
+    filename = f"{profile['default_file']}"
     return Response(
         csv_content,
         mimetype="text/csv",
@@ -1227,18 +1167,25 @@ def api_simulate():
     try:
         payload = request.get_json() or request.form
         state = str(payload.get("state", "KS")).strip().upper()
-        account_length = int(payload.get("account_length", 100))
+        account_length = int(payload.get("account_length", payload.get("tenure_months", payload.get("tenure", payload.get("days_since_last_login", 100)))))
         area_code = int(payload.get("area_code", 415))
-        intl_plan = str(payload.get("international_plan", "no")).strip().lower()
-        vmail_plan = str(payload.get("voice_mail_plan", "no")).strip().lower()
+        intl_plan = str(payload.get("international_plan", payload.get("vip_member", payload.get("vip", payload.get("is_active_member", "no"))))).strip().lower()
+        vmail_plan = str(payload.get("voice_mail_plan", payload.get("has_credit_card", "no"))).strip().lower()
         number_vmail_messages = int(payload.get("number_vmail_messages", 0))
 
-        total_day_minutes = float(payload.get("total_day_minutes", 180.0))
-        total_day_calls = int(payload.get("total_day_calls", 100))
+        total_day_calls = int(payload.get("total_day_calls", payload.get("order_count", payload.get("active_users_count", payload.get("age", 100)))))
+        customer_service_calls = int(payload.get("customer_service_calls", payload.get("support_tickets", payload.get("support_tickets_opened", payload.get("num_of_products", payload.get("service_calls", 1))))))
+
+        raw_spend = payload.get("total_day_charge", payload.get("monthly_spend", payload.get("monthly_recurring_revenue_mrr", payload.get("mrr", None))))
+        if raw_spend is not None:
+            raw_day_charge = float(raw_spend)
+            total_day_minutes = float(payload.get("total_day_minutes", round(raw_day_charge * 5.88, 1)))
+        else:
+            total_day_minutes = float(payload.get("total_day_minutes", 180.0))
+            raw_day_charge = float(round(total_day_minutes * 0.17, 2))
 
         # Apply discount percent if provided in simulation (e.g. 0, 10, 15, 20%)
         discount_percent = float(payload.get("discount_percent", 0))
-        raw_day_charge = float(payload.get("total_day_charge", round(total_day_minutes * 0.17, 2)))
         total_day_charge = round(raw_day_charge * (1.0 - (discount_percent / 100.0)), 2)
 
         total_eve_minutes = float(payload.get("total_eve_minutes", 200.0))
@@ -1253,7 +1200,6 @@ def api_simulate():
         total_intl_calls = int(payload.get("total_intl_calls", 3))
         total_intl_charge = float(payload.get("total_intl_charge", round(total_intl_minutes * 0.27, 2)))
 
-        customer_service_calls = int(payload.get("customer_service_calls", 1))
         original_prob = float(payload.get("original_probability", 0))
 
         sim_customer = pd.DataFrame({

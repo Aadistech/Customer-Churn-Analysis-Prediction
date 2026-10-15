@@ -181,21 +181,26 @@ function initAdvancedTableSystem() {
   const trElements = Array.from(tbody.querySelectorAll('tr'));
   trElements.forEach((tr, idx) => {
     const cells = tr.querySelectorAll('td');
-    if (cells.length < 10) return;
+    if (cells.length < 5) return;
+
+    const d = tr.dataset;
+    const rawId = d.id || (cells[0] ? cells[0].textContent.replace('#', '').trim() : String(idx + 1));
+    const numId = parseInt(rawId.replace(/[^0-9]/g, '')) || (idx + 1);
 
     allRowsData.push({
       element: tr,
-      id: parseInt(cells[0].textContent.replace('#', '')) || (idx + 1),
-      state: cells[1].textContent.trim(),
-      accountLength: parseInt(cells[2].textContent) || 0,
-      intlPlan: cells[3].textContent.trim(),
-      serviceCalls: parseInt(cells[4].textContent) || 0,
-      dayMinutes: parseFloat(cells[5].textContent) || 0,
-      churnProbability: parseFloat(cells[6].textContent) || 0,
-      risk: tr.getAttribute('data-risk') || 'LOW',
-      prediction: tr.getAttribute('data-prediction') || 'STAY',
-      signals: cells[8].textContent.trim(),
-      action: cells[9].textContent.trim(),
+      id: rawId,
+      numId: numId,
+      state: d.state || (cells[1] ? cells[1].textContent.trim() : 'N/A'),
+      accountLength: parseFloat(d.tenure) || 0,
+      intlPlan: d.vip || (cells[3] ? cells[3].textContent.trim() : 'No'),
+      serviceCalls: parseInt(d.tickets) || 0,
+      dayMinutes: parseFloat(d.spend) || 0,
+      churnProbability: parseFloat(d.prob) || (cells[cells.length - 4] ? parseFloat(cells[cells.length - 4].textContent) : 0),
+      risk: d.risk || tr.getAttribute('data-risk') || 'LOW',
+      prediction: d.prediction || tr.getAttribute('data-prediction') || 'STAY',
+      signals: d.signals || (cells[cells.length - 2] ? cells[cells.length - 2].textContent.trim() : ''),
+      action: d.action || (cells[cells.length - 1] ? cells[cells.length - 1].textContent.trim() : ''),
       rawRowText: tr.textContent.toLowerCase()
     });
   });
@@ -218,8 +223,10 @@ function initAdvancedTableSystem() {
       else if (currentFilter === 'LOW') matchesFilter = (item.risk === 'LOW');
       else if (currentFilter === 'CHURN') matchesFilter = (item.prediction === 'CHURN');
       else if (currentFilter === 'STAY') matchesFilter = (item.prediction === 'STAY');
-      else if (currentFilter === 'SVC_CALLS') matchesFilter = (item.serviceCalls >= 3);
-      else if (currentFilter === 'HIGH_DAY') matchesFilter = (item.dayMinutes >= 200);
+      else if (currentFilter === 'SVC_CALLS' || currentFilter === 'TICKETS') matchesFilter = (item.serviceCalls >= 2);
+      else if (currentFilter === 'HIGH_DAY' || currentFilter === 'HIGH_MRR' || currentFilter === 'HIGH_BAL') matchesFilter = (item.dayMinutes >= 50);
+      else if (currentFilter === 'VIP') matchesFilter = (String(item.intlPlan).toLowerCase() === 'yes' || String(item.intlPlan).toLowerCase() === 'vip');
+      else if (currentFilter === 'INACTIVE') matchesFilter = (String(item.intlPlan).toLowerCase() === 'no' || item.intlPlan === '0');
 
       return matchesSearch && matchesFilter;
     });
@@ -232,9 +239,16 @@ function initAdvancedTableSystem() {
       let valA = a[sortColumn];
       let valB = b[sortColumn];
 
-      if (typeof valA === 'string') {
-        valA = valA.toLowerCase();
-        valB = valB.toLowerCase();
+      if (valA === undefined) valA = '';
+      if (valB === undefined) valB = '';
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        const numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
+        const numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
+        if (!isNaN(numA) && !isNaN(numB) && valA.match(/^[#$0-9]/)) {
+          return sortDirection === 'asc' ? numA - numB : numB - numA;
+        }
+        return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
 
       if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -364,10 +378,11 @@ function openCustomerDrawer(customer) {
   activeCustomerDrawerData = customer;
 
   // Set Drawer Text
-  document.getElementById('drawerCustId').textContent = `#${customer.id}`;
-  document.getElementById('drawerState').textContent = customer.state;
-  document.getElementById('drawerTenure').textContent = `${customer.accountLength} months`;
-  document.getElementById('drawerIntlPlan').textContent = customer.intlPlan;
+  const displayId = String(customer.id).startsWith('#') ? customer.id : `#${customer.id}`;
+  document.getElementById('drawerCustId').textContent = displayId;
+  document.getElementById('drawerState').textContent = customer.state || 'N/A';
+  document.getElementById('drawerTenure').textContent = `${customer.accountLength} ${customer.accountLength === 1 ? 'month' : 'months'}`;
+  document.getElementById('drawerIntlPlan').textContent = customer.intlPlan || 'No';
   document.getElementById('drawerProb').textContent = `${customer.churnProbability}%`;
   document.getElementById('drawerRisk').textContent = customer.risk;
   document.getElementById('drawerSignals').textContent = customer.signals;
@@ -375,11 +390,11 @@ function openCustomerDrawer(customer) {
 
   // Render Radar Chart for Customer Usage
   window.AadiCharts.initCustomerRadarChart('drawerRadarCanvas', {
-    dayMinutes: customer.dayMinutes,
+    dayMinutes: customer.dayMinutes || 100,
     eveMinutes: 200,
     nightMinutes: 200,
-    intlMinutes: (customer.intlPlan.toLowerCase() === 'yes') ? 12 : 5,
-    serviceCalls: customer.serviceCalls
+    intlMinutes: (String(customer.intlPlan).toLowerCase() === 'yes' || String(customer.intlPlan).toLowerCase() === 'vip') ? 12 : 5,
+    serviceCalls: customer.serviceCalls || 0
   });
 
   // Setup What-If Retention Simulator Sliders inside Drawer

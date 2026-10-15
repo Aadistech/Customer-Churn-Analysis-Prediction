@@ -9,7 +9,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 300px;">
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem;">
-                    <span class="badge badge-info">RANDOM FOREST MODEL v2.4</span>
+                    <span class="badge badge-info">{{ domain_badge or 'RANDOM FOREST MODEL v2.4' }}</span>
                     <span class="badge badge-success">ACCURACY: 96.4%</span>
                 </div>
                 <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem; line-height: 1.2;">
@@ -39,9 +39,43 @@
 
             <div class="revenue-metric-box">
                 <div class="revenue-metric-label">Revenue Protection Metric</div>
-                <div class="revenue-metric-value mono">₹{{ "{:,}".format(est_rev_at_risk) }}</div>
-                <div class="revenue-metric-subtext">Estimated Monthly ARR at Risk</div>
+                <div class="revenue-metric-value mono">
+                    {{ "$" if domain_key in ['ecommerce', 'saas', 'banking'] else "₹" }}{{ "{:,.2f}".format(est_rev_at_risk) if domain_key in ['ecommerce', 'saas', 'banking'] else "{:,}".format(est_rev_at_risk|int) }}
+                </div>
+                <div class="revenue-metric-subtext">
+                    {{ 'Estimated Revenue Loss at Risk' if domain_key == 'ecommerce' else ('Estimated Annual ARR at Risk' if domain_key == 'saas' else ('Estimated Balance Margin at Risk' if domain_key == 'banking' else 'Estimated Monthly ARR at Risk')) }}
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Multi-Domain Live Dataset Switcher Ribbon -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1.15rem 1.5rem; background: var(--card-bg); border-left: 4px solid var(--primary); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.5rem;">{{ domain_icon or '📊' }}</span>
+            <div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Active Industry Domain Dataset</div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main);">{{ domain_name or 'E-Commerce & Online Retail' }}</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-right: 0.25rem;">Switch Dataset:</span>
+            <a href="{{ url_for('api_switch_dataset', domain='ecommerce') }}" class="btn btn-sm {% if domain_key == 'ecommerce' %}btn-primary{% else %}btn-outline{% endif %}" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                🛒 E-Commerce
+            </a>
+            <a href="{{ url_for('api_switch_dataset', domain='saas') }}" class="btn btn-sm {% if domain_key == 'saas' %}btn-primary{% else %}btn-outline{% endif %}" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                ☁️ SaaS Subscriptions
+            </a>
+            <a href="{{ url_for('api_switch_dataset', domain='banking') }}" class="btn btn-sm {% if domain_key == 'banking' %}btn-primary{% else %}btn-outline{% endif %}" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                🏦 Banking
+            </a>
+            <a href="{{ url_for('api_switch_dataset', domain='telecom') }}" class="btn btn-sm {% if domain_key == 'telecom' %}btn-primary{% else %}btn-outline{% endif %}" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                📞 Telecom
+            </a>
+            <a href="{{ url_for('api_sample_csv', domain=domain_key) }}" class="btn btn-sm btn-outline" title="Download raw sample CSV for {{ domain_name }}" style="border-style: dashed;">
+                📥 Download Sample (.csv)
+            </a>
         </div>
     </div>
 
@@ -159,33 +193,33 @@
         <!-- Churn Distribution Doughnut Chart -->
         <div class="card">
             <div class="section-title">
-                <span>Subscriber Breakdown</span>
-                <span class="badge badge-info">Model Forecast</span>
+                <span>{{ charts.chart1.title if charts and charts.chart1 else 'Customer Retention Breakdown' }}</span>
+                <span class="badge badge-info">{{ charts.chart1.badge if charts and charts.chart1 else 'Model Forecast' }}</span>
             </div>
             <div style="position: relative; height: 260px;">
-                <canvas id="churnDoughnutChart"></canvas>
+                <canvas id="churnDoughnutChart" class="zoomable-canvas"></canvas>
             </div>
         </div>
 
-        <!-- Churn by Customer Service Calls Bar Chart -->
+        <!-- Churn by Behavioral Signal Bar Chart -->
         <div class="card">
             <div class="section-title">
-                <span>Churn Rate by Service Calls</span>
-                <span class="badge badge-warning">Behavioral Signal</span>
+                <span>{{ charts.chart2.title if charts and charts.chart2 else 'Churn Rate by Behavioral Signal' }}</span>
+                <span class="badge badge-warning">{{ charts.chart2.badge if charts and charts.chart2 else 'Behavioral Signal' }}</span>
             </div>
             <div style="position: relative; height: 260px;">
-                <canvas id="serviceCallsBarChart"></canvas>
+                <canvas id="serviceCallsBarChart" class="zoomable-canvas"></canvas>
             </div>
         </div>
 
         <!-- Predictive Feature Importance Chart -->
         <div class="card">
             <div class="section-title">
-                <span>Top Churn Risk Drivers</span>
-                <span class="badge badge-success">Feature Weight</span>
+                <span>{{ charts.chart3.title if charts and charts.chart3 else 'Top Churn Risk Drivers' }}</span>
+                <span class="badge badge-success">{{ charts.chart3.badge if charts and charts.chart3 else 'Random Forest Weights' }}</span>
             </div>
             <div style="position: relative; height: 260px;">
-                <canvas id="featureImportanceChart"></canvas>
+                <canvas id="featureImportanceChart" class="zoomable-canvas"></canvas>
             </div>
         </div>
     </div>
@@ -194,25 +228,31 @@
     <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
         <div class="section-title" style="margin-bottom: 0.85rem;">
             <span>🤖 AI Automated Executive Playbook</span>
-            <span class="badge badge-info">Real-time Policy Logic</span>
+            <span class="badge badge-info">{{ domain_name or 'Multi-Domain Retention Logic' }}</span>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
             <div style="background: rgba(255,255,255,0.03); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                 <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem;">Risk Assessment Evaluation</h4>
                 <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
                     {% if churn_rate >= 20.0 %}
-                        ⚠️ <strong style="color: #F87171;">Critical Churn Level Detected ({{ churn_rate }}%):</strong> High customer churn rate observed across account segments. Immediate outreach required for accounts with &ge;3 customer service calls.
+                        ⚠️ <strong style="color: #F87171;">{{ playbook.status_text if playbook else 'Critical Churn Level Detected (' ~ churn_rate ~ '%)' }}</strong>
                     {% elif churn_rate >= 10.0 %}
-                        ⚡ <strong style="color: #FBBF24;">Moderate Churn Risk ({{ churn_rate }}%):</strong> {{ churned_customers }} accounts flagged for retention intervention. Focus retention efforts on high daytime usage users without active voicemail discounts.
+                        ⚡ <strong style="color: #FBBF24;">{{ playbook.status_text if playbook else 'Moderate Churn Risk (' ~ churn_rate ~ '%)' }}</strong>
                     {% else %}
-                        ✅ <strong style="color: #34D399;">Healthy Account Base ({{ churn_rate }}% Churn):</strong> Retention posture is healthy. Continue monitoring accounts reaching &ge;250 daytime minutes.
+                        ✅ <strong style="color: #34D399;">{{ playbook.status_text if playbook else 'Healthy Account Base (' ~ churn_rate ~ '% Churn)' }}</strong>
                     {% endif %}
                 </p>
             </div>
             <div style="background: rgba(255,255,255,0.03); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                 <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem;">Key Operational Insight</h4>
                 <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
-                    Customer service calls are the single strongest predictor of churn. Accounts making <strong>4 or more service calls</strong> exhibit a <strong>60%+ churn probability</strong> regardless of account length.
+                    {{ playbook.insight_text if playbook else 'Behavioral friction is the primary driver of customer churn. Proactive retention outreach minimizes defection.' }}
+                </p>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem;">Recommended Retention Strategy</h4>
+                <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+                    {{ playbook.action_text if playbook else 'Deploy targeted offers, loyalty credits, and concierge support outreach to mitigate defection.' }}
                 </p>
             </div>
         </div>
@@ -227,7 +267,7 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                <input type="text" id="tableSearchInput" class="form-control search-input" placeholder="🔍 Search state, risk, driver...">
+                <input type="text" id="tableSearchInput" class="form-control search-input" placeholder="🔍 Search ID, state, risk, driver...">
                 <button onclick="window.exportFilteredCSV()" class="btn btn-outline btn-sm">
                     📥 Export Filtered (.csv)
                 </button>
@@ -249,8 +289,19 @@
                 <button class="filter-pill" data-filter="LOW">✅ Low Risk (&lt;40%)</button>
                 <button class="filter-pill" data-filter="CHURN">Will Churn</button>
                 <button class="filter-pill" data-filter="STAY">Will Stay</button>
+                {% if domain_key == 'ecommerce' %}
+                <button class="filter-pill" data-filter="TICKETS">🚨 Tickets &ge; 2</button>
+                <button class="filter-pill" data-filter="VIP">⭐ VIP Members</button>
+                {% elif domain_key == 'saas' %}
+                <button class="filter-pill" data-filter="TICKETS">🚨 Tickets Open &ge; 2</button>
+                <button class="filter-pill" data-filter="HIGH_MRR">📈 High MRR</button>
+                {% elif domain_key == 'banking' %}
+                <button class="filter-pill" data-filter="INACTIVE">⚠️ Inactive Members</button>
+                <button class="filter-pill" data-filter="HIGH_BAL">💰 High Balance</button>
+                {% else %}
                 <button class="filter-pill" data-filter="SVC_CALLS">🚨 Svc Calls &ge; 3</button>
                 <button class="filter-pill" data-filter="HIGH_DAY">📈 High Day &ge; 200m</button>
+                {% endif %}
             </div>
         </div>
 
@@ -259,12 +310,18 @@
             <table class="custom-table" id="customerTable">
                 <thead>
                     <tr>
-                        <th class="sortable" data-sort="id">ID</th>
-                        <th class="sortable" data-sort="state">State</th>
-                        <th class="sortable" data-sort="accountLength">Tenure</th>
-                        <th>Intl Plan</th>
-                        <th class="sortable" data-sort="serviceCalls">Svc Calls</th>
-                        <th class="sortable" data-sort="dayMinutes">Day Mins</th>
+                        {% if table_columns and table_columns|length > 0 %}
+                            {% for col in table_columns %}
+                            <th class="sortable" data-sort="{{ col.key }}">{{ col.label }}</th>
+                            {% endfor %}
+                        {% else %}
+                            <th class="sortable" data-sort="id">ID</th>
+                            <th class="sortable" data-sort="state">State</th>
+                            <th class="sortable" data-sort="accountLength">Tenure</th>
+                            <th>Intl Plan</th>
+                            <th class="sortable" data-sort="serviceCalls">Svc Calls</th>
+                            <th class="sortable" data-sort="dayMinutes">Day Mins</th>
+                        {% endif %}
                         <th class="sortable" data-sort="churnProbability">Churn Prob ▼</th>
                         <th class="sortable" data-sort="risk">Risk Level</th>
                         <th>Top Risk Signals</th>
@@ -273,27 +330,62 @@
                 </thead>
                 <tbody>
                     {% for row in table_data %}
-                    <tr data-risk="{{ row.risk }}" data-prediction="{{ row.prediction }}">
-                        <td class="mono" style="font-weight: 700; color: var(--accent);">#{{ row.id }}</td>
-                        <td><span class="mono" style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">{{ row.state }}</span></td>
-                        <td>{{ row.account_length }} mo</td>
-                        <td>
-                            {% if row.intl_plan == 'Yes' or row.intl_plan == '1' %}
-                            <span class="badge badge-info">Yes</span>
-                            {% else %}
-                            <span style="color: var(--text-subtle);">No</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if row.service_calls >= 4 %}
-                            <strong style="color: #F87171;">{{ row.service_calls }} 🚨</strong>
-                            {% elif row.service_calls >= 3 %}
-                            <span style="color: #FBBF24;">{{ row.service_calls }} ⚠️</span>
-                            {% else %}
-                            <span style="color: var(--text-muted);">{{ row.service_calls }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ row.day_minutes }} m</td>
+                    <tr data-risk="{{ row.risk }}" 
+                        data-prediction="{{ row.prediction }}"
+                        data-id="{{ row.id }}"
+                        data-state="{{ row.state or 'N/A' }}"
+                        data-tenure="{{ row.tenure_months or row.account_length or row.tenure_years or row.days_since_last_login or 0 }}"
+                        data-vip="{{ row.vip_member or row.intl_plan or row.contract_type or row.has_credit_card or 'No' }}"
+                        data-tickets="{{ row.support_tickets or row.service_calls or row.support_tickets_opened or row.num_of_products or 0 }}"
+                        data-spend="{{ row.monthly_spend or row.day_minutes or row.monthly_recurring_revenue_mrr or row.account_balance or 0 }}"
+                        data-prob="{{ row.churn_probability }}"
+                        data-signals="{{ row.signals }}"
+                        data-action="{{ row.action }}">
+
+                        {% if table_columns and table_columns|length > 0 %}
+                            {% for col in table_columns %}
+                                {% set val = row.get(col.key) %}
+                                <td>
+                                    {% if col.type == 'mono' %}
+                                        <span class="mono" style="font-weight: 700; color: var(--accent);">{{ val }}</span>
+                                    {% elif col.type == 'badge' %}
+                                        <span class="mono" style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">{{ val or 'N/A' }}</span>
+                                    {% elif col.type == 'vip_pill' or col.type == 'bool_pill' %}
+                                        {% if val|string|lower in ['yes', '1', 'true', 'vip', 'annual', 'active'] %}
+                                        <span class="badge badge-info">Yes</span>
+                                        {% else %}
+                                        <span style="color: var(--text-subtle);">No</span>
+                                        {% endif %}
+                                    {% elif col.type == 'tickets' %}
+                                        {% if val|int >= 4 %}
+                                        <strong style="color: #F87171;">{{ val }} 🚨</strong>
+                                        {% elif val|int >= 2 %}
+                                        <span style="color: #FBBF24;">{{ val }} ⚠️</span>
+                                        {% else %}
+                                        <span style="color: var(--text-muted);">{{ val }}</span>
+                                        {% endif %}
+                                    {% elif col.prefix == '$' or col.type == 'currency' %}
+                                        <span class="mono">${{ "{:,.2f}".format(val|float) if val is number else val }}</span>
+                                    {% else %}
+                                        {{ val }}{{ col.suffix or '' }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        {% else %}
+                            <td class="mono" style="font-weight: 700; color: var(--accent);">#{{ row.id }}</td>
+                            <td><span class="mono" style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">{{ row.state }}</span></td>
+                            <td>{{ row.account_length }} mo</td>
+                            <td>
+                                {% if row.intl_plan == 'Yes' or row.intl_plan == '1' %}
+                                <span class="badge badge-info">Yes</span>
+                                {% else %}
+                                <span style="color: var(--text-subtle);">No</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.service_calls }}</td>
+                            <td>{{ row.day_minutes }} m</td>
+                        {% endif %}
+
                         <td class="mono" style="font-weight: 700;">
                             {% if row.churn_probability >= 70 %}
                             <span style="color: #F87171;">{{ row.churn_probability }}%</span>
@@ -491,21 +583,22 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Render Doughnut Chart
+    // Render Doughnut Chart (Chart 1)
     const stayCount = {{ staying_customers }};
     const churnCount = {{ churned_customers }};
     window.AadiCharts.initDoughnut('churnDoughnutChart', stayCount, churnCount);
 
-    // Render Service Calls Bar Chart
-    const svcCallsData = {{ charts.service_calls | tojson }};
+    // Render Dynamic Behavioral Signal Bar Chart (Chart 2)
+    const svcCallsData = {{ (charts.chart2.data if charts and charts.chart2 else charts.service_calls) | tojson }};
     if (svcCallsData && svcCallsData.length > 0) {
         const labels = svcCallsData.map(item => item.label);
         const values = svcCallsData.map(item => item.value);
-        window.AadiCharts.initBarChart('serviceCallsBarChart', labels, values, 'Churn Rate (%)', '#EF4444');
+        const chartTitle = {{ (charts.chart2.title if charts and charts.chart2 else 'Churn Rate (%)') | tojson }};
+        window.AadiCharts.initBarChart('serviceCallsBarChart', labels, values, chartTitle, '#EF4444');
     }
 
-    // Render Feature Importance Chart
-    const featureData = {{ charts.feature_importance | tojson }};
+    // Render Dynamic Feature Importance Chart (Chart 3)
+    const featureData = {{ (charts.chart3.feature_importance if charts and charts.chart3 else charts.feature_importance) | tojson }};
     if (featureData && featureData.length > 0) {
         window.AadiCharts.initFeatureImportanceChart('featureImportanceChart', featureData);
     }
