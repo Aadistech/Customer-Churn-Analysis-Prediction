@@ -1,0 +1,201 @@
+customerID,gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges,Churn
+TELCO_1001,Male,1,No,No,7,Yes,Yes,Fiber optic,No,No,Yes,Yes,Yes,No,Month-to-month,No,Credit card (automatic),91.61,623.34,Yes
+TELCO_1002,Male,0,Yes,No,43,Yes,No,DSL,Yes,Yes,No,No,No,No,Month-to-month,No,Credit card (automatic),56.36,2321.4,Yes
+TELCO_1003,Female,0,Yes,Yes,30,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,Yes,Credit card (automatic),25.0,760.18,No
+TELCO_1004,Female,0,No,No,16,Yes,Yes,Fiber optic,Yes,No,No,No,No,No,One year,No,Mailed check,84.43,1394.35,No
+TELCO_1005,Female,0,Yes,No,19,Yes,No,Fiber optic,Yes,Yes,No,No,No,No,Month-to-month,Yes,Mailed check,86.84,1651.53,Yes
+TELCO_1006,Male,0,Yes,Yes,39,Yes,Yes,Fiber optic,No,Yes,No,No,No,Yes,One year,No,Bank transfer (automatic),89.85,3368.03,Yes
+TELCO_1007,Female,1,No,No,72,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,20.74,1441.44,No
+TELCO_1008,Male,0,No,No,13,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Electronic check,24.74,313.29,No
+TELCO_1009,Male,1,No,No,72,Yes,Yes,Fiber optic,No,Yes,No,No,No,No,Two year,No,Bank transfer (automatic),83.55,5954.84,No
+TELCO_1010,Female,0,No,No,3,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,No,Month-to-month,Yes,Mailed check,94.6,277.51,Yes
+TELCO_1011,Male,0,No,No,3,Yes,Yes,DSL,No,No,No,No,Yes,No,Month-to-month,Yes,Bank transfer (automatic),52.46,162.11,Yes
+TELCO_1012,Male,0,No,No,1,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,19.07,18.21,No
+TELCO_1013,Male,0,Yes,Yes,29,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),19.73,558.74,No
+TELCO_1014,Female,0,No,No,13,Yes,No,Fiber optic,No,No,Yes,No,No,No,Month-to-month,No,Electronic check,77.57,1043.84,Yes
+TELCO_1015,Male,0,Yes,No,18,Yes,Yes,Fiber optic,No,No,No,No,No,Yes,Month-to-month,Yes,Credit card (automatic),83.16,1441.63,Yes
+TELCO_1016,Female,0,Yes,Yes,1,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Bank transfer (automatic),19.05,18.35,Yes
+TELCO_1017,Male,0,No,No,50,Yes,No,DSL,No,No,No,No,No,No,Month-to-month,No,Bank transfer (automatic),42.04,2021.16,Yes
+TELCO_1018,Male,0,Yes,No,26,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,Yes,Month-to-month,No,Bank transfer (automatic),93.71,2354.01,Yes
+TELCO_1019,Female,0,Yes,Yes,68,No,No phone service,Fiber optic,No,No,Yes,Yes,Yes,No,Two year,No,Bank transfer (automatic),93.96,6204.04,Yes
+TELCO_1020,Male,0,No,No,71,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Credit card (automatic),25.82,1746.1,No
+TELCO_1021,Female,0,No,No,71,Yes,Yes,Fiber optic,Yes,No,No,Yes,No,No,Two year,No,Mailed check,84.05,5802.2,No
+TELCO_1022,Female,0,Yes,No,4,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Bank transfer (automatic),20.98,81.22,No
+TELCO_1023,Female,1,No,No,3,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Mailed check,19.37,56.68,No
+TELCO_1024,Male,0,Yes,No,3,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,23.17,71.04,Yes
+TELCO_1025,Female,0,No,No,6,Yes,Yes,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Credit card (automatic),76.0,469.03,Yes
+TELCO_1026,Female,0,No,No,44,Yes,No,Fiber optic,Yes,Yes,No,No,Yes,No,One year,No,Mailed check,93.51,4240.57,Yes
+TELCO_1027,Male,0,No,No,16,Yes,No,Fiber optic,No,No,No,Yes,No,No,One year,No,Credit card (automatic),84.6,1315.54,No
+TELCO_1028,Female,1,Yes,Yes,11,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Credit card (automatic),22.97,255.52,No
+TELCO_1029,Female,0,No,No,71,Yes,No,Fiber optic,No,Yes,No,No,Yes,No,Two year,Yes,Bank transfer (automatic),88.14,6145.12,No
+TELCO_1030,Male,1,No,No,25,Yes,Yes,Fiber optic,No,Yes,No,No,No,No,One year,No,Credit card (automatic),84.57,2109.38,No
+TELCO_1031,Female,0,No,No,8,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),22.16,168.93,Yes
+TELCO_1032,Female,0,No,No,63,Yes,No,Fiber optic,No,Yes,No,No,Yes,Yes,Two year,Yes,Bank transfer (automatic),89.27,5770.93,Yes
+TELCO_1033,Female,0,Yes,No,5,Yes,No,DSL,No,No,No,No,No,Yes,Month-to-month,Yes,Mailed check,46.2,230.39,Yes
+TELCO_1034,Male,0,No,No,22,Yes,No,Fiber optic,No,Yes,Yes,No,No,No,One year,Yes,Mailed check,90.08,1897.73,No
+TELCO_1035,Male,1,No,No,62,Yes,No,Fiber optic,Yes,No,No,Yes,No,Yes,Two year,Yes,Credit card (automatic),90.2,5850.09,No
+TELCO_1036,Female,0,No,No,14,Yes,No,Fiber optic,No,No,No,No,No,Yes,Month-to-month,No,Bank transfer (automatic),78.45,1140.21,Yes
+TELCO_1037,Female,0,No,No,3,Yes,Yes,Fiber optic,No,Yes,Yes,No,No,No,Month-to-month,Yes,Mailed check,86.17,264.2,Yes
+TELCO_1038,Male,0,No,No,5,Yes,Yes,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Credit card (automatic),81.5,398.16,Yes
+TELCO_1039,Male,0,No,No,7,Yes,No,DSL,No,No,No,No,No,Yes,Month-to-month,Yes,Mailed check,47.01,324.49,Yes
+TELCO_1040,Male,0,Yes,No,20,Yes,No,DSL,Yes,Yes,No,Yes,No,Yes,One year,Yes,Electronic check,69.62,1378.57,Yes
+TELCO_1041,Male,1,No,No,9,Yes,No,Fiber optic,No,No,No,No,No,Yes,Month-to-month,Yes,Electronic check,81.89,745.09,Yes
+TELCO_1042,Male,0,No,No,22,Yes,No,DSL,No,No,No,Yes,Yes,Yes,One year,Yes,Mailed check,64.6,1481.45,No
+TELCO_1043,Male,0,Yes,Yes,33,Yes,Yes,DSL,No,No,Yes,Yes,No,No,Two year,Yes,Credit card (automatic),60.43,1981.78,No
+TELCO_1044,Female,0,No,No,22,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Bank transfer (automatic),22.9,507.64,No
+TELCO_1045,Male,0,No,No,35,No,No phone service,Fiber optic,No,No,No,Yes,Yes,Yes,Two year,Yes,Credit card (automatic),87.61,3001.41,No
+TELCO_1046,Male,0,No,No,4,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),24.69,97.9,Yes
+TELCO_1047,Female,0,No,No,15,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Electronic check,21.79,311.45,No
+TELCO_1048,Male,0,No,No,47,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Mailed check,19.35,909.3,No
+TELCO_1049,Female,0,No,No,39,Yes,Yes,DSL,No,No,Yes,Yes,No,No,Two year,No,Bank transfer (automatic),54.4,2189.61,No
+TELCO_1050,Female,0,No,No,52,Yes,Yes,Fiber optic,No,No,Yes,Yes,No,No,Two year,No,Electronic check,83.34,4254.88,No
+TELCO_1051,Female,0,Yes,No,32,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Credit card (automatic),25.06,763.05,No
+TELCO_1052,Male,1,No,No,11,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Credit card (automatic),24.89,286.22,No
+TELCO_1053,Female,0,Yes,Yes,13,Yes,Yes,DSL,Yes,No,No,No,Yes,Yes,Month-to-month,Yes,Bank transfer (automatic),58.99,789.58,Yes
+TELCO_1054,Female,0,Yes,No,23,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,Yes,Mailed check,23.15,518.19,No
+TELCO_1055,Female,0,Yes,No,67,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Credit card (automatic),25.91,1769.01,No
+TELCO_1056,Female,0,No,No,30,Yes,No,Fiber optic,No,Yes,No,No,Yes,No,Two year,No,Electronic check,87.86,2744.03,No
+TELCO_1057,Female,0,Yes,No,1,Yes,Yes,Fiber optic,No,No,Yes,Yes,No,Yes,Month-to-month,Yes,Bank transfer (automatic),93.89,96.07,Yes
+TELCO_1058,Female,0,No,No,14,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Mailed check,22.48,307.07,No
+TELCO_1059,Female,0,No,No,33,Yes,No,DSL,No,Yes,No,No,Yes,No,One year,Yes,Credit card (automatic),56.57,1776.07,No
+TELCO_1060,Female,0,No,No,35,Yes,Yes,DSL,No,No,No,Yes,Yes,No,One year,Yes,Credit card (automatic),60.09,2022.53,Yes
+TELCO_1061,Male,0,No,No,3,Yes,No,Fiber optic,No,No,No,No,No,No,Month-to-month,No,Credit card (automatic),79.85,242.32,No
+TELCO_1062,Female,1,No,No,1,Yes,Yes,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,No,Credit card (automatic),90.68,86.98,Yes
+TELCO_1063,Male,1,No,No,42,Yes,No,DSL,No,Yes,Yes,No,Yes,Yes,Month-to-month,Yes,Mailed check,70.01,3083.77,Yes
+TELCO_1064,Male,1,Yes,Yes,48,Yes,Yes,DSL,Yes,Yes,No,No,No,No,Month-to-month,Yes,Electronic check,58.78,2807.9,Yes
+TELCO_1065,Male,0,No,No,24,No,No phone service,DSL,No,No,No,No,No,Yes,Month-to-month,No,Electronic check,46.81,1081.44,Yes
+TELCO_1066,Female,0,No,No,6,Yes,Yes,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Credit card (automatic),78.28,464.92,Yes
+TELCO_1067,Female,0,No,No,2,Yes,No,DSL,No,Yes,Yes,No,No,No,Month-to-month,Yes,Bank transfer (automatic),56.86,115.65,Yes
+TELCO_1068,Female,0,Yes,No,34,Yes,No,DSL,No,No,No,No,Yes,Yes,One year,Yes,Electronic check,53.26,1830.58,No
+TELCO_1069,Female,1,No,No,31,No,No phone service,Fiber optic,Yes,Yes,No,Yes,No,No,One year,Yes,Credit card (automatic),86.92,2672.92,No
+TELCO_1070,Female,0,No,No,48,Yes,No,DSL,No,Yes,Yes,Yes,No,No,One year,Yes,Electronic check,60.14,2842.03,Yes
+TELCO_1071,Female,0,No,No,17,Yes,No,DSL,No,Yes,Yes,No,Yes,Yes,Month-to-month,Yes,Credit card (automatic),68.47,1167.78,Yes
+TELCO_1072,Female,1,Yes,No,9,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),22.82,201.06,No
+TELCO_1073,Female,0,No,No,47,Yes,No,DSL,No,No,No,Yes,Yes,Yes,Two year,Yes,Electronic check,57.68,2719.26,Yes
+TELCO_1074,Female,0,Yes,Yes,2,Yes,Yes,DSL,No,Yes,No,No,No,No,Month-to-month,No,Bank transfer (automatic),51.79,107.35,Yes
+TELCO_1075,Male,0,No,No,10,Yes,Yes,DSL,No,Yes,No,Yes,No,Yes,Month-to-month,No,Credit card (automatic),64.64,643.99,No
+TELCO_1076,Male,0,Yes,No,44,Yes,Yes,DSL,No,Yes,No,No,Yes,Yes,One year,Yes,Mailed check,60.38,2620.56,No
+TELCO_1077,Female,0,No,No,15,Yes,No,DSL,Yes,No,Yes,No,No,No,One year,Yes,Mailed check,59.73,933.29,No
+TELCO_1078,Female,1,Yes,No,33,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Electronic check,24.04,804.9,No
+TELCO_1079,Female,1,No,No,1,Yes,No,Fiber optic,No,Yes,Yes,No,Yes,No,Month-to-month,No,Electronic check,94.35,95.88,No
+TELCO_1080,Male,0,Yes,Yes,34,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Bank transfer (automatic),23.91,827.28,Yes
+TELCO_1081,Female,0,No,No,5,Yes,No,Fiber optic,No,Yes,No,No,No,No,Month-to-month,Yes,Credit card (automatic),83.78,438.43,Yes
+TELCO_1082,Male,0,Yes,No,59,No,No phone service,Fiber optic,No,Yes,Yes,Yes,No,No,Two year,Yes,Mailed check,94.31,5740.51,No
+TELCO_1083,Male,0,No,No,16,Yes,No,Fiber optic,Yes,No,No,No,No,Yes,Month-to-month,No,Mailed check,83.87,1376.65,Yes
+TELCO_1084,Male,0,Yes,No,6,Yes,No,Fiber optic,No,No,Yes,Yes,Yes,No,Month-to-month,Yes,Credit card (automatic),92.23,558.73,Yes
+TELCO_1085,Male,0,No,No,11,Yes,Yes,Fiber optic,No,Yes,No,Yes,No,No,Month-to-month,Yes,Credit card (automatic),90.88,1037.0,Yes
+TELCO_1086,Female,0,No,No,34,Yes,Yes,Fiber optic,No,No,No,Yes,Yes,No,One year,Yes,Credit card (automatic),89.14,3176.48,No
+TELCO_1087,Male,0,Yes,No,12,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Credit card (automatic),20.87,262.69,No
+TELCO_1088,Female,1,Yes,No,3,Yes,No,DSL,Yes,No,No,No,No,Yes,Month-to-month,Yes,Credit card (automatic),60.74,179.8,No
+TELCO_1089,Female,0,No,No,49,Yes,No,Fiber optic,No,Yes,No,No,No,No,Month-to-month,Yes,Electronic check,82.9,4154.23,No
+TELCO_1090,Female,0,Yes,Yes,37,Yes,No,Fiber optic,No,Yes,No,No,Yes,Yes,One year,Yes,Credit card (automatic),93.79,3626.21,Yes
+TELCO_1091,Male,0,No,No,21,Yes,No,Fiber optic,No,No,Yes,Yes,No,No,Month-to-month,Yes,Bank transfer (automatic),84.87,1831.28,No
+TELCO_1092,Male,0,No,No,43,Yes,Yes,DSL,Yes,No,No,No,No,No,One year,No,Bank transfer (automatic),52.68,2353.89,No
+TELCO_1093,Male,0,Yes,Yes,32,Yes,No,Fiber optic,No,No,No,Yes,No,Yes,Two year,No,Credit card (automatic),84.98,2726.35,No
+TELCO_1094,Male,1,No,No,40,Yes,No,DSL,No,No,No,No,Yes,No,One year,No,Mailed check,54.68,2144.36,Yes
+TELCO_1095,Male,0,No,No,40,Yes,No,DSL,No,No,Yes,No,No,No,Two year,No,Bank transfer (automatic),47.71,1973.77,No
+TELCO_1096,Male,1,No,No,48,Yes,No,Fiber optic,No,Yes,No,No,No,No,One year,Yes,Electronic check,78.97,3660.95,Yes
+TELCO_1097,Female,0,Yes,No,44,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Electronic check,19.48,841.62,No
+TELCO_1098,Female,0,Yes,Yes,40,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Mailed check,21.64,892.73,No
+TELCO_1099,Female,0,Yes,No,53,Yes,Yes,DSL,No,No,No,Yes,Yes,Yes,Two year,No,Credit card (automatic),60.95,3161.14,Yes
+TELCO_1100,Male,0,No,No,37,Yes,Yes,Fiber optic,Yes,No,Yes,No,No,Yes,One year,No,Electronic check,95.89,3416.18,Yes
+TELCO_1101,Female,0,No,No,35,Yes,Yes,Fiber optic,No,Yes,Yes,Yes,No,No,One year,Yes,Bank transfer (automatic),92.06,3361.09,No
+TELCO_1102,Female,0,No,No,44,Yes,No,Fiber optic,Yes,No,No,No,No,No,One year,No,Electronic check,83.97,3730.49,Yes
+TELCO_1103,Male,0,No,No,32,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,19.61,632.07,No
+TELCO_1104,Male,1,No,No,13,Yes,Yes,Fiber optic,No,No,No,No,No,No,Month-to-month,No,Credit card (automatic),76.61,998.47,Yes
+TELCO_1105,Male,0,No,No,36,Yes,No,Fiber optic,No,Yes,No,No,Yes,Yes,Month-to-month,No,Bank transfer (automatic),95.41,3505.14,Yes
+TELCO_1106,Female,0,No,No,29,Yes,No,Fiber optic,No,No,Yes,No,Yes,Yes,One year,Yes,Credit card (automatic),95.55,2814.17,No
+TELCO_1107,Male,0,No,No,68,Yes,Yes,Fiber optic,Yes,Yes,No,Yes,Yes,Yes,Two year,Yes,Mailed check,99.3,6418.28,No
+TELCO_1108,Male,0,No,No,2,Yes,No,DSL,No,No,Yes,No,No,No,Month-to-month,No,Mailed check,55.37,109.83,No
+TELCO_1109,Male,0,No,No,23,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Electronic check,25.45,573.55,No
+TELCO_1110,Female,0,No,No,32,Yes,No,DSL,Yes,Yes,No,Yes,Yes,No,Two year,Yes,Mailed check,68.91,2133.56,No
+TELCO_1111,Female,0,No,No,4,Yes,Yes,DSL,No,Yes,Yes,No,No,No,Month-to-month,No,Electronic check,54.02,210.93,Yes
+TELCO_1112,Male,1,Yes,No,1,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Electronic check,23.78,24.11,No
+TELCO_1113,Female,0,Yes,Yes,6,Yes,No,Fiber optic,No,No,No,No,No,No,Month-to-month,Yes,Electronic check,77.8,467.99,Yes
+TELCO_1114,Female,1,Yes,Yes,56,Yes,No,DSL,No,No,No,No,No,No,Two year,Yes,Mailed check,45.45,2548.57,No
+TELCO_1115,Male,0,No,No,37,Yes,Yes,DSL,Yes,No,No,No,Yes,No,One year,Yes,Bank transfer (automatic),60.86,2231.3,No
+TELCO_1116,Female,0,No,No,7,No,No phone service,Fiber optic,Yes,No,No,Yes,No,Yes,Month-to-month,Yes,Mailed check,95.93,686.81,Yes
+TELCO_1117,Male,0,No,No,5,Yes,No,Fiber optic,No,No,Yes,No,No,No,Month-to-month,No,Electronic check,76.32,371.7,Yes
+TELCO_1118,Male,0,Yes,Yes,37,Yes,No,Fiber optic,No,Yes,No,Yes,No,No,One year,No,Bank transfer (automatic),86.77,3126.02,No
+TELCO_1119,Male,0,No,No,25,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Credit card (automatic),25.34,637.04,Yes
+TELCO_1120,Female,0,No,No,32,Yes,Yes,DSL,Yes,No,Yes,Yes,No,Yes,One year,Yes,Credit card (automatic),65.63,2198.4,No
+TELCO_1121,Male,0,No,No,7,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Mailed check,19.19,128.31,Yes
+TELCO_1122,Male,0,Yes,Yes,5,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,18.62,95.4,No
+TELCO_1123,Male,0,Yes,No,59,Yes,Yes,Fiber optic,No,Yes,No,No,No,No,Two year,No,Bank transfer (automatic),83.22,5113.42,Yes
+TELCO_1124,Female,1,Yes,Yes,11,Yes,No,Fiber optic,No,Yes,Yes,No,Yes,No,Month-to-month,Yes,Credit card (automatic),95.43,1098.7,Yes
+TELCO_1125,Female,0,No,No,3,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,22.57,67.87,No
+TELCO_1126,Male,0,Yes,Yes,23,Yes,Yes,Fiber optic,Yes,No,No,No,No,No,Month-to-month,Yes,Electronic check,80.83,1865.08,Yes
+TELCO_1127,Male,0,No,No,2,Yes,No,Fiber optic,No,No,Yes,No,No,Yes,Month-to-month,Yes,Bank transfer (automatic),87.2,170.34,Yes
+TELCO_1128,Female,0,No,No,26,Yes,No,DSL,No,No,Yes,Yes,Yes,No,One year,No,Electronic check,62.37,1621.6,No
+TELCO_1129,Female,0,Yes,Yes,61,No,No phone service,Fiber optic,No,Yes,No,No,Yes,No,Month-to-month,Yes,Bank transfer (automatic),87.58,5083.63,Yes
+TELCO_1130,Male,0,No,No,43,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Bank transfer (automatic),21.42,910.36,No
+TELCO_1131,Male,0,No,No,21,Yes,No,DSL,No,No,No,No,Yes,Yes,Month-to-month,Yes,Bank transfer (automatic),60.93,1286.32,Yes
+TELCO_1132,Male,0,No,No,4,Yes,No,Fiber optic,Yes,Yes,No,No,No,Yes,Month-to-month,Yes,Bank transfer (automatic),87.07,346.36,Yes
+TELCO_1133,Male,1,Yes,No,1,Yes,Yes,DSL,No,Yes,No,No,Yes,Yes,Month-to-month,Yes,Mailed check,59.88,60.31,Yes
+TELCO_1134,Female,0,No,No,24,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,No,Month-to-month,Yes,Electronic check,86.94,2010.5,Yes
+TELCO_1135,Female,0,No,No,45,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Bank transfer (automatic),23.38,1033.23,No
+TELCO_1136,Male,0,Yes,No,42,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Bank transfer (automatic),24.36,1055.5,No
+TELCO_1137,Male,0,Yes,Yes,47,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Electronic check,20.07,973.38,No
+TELCO_1138,Female,0,Yes,No,18,Yes,No,Fiber optic,Yes,No,No,No,No,No,Month-to-month,Yes,Bank transfer (automatic),82.92,1522.66,No
+TELCO_1139,Male,1,Yes,No,19,Yes,No,Fiber optic,No,No,Yes,No,Yes,Yes,Month-to-month,No,Mailed check,88.22,1667.09,Yes
+TELCO_1140,Male,0,Yes,No,21,Yes,No,DSL,No,Yes,Yes,No,Yes,No,Month-to-month,Yes,Credit card (automatic),60.76,1252.85,Yes
+TELCO_1141,Male,1,No,No,22,No,No phone service,Fiber optic,No,No,Yes,Yes,No,No,One year,Yes,Credit card (automatic),87.3,1900.55,No
+TELCO_1142,Male,0,No,No,2,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,Yes,Month-to-month,Yes,Credit card (automatic),95.58,191.69,Yes
+TELCO_1143,Female,0,Yes,No,7,Yes,Yes,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Mailed check,82.17,575.81,Yes
+TELCO_1144,Male,0,No,No,2,Yes,No,Fiber optic,No,No,No,Yes,Yes,No,Month-to-month,Yes,Electronic check,81.54,162.83,Yes
+TELCO_1145,Female,0,No,No,28,Yes,No,Fiber optic,Yes,No,No,No,Yes,Yes,Month-to-month,No,Credit card (automatic),88.89,2501.3,Yes
+TELCO_1146,Male,0,No,No,14,Yes,No,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Electronic check,76.32,1061.97,No
+TELCO_1147,Male,0,No,No,63,Yes,Yes,DSL,Yes,Yes,Yes,Yes,Yes,No,Two year,No,Bank transfer (automatic),69.24,4393.85,No
+TELCO_1148,Male,1,No,No,41,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,20.37,857.01,No
+TELCO_1149,Female,1,No,No,36,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,Yes,Bank transfer (automatic),19.2,704.66,No
+TELCO_1150,Female,0,No,No,17,Yes,No,Fiber optic,Yes,Yes,No,Yes,No,Yes,One year,No,Bank transfer (automatic),93.69,1600.27,Yes
+TELCO_1151,Female,0,Yes,Yes,6,Yes,No,DSL,No,No,Yes,No,Yes,No,Month-to-month,No,Mailed check,52.32,325.67,No
+TELCO_1152,Male,0,No,No,1,Yes,No,DSL,No,No,No,No,Yes,Yes,Month-to-month,Yes,Mailed check,53.13,53.23,Yes
+TELCO_1153,Male,0,Yes,No,42,Yes,Yes,Fiber optic,Yes,Yes,No,Yes,No,No,One year,No,Mailed check,87.33,3509.56,No
+TELCO_1154,Male,0,Yes,Yes,63,Yes,No,DSL,Yes,No,No,Yes,No,Yes,Two year,Yes,Electronic check,57.4,3525.13,No
+TELCO_1155,Female,0,Yes,No,6,Yes,Yes,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Electronic check,87.38,549.81,No
+TELCO_1156,Male,0,No,No,6,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Electronic check,24.28,138.6,Yes
+TELCO_1157,Male,0,No,No,19,Yes,No,Fiber optic,No,Yes,No,No,Yes,Yes,Month-to-month,Yes,Mailed check,91.11,1737.39,Yes
+TELCO_1158,Male,0,No,No,27,Yes,Yes,Fiber optic,No,No,Yes,No,No,Yes,One year,No,Mailed check,88.08,2377.31,Yes
+TELCO_1159,Female,0,Yes,No,19,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,Yes,Electronic check,20.54,390.11,No
+TELCO_1160,Male,0,Yes,No,15,Yes,No,Fiber optic,Yes,No,Yes,No,Yes,Yes,Month-to-month,No,Mailed check,94.64,1480.81,No
+TELCO_1161,Female,0,Yes,No,44,Yes,Yes,Fiber optic,No,No,Yes,No,No,No,Two year,Yes,Bank transfer (automatic),76.69,3466.66,Yes
+TELCO_1162,Male,0,Yes,No,31,Yes,Yes,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Electronic check,83.6,2703.66,Yes
+TELCO_1163,Female,0,Yes,No,9,Yes,No,Fiber optic,Yes,No,Yes,No,Yes,No,Month-to-month,Yes,Mailed check,93.12,871.38,Yes
+TELCO_1164,Female,0,Yes,Yes,2,Yes,Yes,Fiber optic,Yes,No,Yes,No,No,No,Month-to-month,No,Bank transfer (automatic),84.93,166.77,Yes
+TELCO_1165,Male,0,Yes,Yes,18,Yes,No,Fiber optic,No,No,Yes,No,Yes,Yes,Month-to-month,No,Electronic check,87.58,1531.51,No
+TELCO_1166,Male,1,Yes,No,21,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Credit card (automatic),19.8,418.13,No
+TELCO_1167,Male,0,Yes,Yes,12,Yes,No,DSL,No,No,No,No,No,Yes,Month-to-month,Yes,Electronic check,54.13,629.93,Yes
+TELCO_1168,Male,1,No,No,21,No,No phone service,DSL,No,No,No,No,Yes,No,Month-to-month,No,Bank transfer (automatic),49.54,1017.44,No
+TELCO_1169,Male,0,Yes,No,10,Yes,No,DSL,No,No,No,No,Yes,No,Month-to-month,Yes,Credit card (automatic),51.44,528.9,Yes
+TELCO_1170,Female,0,No,No,11,Yes,Yes,DSL,No,No,Yes,No,No,No,Month-to-month,No,Electronic check,56.0,600.47,Yes
+TELCO_1171,Male,0,Yes,No,8,Yes,No,DSL,No,No,No,No,Yes,No,Month-to-month,Yes,Mailed check,55.48,458.78,No
+TELCO_1172,Female,0,Yes,No,1,Yes,No,DSL,No,Yes,No,No,Yes,Yes,Month-to-month,No,Electronic check,64.02,60.96,Yes
+TELCO_1173,Male,0,No,No,47,Yes,No,Fiber optic,Yes,Yes,No,No,No,No,Two year,Yes,Bank transfer (automatic),85.87,3924.19,No
+TELCO_1174,Male,0,No,No,2,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,21.44,41.52,Yes
+TELCO_1175,Male,0,Yes,No,1,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Electronic check,19.76,20.4,No
+TELCO_1176,Female,0,No,No,15,Yes,Yes,Fiber optic,No,Yes,No,No,Yes,No,Month-to-month,Yes,Credit card (automatic),89.82,1293.6,Yes
+TELCO_1177,Male,0,Yes,Yes,6,Yes,No,DSL,Yes,No,No,No,No,Yes,Month-to-month,No,Credit card (automatic),56.94,348.63,Yes
+TELCO_1178,Male,0,No,No,10,Yes,Yes,DSL,No,No,No,No,Yes,Yes,Month-to-month,Yes,Credit card (automatic),51.5,497.16,Yes
+TELCO_1179,Female,1,No,No,34,Yes,Yes,DSL,Yes,No,Yes,No,No,No,Month-to-month,Yes,Mailed check,51.91,1742.18,Yes
+TELCO_1180,Male,0,No,No,5,Yes,No,Fiber optic,Yes,No,Yes,No,No,No,Month-to-month,Yes,Electronic check,88.56,457.89,Yes
+TELCO_1181,Female,0,No,No,27,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,Yes,Mailed check,23.86,619.76,No
+TELCO_1182,Male,0,Yes,Yes,32,Yes,Yes,Fiber optic,Yes,No,Yes,No,Yes,No,Two year,Yes,Credit card (automatic),94.07,3025.91,No
+TELCO_1183,Female,0,Yes,No,8,Yes,No,Fiber optic,No,Yes,Yes,No,No,No,Month-to-month,No,Bank transfer (automatic),89.8,710.0,Yes
+TELCO_1184,Female,1,No,No,20,Yes,No,Fiber optic,No,No,No,Yes,No,Yes,Month-to-month,Yes,Bank transfer (automatic),84.72,1662.37,No
+TELCO_1185,Male,0,Yes,Yes,4,Yes,No,DSL,No,No,Yes,No,No,No,Month-to-month,Yes,Bank transfer (automatic),50.84,209.89,Yes
+TELCO_1186,Male,1,No,No,2,Yes,No,DSL,Yes,No,No,No,No,No,Month-to-month,Yes,Credit card (automatic),53.05,106.15,Yes
+TELCO_1187,Male,0,Yes,No,5,Yes,No,Fiber optic,No,Yes,No,No,No,Yes,Month-to-month,Yes,Mailed check,81.27,420.86,Yes
+TELCO_1188,Male,0,No,No,3,Yes,No,Fiber optic,No,Yes,Yes,No,Yes,No,Month-to-month,No,Bank transfer (automatic),95.43,284.11,Yes
+TELCO_1189,Female,0,Yes,No,38,Yes,No,Fiber optic,Yes,No,No,No,No,No,Month-to-month,No,Credit card (automatic),78.83,2864.89,No
+TELCO_1190,Female,0,No,No,31,Yes,No,DSL,Yes,No,No,Yes,Yes,Yes,One year,Yes,Bank transfer (automatic),61.25,1853.07,No
+TELCO_1191,Female,0,Yes,No,26,Yes,No,Fiber optic,No,No,Yes,Yes,No,No,One year,Yes,Bank transfer (automatic),83.94,2231.59,No
+TELCO_1192,Male,0,No,No,26,Yes,No,DSL,No,Yes,Yes,Yes,No,No,One year,Yes,Electronic check,64.66,1676.49,Yes
+TELCO_1193,Male,0,No,No,24,Yes,No,DSL,No,Yes,No,No,No,Yes,Month-to-month,Yes,Electronic check,59.62,1429.1,Yes
+TELCO_1194,Male,0,Yes,Yes,15,Yes,No,Fiber optic,Yes,No,No,Yes,No,No,Month-to-month,Yes,Electronic check,85.29,1220.21,Yes
+TELCO_1195,Female,0,No,No,45,Yes,No,Fiber optic,Yes,No,Yes,Yes,Yes,No,One year,No,Bank transfer (automatic),92.67,4357.17,No
+TELCO_1196,Female,0,Yes,No,55,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,Yes,Mailed check,25.39,1357.95,No
+TELCO_1197,Male,0,Yes,Yes,29,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Electronic check,20.42,597.74,Yes
+TELCO_1198,Male,0,Yes,Yes,38,Yes,Yes,DSL,No,Yes,No,Yes,No,Yes,One year,No,Mailed check,61.2,2306.72,No
+TELCO_1199,Male,0,Yes,No,23,Yes,Yes,Fiber optic,No,No,Yes,Yes,No,Yes,Month-to-month,Yes,Electronic check,95.33,2085.76,Yes
+TELCO_1200,Male,0,No,No,3,Yes,No,Fiber optic,Yes,Yes,Yes,No,Yes,No,Month-to-month,Yes,Electronic check,92.0,285.72,Yes

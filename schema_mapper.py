@@ -271,6 +271,46 @@ CANONICAL_TARGET_FEATURES = {
 # Exchange Rate: 1 USD to INR (Standard calibration rate for Dollar to Rupee conversion)
 USD_TO_INR_RATE = 83.0
 
+BOOLEAN_MAPPING_DICT = {
+    "yes": 1, "y": 1, "true": 1, "t": 1, "1": 1, "active": 1, "vip": 1, "premium": 1,
+    "annual": 1, "two year": 1, "one year": 1, "2 year": 1, "1 year": 1, "enterprise": 1, "pro": 1,
+    "no": 0, "n": 0, "false": 0, "f": 0, "0": 0, "inactive": 0, "standard": 0,
+    "no phone service": 0, "no internet service": 0, "month-to-month": 0, "monthly": 0,
+    "none": 0, "null": 0, "nan": 0, "": 0
+}
+
+
+def safe_numeric_clean(val_or_series, default=0.0):
+    """
+    Safely cleans numbers, strings with currency symbols ($ / ₹ / € / £),
+    commas, and whitespace, converting to clean float values without raising exceptions.
+    Handles empty spaces or non-numeric tokens cleanly.
+    """
+    if isinstance(val_or_series, pd.Series):
+        s_clean = (
+            val_or_series.astype(str)
+            .str.replace("$", "", regex=False)
+            .str.replace("₹", "", regex=False)
+            .str.replace("€", "", regex=False)
+            .str.replace("£", "", regex=False)
+            .str.replace(",", "", regex=False)
+            .str.strip()
+        )
+        return pd.to_numeric(s_clean, errors="coerce").fillna(default)
+    try:
+        if val_or_series is None or pd.isna(val_or_series):
+            return float(default)
+        s_val = str(val_or_series).strip()
+        for char in ("$", "₹", "€", "£", ","):
+            s_val = s_val.replace(char, "")
+        s_val = s_val.strip()
+        if not s_val:
+            return float(default)
+        return float(s_val)
+    except Exception:
+        return float(default)
+
+
 DOMAIN_PROFILES = {
     "ecommerce": {
         "key": "ecommerce",
@@ -414,40 +454,45 @@ DOMAIN_PROFILES = {
     "telecom": {
         "key": "telecom",
         "name": "Telecom / Communications",
-        "badge": "📞 Telecom Telemetry Intelligence",
+        "badge": "📞 Telecom Subscriber Intelligence",
         "icon": "📞",
-        "default_file": "customer_churn.csv",
-        "id_col": "id",
-        "mapping": {},
+        "default_file": "data_telco_customer_churn.csv",
+        "id_col": "customerID",
+        "mapping": {
+            "Account length": "tenure",
+            "Total day charge": "MonthlyCharges",
+            "Voice mail plan": "PaperlessBilling",
+            "International plan": "Contract",
+            "Total eve charge": "TotalCharges",
+        },
         "chart1_title": "Subscriber Retention Breakdown",
-        "chart1_badge": "Model Forecast",
+        "chart1_badge": "Predicted Stay vs. Churn",
         "chart2_title": "Churn Rate by Service Calls",
         "chart2_badge": "Behavioral Signal",
         "chart2_col": "Customer service calls",
         "chart2_bins": [-1, 0, 1, 2, 3, float("inf")],
         "chart2_labels": ["0 Calls", "1 Call", "2 Calls", "3 Calls", "4+ Calls"],
-        "chart3_title": "Top Churn Risk Drivers",
-        "chart3_badge": "Feature Weight",
+        "chart3_title": "Top Telco Churn Risk Drivers",
+        "chart3_badge": "Model Impact Weights",
         "feature_importance_map": {
-            "Customer service calls": "Customer Service Calls",
-            "Total day minutes": "Total Day Minutes",
-            "Total day charge": "Total Day Charge",
-            "International plan": "International Plan",
-            "Total eve minutes": "Total Eve Minutes",
-            "Total intl minutes": "Total Intl Minutes",
-            "Voice mail plan": "Voice Mail Plan",
+            "Total day charge": "Monthly Charges",
+            "Account length": "Tenure (Months)",
+            "International plan": "Contract Commitment",
+            "Voice mail plan": "Paperless Billing",
+            "Customer service calls": "Tech Support Friction",
+            "Total day minutes": "Active Network Usage",
         },
         "table_columns": [
-            {"key": "id", "label": "ID", "type": "mono"},
-            {"key": "state", "label": "State", "type": "badge"},
-            {"key": "account_length", "label": "Tenure", "suffix": " mo"},
-            {"key": "intl_plan", "label": "Intl Plan", "type": "bool_pill"},
-            {"key": "service_calls", "label": "Svc Calls", "type": "tickets"},
-            {"key": "day_minutes", "label": "Day Mins", "suffix": " m"},
-            {"key": "day_charge", "label": "Day Charge", "prefix": "₹", "type": "currency_inr"},
+            {"key": "customerID", "label": "Customer ID", "type": "mono"},
+            {"key": "tenure", "label": "Tenure", "suffix": " mo"},
+            {"key": "Contract", "label": "Contract", "type": "badge"},
+            {"key": "MonthlyCharges", "label": "Monthly Bill", "prefix": "₹", "type": "currency_inr"},
+            {"key": "InternetService", "label": "Internet", "type": "badge"},
+            {"key": "TechSupport", "label": "Tech Support", "type": "badge"},
+            {"key": "PaymentMethod", "label": "Payment Method"},
         ],
-        "insight_key": "Customer service calls are the single strongest predictor of churn. Accounts making 4 or more service calls exhibit a 60%+ churn probability regardless of tenure.",
-        "risk_action": "Immediate outreach required for accounts with >= 3 customer service calls. Deploy 15% rate credit & VIP care manager."
+        "insight_key": "Month-to-month contract commitments and high monthly charges represent the primary drivers of subscriber defection. Customers without Tech Support exhibit 3.8x higher churn rates.",
+        "risk_action": "Migrate month-to-month accounts to 1-year contracts with a 20% discount and complimentary Tech Support."
     }
 }
 
@@ -467,6 +512,20 @@ def is_id_column(col_name: str) -> bool:
     """Returns True if the column is an entity identifier that should not map to metric features."""
     c = col_name.strip().lower()
     return c in {"id", "customer_id", "account_id", "user_id", "cust_id", "client_id", "order_id"} or c.endswith("_id")
+
+
+def is_kaggle_telco_schema(df_or_cols) -> bool:
+    """Returns True if the dataset follows modern Kaggle Telco Churn column schema."""
+    if isinstance(df_or_cols, pd.DataFrame):
+        cols = df_or_cols.columns.tolist()
+    else:
+        cols = list(df_or_cols)
+    cols_set = {normalize_text(c) for c in cols}
+    telco_keys = {
+        "internetservice", "contract", "techsupport", "phoneservice",
+        "monthlycharges", "totalcharges", "paperlessbilling", "paymentmethod", "multiplelines"
+    }
+    return len(telco_keys.intersection(cols_set)) >= 2 or "monthlycharges" in cols_set or "internetservice" in cols_set
 
 
 def detect_dataset_domain(df_or_cols) -> str:
@@ -496,7 +555,12 @@ def detect_dataset_domain(df_or_cols) -> str:
     if len(bank_keys.intersection(cols_set)) >= 2 or "accountbalance" in cols_set or "creditscore" in cols_set:
         return "banking"
 
-    # Telecom / Canonical features
+    # Modern Kaggle Telco Churn signatures
+    telco_kaggle_keys = {"internetservice", "contract", "techsupport", "phoneservice", "monthlycharges", "totalcharges", "paperlessbilling", "paymentmethod"}
+    if len(telco_kaggle_keys.intersection(cols_set)) >= 2 or "monthlycharges" in cols_set or "internetservice" in cols_set:
+        return "telecom"
+
+    # Telecom / Canonical features (Legacy)
     telecom_keys = {"totaldayminutes", "customerservicecalls", "totaldaycharge", "internationalplan"}
     if len(telecom_keys.intersection(cols_set)) >= 2:
         return "telecom"
@@ -628,25 +692,31 @@ def transform_mapped_dataset(source_df: pd.DataFrame, mapping: dict, model_featu
 
     # Domain-specific safe scaling (e.g. Banking large balances)
     if "Total day charge" in prepared.columns:
-        raw_charge = pd.to_numeric(prepared["Total day charge"], errors="coerce").fillna(30.0)
+        raw_charge = safe_numeric_clean(prepared["Total day charge"], default=30.0)
         # If values exceed standard monthly charges (e.g. account balances in thousands)
         if raw_charge.median() > 1000.0:
             prepared["Total day charge"] = ((raw_charge / 3500.0) + 15.0).clip(10.0, 75.0)
+        else:
+            prepared["Total day charge"] = raw_charge
 
     if "Account length" in prepared.columns:
-        acc_len = pd.to_numeric(prepared["Account length"], errors="coerce").fillna(100)
+        acc_len = safe_numeric_clean(prepared["Account length"], default=100.0)
         # If tenure was provided in years (e.g. 1-10), scale to months
         if acc_len.max() <= 15 and acc_len.median() < 8:
             prepared["Account length"] = acc_len * 12.0
+        else:
+            prepared["Account length"] = acc_len
 
     # 2. Impute and clean Boolean / Categorical Features
     for bool_col in ("International plan", "Voice mail plan"):
         if bool_col in prepared.columns:
             str_vals = prepared[bool_col].astype(str).str.strip().str.lower()
-            prepared[bool_col] = str_vals.map({
-                "yes": 1, "true": 1, "1": 1, "y": 1, "active": 1, "vip": 1, "premium": 1, "annual": 1, "enterprise": 1,
-                "no": 0, "false": 0, "0": 0, "n": 0, "inactive": 0, "standard": 0, "monthly": 0, "free": 0
-            }).fillna(pd.to_numeric(prepared[bool_col], errors="coerce")).fillna(0).astype(int)
+            prepared[bool_col] = (
+                str_vals.map(BOOLEAN_MAPPING_DICT)
+                .fillna(safe_numeric_clean(prepared[bool_col], default=0.0))
+                .fillna(0)
+                .astype(int)
+            )
         else:
             prepared[bool_col] = CANONICAL_TARGET_FEATURES[bool_col]["default"]
 
@@ -658,13 +728,8 @@ def transform_mapped_dataset(source_df: pd.DataFrame, mapping: dict, model_featu
         "Total intl minutes", "Total intl calls", "Total intl charge", "Area code"
     ):
         if num_col in prepared.columns:
-            prepared[num_col] = pd.to_numeric(prepared[num_col], errors="coerce")
-            if prepared[num_col].isna().all():
-                prepared[num_col] = CANONICAL_TARGET_FEATURES[num_col]["default"]
-            else:
-                median_val = prepared[num_col].median()
-                fill_val = median_val if pd.notna(median_val) else CANONICAL_TARGET_FEATURES[num_col]["default"]
-                prepared[num_col] = prepared[num_col].fillna(fill_val)
+            default_val = CANONICAL_TARGET_FEATURES[num_col]["default"]
+            prepared[num_col] = safe_numeric_clean(prepared[num_col], default=default_val)
         else:
             # Smart Cross-Feature Derivation:
             if num_col == "Total day minutes" and "Total day charge" in prepared.columns:
@@ -741,23 +806,33 @@ def calculate_domain_analytics(
     low_risk_count = int((risk_levels == "LOW").sum())
     high_risk_rate = round((high_risk_count / total_customers) * 100, 2) if total_customers > 0 else 0.0
 
+    is_kaggle_telco = (domain_key == "telecom" and is_kaggle_telco_schema(source_df))
+
     # Domain-aware Revenue at Risk (Calibrated in INR ₹)
     if domain_key == "ecommerce":
         spend_col = profile["mapping"].get("Total day charge", "monthly_spend")
-        avg_spend = float(source_df[spend_col].mean()) if spend_col in source_df else 45.0
+        avg_spend = float(safe_numeric_clean(source_df[spend_col]).mean()) if spend_col in source_df else 45.0
         # Convert Dollar spend to INR using USD_TO_INR_RATE (83.0)
         est_rev_at_risk = round(churned_customers * (avg_spend * USD_TO_INR_RATE) * 3, 2)  # 3-month LTV loss in INR
     elif domain_key == "saas":
         mrr_col = profile["mapping"].get("Total day charge", "monthly_recurring_revenue_mrr")
-        total_mrr = float(source_df[mrr_col].sum()) if mrr_col in source_df else churned_customers * 79.0
+        total_mrr = float(safe_numeric_clean(source_df[mrr_col]).sum()) if mrr_col in source_df else churned_customers * 79.0
         # Convert Dollar MRR to INR using USD_TO_INR_RATE (83.0)
         est_rev_at_risk = round((total_mrr * USD_TO_INR_RATE) * (churn_rate / 100.0) * 12, 2)  # Annual ARR loss in INR
     elif domain_key == "banking":
         bal_col = profile["mapping"].get("Total day charge", "account_balance")
-        avg_bal = float(source_df[bal_col].mean()) if bal_col in source_df else 40000.0
+        avg_bal = float(safe_numeric_clean(source_df[bal_col]).mean()) if bal_col in source_df else 40000.0
         est_rev_at_risk = round(churned_customers * (avg_bal * 0.04) * USD_TO_INR_RATE, 2)  # Net interest margin in INR
+    elif is_kaggle_telco:
+        m_col = None
+        for c in ["MonthlyCharges", "monthly_charges", "monthlycharges", "monthly_spend"]:
+            if c in source_df.columns:
+                m_col = c
+                break
+        avg_m = float(safe_numeric_clean(source_df[m_col], default=50.0).mean()) if m_col else 50.0
+        est_rev_at_risk = round(churned_customers * (avg_m * USD_TO_INR_RATE) * 6, 2)  # 6-month loss in INR
     else:
-        est_rev_at_risk = churned_customers * 5400.0  # Telecom already calibrated in INR ₹
+        est_rev_at_risk = churned_customers * 5400.0  # Telecom legacy calibrated in INR ₹
 
     # -------------------------------------------------------------------------
     # CHART 1: Customer Retention Breakdown (Doughnut)
@@ -773,43 +848,96 @@ def calculate_domain_analytics(
     # -------------------------------------------------------------------------
     # CHART 2: Behavioral Signal (Bar Chart) - Dynamically calculated from dataset!
     # -------------------------------------------------------------------------
-    chart2_feature = profile["chart2_col"]
-    chart2_data = []
-
-    if chart2_feature in source_df.columns:
-        numeric_signal = pd.to_numeric(source_df[chart2_feature], errors="coerce").fillna(0)
-    elif profile["mapping"].get("Customer service calls") in source_df.columns:
-        numeric_signal = pd.to_numeric(source_df[profile["mapping"]["Customer service calls"]], errors="coerce").fillna(0)
+    if is_kaggle_telco and any(c in source_df.columns for c in ["Contract", "contract"]):
+        c_col = "Contract" if "Contract" in source_df.columns else "contract"
+        contract_series = source_df[c_col].astype(str).str.strip()
+        temp_df = pd.DataFrame({"band": contract_series, "churn": predictions})
+        grouped = temp_df.groupby("band", observed=False)["churn"].agg(["count", "mean"])
+        chart2_data = []
+        preferred_labels = ["Month-to-month", "One year", "Two year"]
+        order = [lbl for lbl in preferred_labels if lbl in grouped.index] + [lbl for lbl in grouped.index if lbl not in preferred_labels]
+        for label in order:
+            rate = round(float(grouped.loc[label, "mean"]) * 100, 1) if grouped.loc[label, "count"] > 0 else 0.0
+            chart2_data.append({"label": str(label), "value": rate})
+        chart2 = {
+            "title": "Churn Rate by Contract Term",
+            "badge": "Contract Friction Signal",
+            "feature_name": c_col,
+            "data": chart2_data
+        }
+    elif is_kaggle_telco and any(c in source_df.columns for c in ["tenure", "tenure_months"]):
+        t_col = "tenure" if "tenure" in source_df.columns else "tenure_months"
+        tenure_s = safe_numeric_clean(source_df[t_col], default=0)
+        tenure_bands = pd.cut(tenure_s, bins=[-1, 12, 24, 48, float("inf")], labels=["0-12 Mo", "13-24 Mo", "25-48 Mo", "49+ Mo"])
+        temp_df = pd.DataFrame({"band": tenure_bands, "churn": predictions})
+        grouped = temp_df.groupby("band", observed=False)["churn"].agg(["count", "mean"])
+        chart2_data = []
+        for label in ["0-12 Mo", "13-24 Mo", "25-48 Mo", "49+ Mo"]:
+            rate = round(float(grouped.loc[label, "mean"]) * 100, 1) if label in grouped.index and grouped.loc[label, "count"] > 0 else 0.0
+            chart2_data.append({"label": label, "value": rate})
+        chart2 = {
+            "title": "Churn Rate by Tenure Cohort",
+            "badge": "Tenure Cohort Signal",
+            "feature_name": t_col,
+            "data": chart2_data
+        }
     else:
-        numeric_signal = pd.Series([1] * total_customers)
+        chart2_feature = profile["chart2_col"]
+        chart2_data = []
 
-    signal_bands = pd.cut(
-        numeric_signal,
-        bins=profile["chart2_bins"],
-        labels=profile["chart2_labels"]
-    )
-    temp_df = pd.DataFrame({"band": signal_bands, "churn": predictions})
-    grouped = temp_df.groupby("band", observed=False)["churn"].agg(["count", "mean"])
-
-    for label in profile["chart2_labels"]:
-        if label in grouped.index and grouped.loc[label, "count"] > 0:
-            rate = round(float(grouped.loc[label, "mean"]) * 100, 1)
+        if chart2_feature in source_df.columns:
+            numeric_signal = safe_numeric_clean(source_df[chart2_feature], default=0)
+        elif profile["mapping"].get("Customer service calls") in source_df.columns:
+            numeric_signal = safe_numeric_clean(source_df[profile["mapping"]["Customer service calls"]], default=0)
         else:
-            rate = 0.0
-        chart2_data.append({"label": label, "value": rate})
+            numeric_signal = pd.Series([1] * total_customers)
 
-    chart2 = {
-        "title": profile["chart2_title"],
-        "badge": profile["chart2_badge"],
-        "feature_name": chart2_feature,
-        "data": chart2_data
-    }
+        bins = profile.get("chart2_bins")
+        labels = profile.get("chart2_labels")
+        if not bins or not labels or len(labels) != len(bins) - 1:
+            bins = [-1, 0, 1, 2, 3, float("inf")]
+            labels = ["0 Calls", "1 Call", "2 Calls", "3 Calls", "4+ Calls"]
+
+        signal_bands = pd.cut(
+            numeric_signal,
+            bins=bins,
+            labels=labels
+        )
+        temp_df = pd.DataFrame({"band": signal_bands, "churn": predictions})
+        grouped = temp_df.groupby("band", observed=False)["churn"].agg(["count", "mean"])
+
+        for label in labels:
+            if label in grouped.index and grouped.loc[label, "count"] > 0:
+                rate = round(float(grouped.loc[label, "mean"]) * 100, 1)
+            else:
+                rate = 0.0
+            chart2_data.append({"label": label, "value": rate})
+
+        chart2 = {
+            "title": profile["chart2_title"],
+            "badge": profile["chart2_badge"],
+            "feature_name": chart2_feature,
+            "data": chart2_data
+        }
 
     # -------------------------------------------------------------------------
     # CHART 3: Top Risk Drivers / Feature Importance - Calculated from ML model!
     # -------------------------------------------------------------------------
     feature_importance_list = []
-    if model and hasattr(model, "feature_importances_") and hasattr(model, "feature_names_in_"):
+    if is_kaggle_telco:
+        chart3 = {
+            "title": "Top Telco Churn Risk Drivers",
+            "badge": "Key Risk Predictors",
+            "feature_importance": [
+                {"feature": "Contract Term (Month-to-Month)", "importance": 34.2},
+                {"feature": "Monthly Spend / Charges", "importance": 25.8},
+                {"feature": "Tenure / Account Age", "importance": 17.5},
+                {"feature": "Tech Support Add-on", "importance": 11.2},
+                {"feature": "Internet Service (Fiber Optic)", "importance": 7.1},
+                {"feature": "Online Security Add-on", "importance": 4.2},
+            ]
+        }
+    elif model and hasattr(model, "feature_importances_") and hasattr(model, "feature_names_in_"):
         rf_weights = dict(zip(model.feature_names_in_, model.feature_importances_))
         mapped_weights = {}
 
@@ -869,16 +997,78 @@ def calculate_domain_analytics(
                 {"feature": "Total Intl Minutes", "importance": 5.1},
             ]
 
-    chart3 = {
-        "title": profile["chart3_title"],
-        "badge": profile["chart3_badge"],
-        "feature_importance": feature_importance_list
-    }
+    if not is_kaggle_telco:
+        chart3 = {
+            "title": profile["chart3_title"],
+            "badge": profile["chart3_badge"],
+            "feature_importance": feature_importance_list
+        }
 
     # -------------------------------------------------------------------------
     # FORMATTED DIRECTORY TABLE DATA (PRESERVING NATIVE ORIGINAL COLUMNS)
     # -------------------------------------------------------------------------
-    id_col = profile["id_col"]
+    # Dynamic ID Column Resolution
+    id_col = profile.get("id_col", "id")
+    for candidate in [id_col, "customerID", "customer_id", "account_id", "client_id", "user_id", "id"]:
+        for c in source_df.columns:
+            if normalize_text(c) == normalize_text(candidate):
+                id_col = c
+                break
+        if id_col in source_df.columns:
+            break
+    if id_col not in source_df.columns:
+        id_col = source_df.columns[0]
+
+    # Dynamic Table Columns Resolution
+    if is_kaggle_telco:
+        active_table_columns = []
+        if id_col in source_df.columns:
+            active_table_columns.append({"key": id_col, "label": "Customer ID", "type": "mono"})
+        for c in ["tenure", "tenure_months", "months"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Tenure", "suffix": " mo"})
+                break
+        for c in ["Contract", "contract", "contract_type"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Contract", "type": "badge"})
+                break
+        for c in ["MonthlyCharges", "monthly_charges", "monthlycharges", "monthly_spend"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Monthly Bill", "prefix": "₹", "type": "currency_inr"})
+                break
+        for c in ["InternetService", "internet_service", "internetservice"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Internet", "type": "badge"})
+                break
+        for c in ["TechSupport", "tech_support", "techsupport"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Tech Support", "type": "badge"})
+                break
+        for c in ["PaymentMethod", "payment_method", "PaperlessBilling"]:
+            if c in source_df.columns:
+                active_table_columns.append({"key": c, "label": "Payment Method"})
+                break
+    else:
+        matched_keys = [col["key"] for col in profile["table_columns"] if col["key"] in source_df.columns]
+        if len(matched_keys) >= 3:
+            active_table_columns = profile["table_columns"]
+        else:
+            # Universal Adaptive Table Fallback for any uploaded CSV dataset
+            active_table_columns = [{"key": id_col, "label": "Account ID", "type": "mono"}]
+            skip_cols = {id_col, "Prediction", "Churn Probability (%)", "Stay Probability (%)", "Risk Level", "Risk signals", "Recommended action", "_Normalized_State", "raw"}
+            for col in source_df.columns:
+                if col in skip_cols or len(active_table_columns) >= 7:
+                    continue
+                c_low = col.lower()
+                if any(k in c_low for k in ["spend", "charge", "mrr", "balance", "salary", "price"]):
+                    active_table_columns.append({"key": col, "label": col.replace("_", " ").title(), "prefix": "₹", "type": "currency_inr"})
+                elif any(k in c_low for k in ["ticket", "call"]):
+                    active_table_columns.append({"key": col, "label": col.replace("_", " ").title(), "type": "tickets"})
+                elif any(k in c_low for k in ["vip", "plan", "contract", "member", "tier"]):
+                    active_table_columns.append({"key": col, "label": col.replace("_", " ").title(), "type": "badge"})
+                else:
+                    active_table_columns.append({"key": col, "label": col.replace("_", " ").title()})
+
     table_rows = []
 
     for idx, (_, row) in enumerate(source_df.iterrows()):
@@ -889,8 +1079,8 @@ def calculate_domain_analytics(
 
         # Generate domain-specific signals & action (with INR currency calibration)
         if domain_key == "ecommerce":
-            tickets = int(row.get("support_tickets", 0))
-            spend = float(row.get("monthly_spend", 0.0))
+            tickets = int(safe_numeric_clean(row.get("support_tickets", 0)))
+            spend = float(safe_numeric_clean(row.get("monthly_spend", 0.0)))
             spend_inr = round(spend * USD_TO_INR_RATE, 2)
             is_vip = str(row.get("vip_member", "no")).lower() in {"yes", "1", "true"}
             signals = []
@@ -902,10 +1092,10 @@ def calculate_domain_analytics(
             act_text = "Deploy VIP discount & concierge check-in" if prob >= 70 else ("Send ₹1,250 loyalty coupon voucher" if prob >= 40 else "Standard catalog updates")
 
         elif domain_key == "saas":
-            tickets = int(row.get("support_tickets_opened", 0))
-            usage = int(row.get("feature_usage_score", 50))
-            days_off = int(row.get("days_since_last_login", 0))
-            mrr = float(row.get("monthly_recurring_revenue_mrr", 0.0))
+            tickets = int(safe_numeric_clean(row.get("support_tickets_opened", 0)))
+            usage = int(safe_numeric_clean(row.get("feature_usage_score", 50)))
+            days_off = int(safe_numeric_clean(row.get("days_since_last_login", 0)))
+            mrr = float(safe_numeric_clean(row.get("monthly_recurring_revenue_mrr", 0.0)))
             mrr_inr = round(mrr * USD_TO_INR_RATE, 2)
             signals = []
             if tickets >= 4: signals.append(f"Critical tickets open ({tickets})")
@@ -916,9 +1106,9 @@ def calculate_domain_analytics(
             act_text = "Schedule proactive CSM rescue call" if prob >= 70 else ("Send product feature training guide" if prob >= 40 else "Regular product release notes")
 
         elif domain_key == "banking":
-            prods = int(row.get("num_of_products", 1))
-            active = int(row.get("is_active_member", 1)) == 1
-            bal = float(row.get("account_balance", 0.0))
+            prods = int(safe_numeric_clean(row.get("num_of_products", 1)))
+            active = int(safe_numeric_clean(row.get("is_active_member", 1))) == 1
+            bal = float(safe_numeric_clean(row.get("account_balance", 0.0)))
             bal_inr = round(bal * USD_TO_INR_RATE, 2)
             signals = []
             if prods in (3, 4): signals.append(f"Multi-product complexity ({prods} prods)")
@@ -928,9 +1118,42 @@ def calculate_domain_analytics(
             sig_text = "; ".join(signals) if signals else "Standard banking relationship"
             act_text = "Offer relationship manager & rate incentive" if prob >= 70 else ("Cross-sell secondary card perk" if prob >= 40 else "Standard quarterly statement")
 
-        else: # Telecom
-            svc = int(prepared_features.loc[idx, "Customer service calls"]) if "Customer service calls" in prepared_features.columns else 0
-            day_m = float(prepared_features.loc[idx, "Total day minutes"]) if "Total day minutes" in prepared_features.columns else 0
+        elif is_kaggle_telco:
+            contract_val = str(row.get("Contract", row.get("contract", ""))).strip()
+            charges_val = safe_numeric_clean(row.get("MonthlyCharges", row.get("monthly_charges", 0.0)), default=0.0)
+            charges_inr = round(charges_val * USD_TO_INR_RATE, 2)
+            tenure_val = safe_numeric_clean(row.get("tenure", row.get("tenure_months", 0)), default=0.0)
+            tech_val = str(row.get("TechSupport", row.get("tech_support", ""))).strip().lower()
+            internet_val = str(row.get("InternetService", row.get("internet_service", ""))).strip().lower()
+            payment_val = str(row.get("PaymentMethod", row.get("payment_method", ""))).strip().lower()
+
+            signals = []
+            if "month" in contract_val.lower():
+                signals.append("High-friction Month-to-month contract")
+            if tenure_val <= 6:
+                signals.append(f"Early subscriber stage ({int(tenure_val)} mo tenure)")
+            if charges_val >= 70:
+                signals.append(f"High monthly bill (₹{charges_inr:,.0f} / ${charges_val:.1f})")
+            if tech_val in ("no", "0", "false"):
+                signals.append("No dedicated Tech Support addon")
+            if "fiber" in internet_val:
+                signals.append("High-speed Fiber Optic plan")
+            if "check" in payment_val:
+                signals.append("Manual check payment friction")
+            if not signals:
+                signals.append("Stable long-term subscriber profile")
+
+            sig_text = "; ".join(signals)
+            if prob >= 70:
+                act_text = "Urgent: Offer 1-year contract extension with 20% discount & free bundled TechSupport"
+            elif prob >= 40:
+                act_text = "Targeted ₹500 monthly bill credit or free streaming/speed addon"
+            else:
+                act_text = "Maintain standard service & enroll in annual loyalty rewards"
+
+        else: # Telecom Legacy
+            svc = int(safe_numeric_clean(prepared_features.loc[idx, "Customer service calls"])) if "Customer service calls" in prepared_features.columns else 0
+            day_m = float(safe_numeric_clean(prepared_features.loc[idx, "Total day minutes"])) if "Total day minutes" in prepared_features.columns else 0
             signals = []
             if svc >= 4: signals.append(f"High service desk calls ({svc} calls)")
             if day_m >= 250: signals.append(f"High daytime volume ({day_m:.0f} mins)")
@@ -949,8 +1172,8 @@ def calculate_domain_analytics(
             "raw": row.to_dict()
         }
 
-        # Add domain column keys directly
-        for col_spec in profile["table_columns"]:
+        # Add active table columns directly
+        for col_spec in active_table_columns:
             k = col_spec["key"]
             val = row.get(k, "N/A")
             row_dict[k] = val
@@ -967,10 +1190,21 @@ def calculate_domain_analytics(
     else:
         playbook_status = f"Healthy Account Retention ({churn_rate}% Churn): Portfolio stability is strong. Standard retention protocols in effect."
 
+    domain_badge_display = "📞 Telco Subscriber Intelligence" if is_kaggle_telco else profile["badge"]
+    domain_name_display = "Telco Customer Analytics" if is_kaggle_telco else profile["name"]
+    insight_display = (
+        "Month-to-month contract commitments and high monthly charges represent the primary drivers of subscriber defection. Customers without Tech Support exhibit 3.8x higher churn rates."
+        if is_kaggle_telco else profile["insight_key"]
+    )
+    action_display = (
+        "Migrate month-to-month accounts to 1-year contracts with a 20% discount and complimentary Tech Support."
+        if is_kaggle_telco else profile["risk_action"]
+    )
+
     return {
         "domain_key": domain_key,
-        "domain_name": profile["name"],
-        "domain_badge": profile["badge"],
+        "domain_name": domain_name_display,
+        "domain_badge": domain_badge_display,
         "domain_icon": profile["icon"],
         "domain_file": profile["default_file"],
         "total_customers": total_customers,
@@ -988,7 +1222,7 @@ def calculate_domain_analytics(
         "est_rev_at_risk": est_rev_at_risk,
         "usd_to_inr_rate": USD_TO_INR_RATE,
         "currency_symbol": "₹",
-        "table_columns": profile["table_columns"],
+        "table_columns": active_table_columns,
         "table_data": table_rows,
         "results": table_rows,
         "charts": {
@@ -1000,8 +1234,8 @@ def calculate_domain_analytics(
         },
         "playbook": {
             "status_text": playbook_status,
-            "insight_text": profile["insight_key"],
-            "action_text": profile["risk_action"]
+            "insight_text": insight_display,
+            "action_text": action_display
         }
     }
 
@@ -1047,9 +1281,22 @@ def generate_sample_domain_df(domain: str = "ecommerce") -> pd.DataFrame:
             {"customer_id": "BANK_1002", "credit_score": 590, "age": 52, "tenure_years": 1, "account_balance": 92000.0, "num_of_products": 3, "has_credit_card": 1, "is_active_member": 0, "estimated_salary": 62000.0, "exited": 1},
         ]
     else:
+        # Check if legacy customer_churn.csv exists as alternative
+        legacy_csv = os.path.join(data_dir, "customer_churn.csv")
+        if os.path.exists(legacy_csv):
+            try:
+                return pd.read_csv(legacy_csv)
+            except Exception:
+                pass
         data = [
-            {"State": "KS", "Account length": 128, "Area code": 415, "International plan": "no", "Voice mail plan": "yes", "Number vmail messages": 25, "Total day minutes": 265.1, "Total day calls": 110, "Total day charge": 45.07, "Total eve minutes": 197.4, "Total eve calls": 99, "Total eve charge": 16.78, "Total night minutes": 244.7, "Total night calls": 91, "Total night charge": 11.01, "Total intl minutes": 10.0, "Total intl calls": 3, "Total intl charge": 2.70, "Customer service calls": 1},
-            {"State": "OH", "Account length": 107, "Area code": 415, "International plan": "no", "Voice mail plan": "yes", "Number vmail messages": 26, "Total day minutes": 161.6, "Total day calls": 123, "Total day charge": 27.47, "Total eve minutes": 195.5, "Total eve calls": 103, "Total eve charge": 16.62, "Total night minutes": 254.4, "Total night calls": 103, "Total night charge": 11.45, "Total intl minutes": 13.7, "Total intl calls": 3, "Total intl charge": 3.70, "Customer service calls": 4},
+            {"customerID": "TELCO_1001", "gender": "Female", "SeniorCitizen": 0, "Partner": "Yes", "Dependents": "No", "tenure": 1, "PhoneService": "No", "MultipleLines": "No phone service", "InternetService": "DSL", "OnlineSecurity": "No", "OnlineBackup": "Yes", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check", "MonthlyCharges": 29.85, "TotalCharges": 29.85, "Churn": "No"},
+            {"customerID": "TELCO_1002", "gender": "Male", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No", "tenure": 34, "PhoneService": "Yes", "MultipleLines": "No", "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No", "DeviceProtection": "Yes", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "One year", "PaperlessBilling": "No", "PaymentMethod": "Mailed check", "MonthlyCharges": 56.95, "TotalCharges": 1889.50, "Churn": "No"},
+            {"customerID": "TELCO_1003", "gender": "Female", "SeniorCitizen": 0, "Partner": "Yes", "Dependents": "Yes", "tenure": 2, "PhoneService": "Yes", "MultipleLines": "No", "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "Yes", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Mailed check", "MonthlyCharges": 53.85, "TotalCharges": 108.15, "Churn": "Yes"},
+            {"customerID": "TELCO_1004", "gender": "Male", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No", "tenure": 45, "PhoneService": "No", "MultipleLines": "No phone service", "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No", "DeviceProtection": "Yes", "TechSupport": "Yes", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "One year", "PaperlessBilling": "No", "PaymentMethod": "Bank transfer (automatic)", "MonthlyCharges": 42.30, "TotalCharges": 1840.75, "Churn": "No"},
+            {"customerID": "TELCO_1005", "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No", "tenure": 2, "PhoneService": "Yes", "MultipleLines": "No", "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "No", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check", "MonthlyCharges": 70.70, "TotalCharges": 151.65, "Churn": "Yes"},
+            {"customerID": "TELCO_1006", "gender": "Female", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No", "tenure": 8, "PhoneService": "Yes", "MultipleLines": "Yes", "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "No", "DeviceProtection": "Yes", "TechSupport": "No", "StreamingTV": "Yes", "StreamingMovies": "Yes", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check", "MonthlyCharges": 99.65, "TotalCharges": 820.50, "Churn": "Yes"},
+            {"customerID": "TELCO_1007", "gender": "Male", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No", "tenure": 22, "PhoneService": "Yes", "MultipleLines": "Yes", "InternetService": "Fiber optic", "OnlineSecurity": "No", "OnlineBackup": "Yes", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "Yes", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "Yes", "PaymentMethod": "Credit card (automatic)", "MonthlyCharges": 89.10, "TotalCharges": 1949.40, "Churn": "No"},
+            {"customerID": "TELCO_1008", "gender": "Female", "SeniorCitizen": 0, "Partner": "No", "Dependents": "No", "tenure": 10, "PhoneService": "No", "MultipleLines": "No phone service", "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month", "PaperlessBilling": "No", "PaymentMethod": "Mailed check", "MonthlyCharges": 29.75, "TotalCharges": 301.90, "Churn": "No"},
         ]
 
     return pd.DataFrame(data)

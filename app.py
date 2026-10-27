@@ -832,25 +832,36 @@ def logout():
 def dashboard():
     """Executive Dashboard view with customer dataset analytics supporting E-Commerce, SaaS, Banking, Telecom."""
     try:
-        domain_req = request.args.get("domain", session.get("active_domain")).strip().lower() if (request.args.get("domain") or session.get("active_domain")) else None
-
-        # Case 1: Explicit domain switch requested (e.g. /dashboard?domain=ecommerce)
-        if domain_req and domain_req in schema_mapper.DOMAIN_PROFILES:
-            target_file = os.path.join(DATA_DIR, schema_mapper.DOMAIN_PROFILES[domain_req]["default_file"])
-            if os.path.exists(target_file):
-                df = pd.read_csv(target_file)
+        # Case 1: Explicit domain switch requested via query param (e.g. /dashboard?domain=ecommerce)
+        explicit_domain = request.args.get("domain")
+        if explicit_domain:
+            domain_req = explicit_domain.strip().lower()
+            if domain_req in schema_mapper.DOMAIN_PROFILES:
+                target_file = os.path.join(DATA_DIR, schema_mapper.DOMAIN_PROFILES[domain_req]["default_file"])
+                if os.path.exists(target_file):
+                    df = pd.read_csv(target_file)
+                else:
+                    df = schema_mapper.generate_sample_domain_df(domain_req)
+                    df.to_csv(target_file, index=False)
                 result_df, summary = analyze_customers(df, domain_key=domain_req)
                 result_df.to_csv(BULK_RESULTS_PATH, index=False)
                 session["active_domain"] = domain_req
                 return render_template("index.html", **summary)
 
-        # Case 2: Read active bulk results if available
+        # Case 2: Read active bulk results if available (persists uploaded & scored dataset)
         if os.path.exists(BULK_RESULTS_PATH):
             df = pd.read_csv(BULK_RESULTS_PATH)
             detected_domain = session.get("active_domain") or schema_mapper.detect_dataset_domain(df)
             _, summary = analyze_customers(df, domain_key=detected_domain)
             session["active_domain"] = detected_domain
-        # Case 3: Default to E-Commerce Dataset if present
+            return render_template("index.html", **summary)
+
+        # Case 3: Default to modern Telco or E-Commerce if present
+        if os.path.exists(os.path.join(DATA_DIR, "data_telco_customer_churn.csv")):
+            df = pd.read_csv(os.path.join(DATA_DIR, "data_telco_customer_churn.csv"))
+            result_df, summary = analyze_customers(df, domain_key="telecom")
+            result_df.to_csv(BULK_RESULTS_PATH, index=False)
+            session["active_domain"] = "telecom"
         elif os.path.exists(os.path.join(DATA_DIR, "data_ecommerce_customer_churn.csv")):
             df = pd.read_csv(os.path.join(DATA_DIR, "data_ecommerce_customer_churn.csv"))
             result_df, summary = analyze_customers(df, domain_key="ecommerce")
@@ -1193,17 +1204,14 @@ def process_mapped_features(source_df: pd.DataFrame, mapping: dict = None) -> tu
                 # Categorical text flag cleaning (e.g. vip_member: 'yes'/'no', 'true'/'false', 1/0)
                 cleaned = series.astype(str).str.strip().str.lower()
                 feature_df[canon_feature] = (
-                    cleaned.map({
-                        "yes": 1, "y": 1, "true": 1, "t": 1, "1": 1, "active": 1, "vip": 1, "premium": 1,
-                        "no": 0, "n": 0, "false": 0, "f": 0, "0": 0, "inactive": 0
-                    })
-                    .fillna(pd.to_numeric(series, errors="coerce"))
+                    cleaned.map(schema_mapper.BOOLEAN_MAPPING_DICT)
+                    .fillna(schema_mapper.safe_numeric_clean(series, default=0.0))
                     .fillna(default_val)
                     .astype(int)
                 )
             else:
-                # Numerical safe parsing with pd.to_numeric(..., errors='coerce').fillna(0)
-                feature_df[canon_feature] = pd.to_numeric(series, errors="coerce").fillna(default_val)
+                # Numerical safe parsing with safe_numeric_clean
+                feature_df[canon_feature] = schema_mapper.safe_numeric_clean(series, default=default_val)
         else:
             feature_df[canon_feature] = default_val
 
@@ -1294,19 +1302,23 @@ def predict_mapped():
                 temp_file_id = payload["temp_file_id"]
                 mapping = payload.get("mapping", {})
                 found_file = None
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
                 for fname in os.listdir(UPLOAD_FOLDER):
                     if fname.startswith(temp_file_id):
                         found_file = os.path.join(UPLOAD_FOLDER, fname)
                         break
                 if not found_file or not os.path.exists(found_file):
-                    return jsonify({"success": False, "error": "Uploaded session file not found or expired."}), 404
+                    return jsonify({"success": False, "error": "Uploaded session file not found or expired. Please re-upload your dataset."}), 404
 
                 ext = os.path.splitext(found_file)[1].lower()
                 if ext == ".csv":
                     try:
-                        source_df = pd.read_csv(found_file)
-                    except UnicodeDecodeError:
-                        source_df = pd.read_csv(found_file, encoding="latin1")
+                        source_df = pd.read_csv(found_file, encoding="utf-8")
+                    except (UnicodeDecodeError, pd.errors.ParserError):
+                        try:
+                            source_df = pd.read_csv(found_file, encoding="utf-8-sig")
+                        except Exception:
+                            source_df = pd.read_csv(found_file, encoding="latin1")
                 else:
                     source_df = pd.read_excel(found_file)
 
@@ -1335,6 +1347,9 @@ def predict_mapped():
         if source_df is None or source_df.empty:
             return jsonify({"success": False, "error": "Input dataset is empty."}), 400
 
+        detected_domain = schema_mapper.detect_dataset_domain(source_df)
+        session["active_domain"] = detected_domain
+
         # Execute feature engineering, cleaning, safe parsing, and strict model alignment
         feature_df, original_df = process_mapped_features(source_df, mapping=mapping)
 
@@ -1361,7 +1376,7 @@ def predict_mapped():
         ).astype(str)
 
         guidance_list = [
-            customer_guidance(prep_row, prob)
+            customer_guidance(prep_row, prob, domain=detected_domain)
             for (_, prep_row), prob in zip(feature_df.iterrows(), churn_probs)
         ]
         enriched_df["Risk signals"] = ["; ".join(d) for d, _ in guidance_list]
@@ -1370,8 +1385,6 @@ def predict_mapped():
         # Update bulk results file for live dashboard sync
         os.makedirs(DATA_DIR, exist_ok=True)
         enriched_df.to_csv(BULK_RESULTS_PATH, index=False)
-        detected_domain = schema_mapper.detect_dataset_domain(source_df)
-        session["active_domain"] = detected_domain
 
         # Build JSON response
         records_output = []

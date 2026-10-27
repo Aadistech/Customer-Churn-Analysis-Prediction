@@ -1423,6 +1423,18 @@ function initDragAndDrop() {
           })
         });
 
+        if (!response.ok) {
+          let errMsg = 'Failed to process dataset scoring.';
+          try {
+            const errData = await response.json();
+            errMsg = errData.error || errMsg;
+          } catch (_) {
+            errMsg = 'Server error (' + response.status + '): Please check dataset columns.';
+          }
+          showToast(errMsg, 'error');
+          return;
+        }
+
         const res = await response.json();
         if (!res.success) {
           showToast(res.error || 'Failed to process dataset scoring.', 'error');
@@ -1449,7 +1461,7 @@ function initDragAndDrop() {
         switchWizardStep(3);
       } catch (err) {
         console.error(err);
-        showToast('Error scoring mapped dataset.', 'error');
+        showToast('Error scoring mapped dataset: ' + (err.message || 'Check connection'), 'error');
       } finally {
         btnRunMappedPredictions.disabled = false;
         btnRunMappedPredictions.innerHTML = '🚀 Run Predictions & Analytics →';
