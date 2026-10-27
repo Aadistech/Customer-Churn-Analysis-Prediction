@@ -1036,6 +1036,7 @@ function renderPredictionResult(res) {
    UNIVERSAL DATASET SCHEMA MAPPER & BATCH WIZARD
    ============================================================ */
 let uploadWizardState = {
+  file: null,
   tempFileId: null,
   filename: '',
   columns: [],
@@ -1057,7 +1058,7 @@ window.switchWizardStep = function(step) {
 
   if (!step1) return;
 
-  if (step === 2 && !uploadWizardState.tempFileId) {
+  if (step === 2 && !uploadWizardState.tempFileId && !uploadWizardState.file) {
     showToast('Please upload a dataset file in Step 1 first.', 'warning');
     return;
   }
@@ -1156,6 +1157,7 @@ function initDragAndDrop() {
   });
 
   function handleFileSelected(file) {
+    uploadWizardState.file = file;
     if (fileInfoBox && fileInfoText && fileSizeBadge) {
       fileInfoText.innerHTML = `📄 <strong>Selected:</strong> ${file.name}`;
       const sizeKb = (file.size / 1024).toFixed(1);
@@ -1172,6 +1174,7 @@ function initDragAndDrop() {
         return;
       }
 
+      uploadWizardState.file = fileInput.files[0];
       btnUploadAndDetect.disabled = true;
       btnUploadAndDetect.innerHTML = '⌛ Scanning & Auto-Matching Columns...';
 
@@ -1395,8 +1398,10 @@ function initDragAndDrop() {
   // Step 2 Action: Run Mapped Predictions
   if (btnRunMappedPredictions) {
     btnRunMappedPredictions.addEventListener('click', async () => {
-      if (!uploadWizardState.tempFileId) {
-        showToast('No active uploaded file session.', 'error');
+      const fileToSend = uploadWizardState.file || (fileInput && fileInput.files && fileInput.files[0]);
+      if (!uploadWizardState.tempFileId && !fileToSend) {
+        showToast('No active uploaded file session. Please re-upload in Step 1.', 'warning');
+        switchWizardStep(1);
         return;
       }
 
@@ -1414,24 +1419,49 @@ function initDragAndDrop() {
       btnRunMappedPredictions.innerHTML = '⌛ Generating Predictions & Risk Signals...';
 
       try {
-        const response = await fetch('/api/process_mapped_dataset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            temp_file_id: uploadWizardState.tempFileId,
-            mapping: mapping
-          })
-        });
+        let response;
+        if (fileToSend) {
+          // Always send actual File object via multipart FormData for 100% resilience against server restarts/deploys!
+          const formData = new FormData();
+          formData.append('dataset', fileToSend);
+          if (uploadWizardState.tempFileId) {
+            formData.append('temp_file_id', uploadWizardState.tempFileId);
+          }
+          formData.append('mapping', JSON.stringify(mapping));
+
+          response = await fetch('/api/process_mapped_dataset', {
+            method: 'POST',
+            body: formData
+          });
+        } else {
+          // Fallback if File object is absent from memory
+          response = await fetch('/api/process_mapped_dataset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              temp_file_id: uploadWizardState.tempFileId,
+              mapping: mapping
+            })
+          });
+        }
 
         if (!response.ok) {
           let errMsg = 'Failed to process dataset scoring.';
+          let isExpired = false;
           try {
             const errData = await response.json();
             errMsg = errData.error || errMsg;
+            isExpired = errData.session_expired || (response.status === 404);
           } catch (_) {
             errMsg = 'Server error (' + response.status + '): Please check dataset columns.';
           }
           showToast(errMsg, 'error');
+          if (isExpired) {
+            setTimeout(() => {
+              showToast('Returning to Step 1 so you can re-attach your dataset file.', 'info');
+              switchWizardStep(1);
+            }, 1200);
+          }
           return;
         }
 
@@ -1473,6 +1503,7 @@ function initDragAndDrop() {
   if (btnScoreAnother) {
     btnScoreAnother.addEventListener('click', () => {
       uploadWizardState = {
+        file: null,
         tempFileId: null,
         filename: '',
         columns: [],

@@ -1074,6 +1074,7 @@ def api_upload_preview():
         if ext not in [".csv", ".xlsx", ".xls"]:
             return jsonify({"success": False, "error": "Unsupported file format. Please upload .csv, .xlsx, or .xls"}), 400
 
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         temp_file_id = str(uuid.uuid4())
         saved_filename = f"{temp_file_id}{ext}"
         saved_path = os.path.join(UPLOAD_FOLDER, saved_filename)
@@ -1083,9 +1084,12 @@ def api_upload_preview():
         try:
             if ext == ".csv":
                 try:
-                    df = pd.read_csv(saved_path)
-                except UnicodeDecodeError:
-                    df = pd.read_csv(saved_path, encoding="latin1")
+                    df = pd.read_csv(saved_path, encoding="utf-8")
+                except (UnicodeDecodeError, pd.errors.ParserError):
+                    try:
+                        df = pd.read_csv(saved_path, encoding="utf-8-sig")
+                    except Exception:
+                        df = pd.read_csv(saved_path, encoding="latin1")
             else:
                 df = pd.read_excel(saved_path)
         except Exception as read_err:
@@ -1271,50 +1275,63 @@ def predict_mapped():
         mapping = {}
         source_df = None
 
-        # Case A: File upload
+        # 1. Parse mapping from form-data or JSON payload
+        raw_mapping = request.form.get("mapping")
+        if raw_mapping:
+            try:
+                mapping = json.loads(raw_mapping) if isinstance(raw_mapping, str) else raw_mapping
+            except Exception:
+                mapping = {}
+
+        payload = request.get_json(silent=True) or {}
+        if isinstance(payload, dict) and "mapping" in payload:
+            json_mapping = payload.get("mapping")
+            if json_mapping and isinstance(json_mapping, dict):
+                mapping = json_mapping
+
+        # 2. Case A: Multipart File upload directly in the request (Zero-dependency on server storage)
         if request.files and ("dataset" in request.files or "file" in request.files):
             file = request.files.get("dataset") or request.files.get("file")
-            filename = file.filename.lower()
+            filename = (file.filename or "uploaded_dataset.csv").lower()
             if filename.endswith(".csv"):
                 try:
-                    source_df = pd.read_csv(file)
-                except UnicodeDecodeError:
-                    file.seek(0)
-                    source_df = pd.read_csv(file, encoding="latin1")
+                    source_df = pd.read_csv(file, encoding="utf-8")
+                except Exception:
+                    try:
+                        file.seek(0)
+                        source_df = pd.read_csv(file, encoding="utf-8-sig")
+                    except Exception:
+                        file.seek(0)
+                        source_df = pd.read_csv(file, encoding="latin1")
             elif filename.endswith(".xlsx") or filename.endswith(".xls"):
                 source_df = pd.read_excel(file)
             else:
                 return jsonify({"success": False, "error": "Unsupported file format. Please upload .csv or .xlsx"}), 400
 
-            raw_mapping = request.form.get("mapping")
-            if raw_mapping:
-                try:
-                    mapping = json.loads(raw_mapping)
-                except Exception:
-                    mapping = {}
-
-        # Case B: JSON payload
-        elif request.is_json or request.get_json(silent=True):
-            payload = request.get_json(silent=True) or {}
-
-            # Sub-case: temp_file_id
-            if isinstance(payload, dict) and "temp_file_id" in payload:
-                temp_file_id = payload["temp_file_id"]
-                mapping = payload.get("mapping", {})
-                found_file = None
+            # Cache the file to uploads folder so subsequent queries can find it
+            try:
                 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                for fname in os.listdir(UPLOAD_FOLDER):
-                    if fname.startswith(temp_file_id):
-                        found_file = os.path.join(UPLOAD_FOLDER, fname)
-                        break
-                if not found_file or not os.path.exists(found_file):
-                    return jsonify({"success": False, "error": "Uploaded session file not found or expired. Please re-upload your dataset."}), 404
+                cache_id = request.form.get("temp_file_id") or str(uuid.uuid4())
+                cache_path = os.path.join(UPLOAD_FOLDER, f"{cache_id}.csv")
+                source_df.to_csv(cache_path, index=False)
+            except Exception:
+                pass
 
+        # 3. Case B: temp_file_id lookup from disk
+        temp_file_id = request.form.get("temp_file_id") or (payload.get("temp_file_id") if isinstance(payload, dict) else None)
+        if source_df is None and temp_file_id:
+            found_file = None
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            for fname in os.listdir(UPLOAD_FOLDER):
+                if fname.startswith(temp_file_id):
+                    found_file = os.path.join(UPLOAD_FOLDER, fname)
+                    break
+            if found_file and os.path.exists(found_file):
                 ext = os.path.splitext(found_file)[1].lower()
                 if ext == ".csv":
                     try:
                         source_df = pd.read_csv(found_file, encoding="utf-8")
-                    except (UnicodeDecodeError, pd.errors.ParserError):
+                    except Exception:
                         try:
                             source_df = pd.read_csv(found_file, encoding="utf-8-sig")
                         except Exception:
@@ -1322,26 +1339,26 @@ def predict_mapped():
                 else:
                     source_df = pd.read_excel(found_file)
 
-            # Sub-case: "data" or "records"
-            elif isinstance(payload, dict) and ("data" in payload or "records" in payload):
+        # 4. Case C: Direct JSON records in payload
+        if source_df is None:
+            if isinstance(payload, dict) and ("data" in payload or "records" in payload):
                 raw_data = payload.get("data") or payload.get("records")
-                mapping = payload.get("mapping", {})
                 source_df = pd.DataFrame(raw_data)
-
-            # Sub-case: directly a list of records
             elif isinstance(payload, list):
                 source_df = pd.DataFrame(payload)
-                mapping = {}
-
-            # Sub-case: single record object
             elif isinstance(payload, dict):
-                mapping = payload.get("mapping", {})
                 record_items = {k: v for k, v in payload.items() if k not in {"mapping", "temp_file_id"}}
                 if record_items:
                     source_df = pd.DataFrame([record_items])
-                else:
-                    return jsonify({"success": False, "error": "No customer records found in payload."}), 400
-        else:
+
+        # 5. Check if source_df was obtained
+        if source_df is None or source_df.empty:
+            if temp_file_id:
+                return jsonify({
+                    "success": False,
+                    "error": "Uploaded session file not found or expired. Please re-upload your dataset in Step 1.",
+                    "session_expired": True
+                }), 404
             return jsonify({"success": False, "error": "No input data provided. Send JSON records or upload a dataset."}), 400
 
         if source_df is None or source_df.empty:
