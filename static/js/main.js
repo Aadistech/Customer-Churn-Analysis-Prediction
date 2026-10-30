@@ -291,7 +291,12 @@ function initAdvancedTableSystem() {
 
     // Update Counter & Pagination Controls
     if (recordsCounter) {
-      recordsCounter.textContent = `Showing ${paginatedItems.length} of ${totalRecords} matching accounts (Page ${currentPage} of ${totalPages})`;
+      const fullTotal = table.getAttribute('data-total-records');
+      if (fullTotal && parseInt(fullTotal) > totalRecords) {
+        recordsCounter.innerHTML = `Showing ${paginatedItems.length} of ${totalRecords} prioritized accounts (Page ${currentPage} of ${totalPages}) &bull; <span style="color: #10B981; font-weight: 600;">Full ${parseInt(fullTotal).toLocaleString()} accounts available via 'Full CSV'</span>`;
+      } else {
+        recordsCounter.textContent = `Showing ${paginatedItems.length} of ${totalRecords} matching accounts (Page ${currentPage} of ${totalPages})`;
+      }
     }
 
     renderPaginationButtons(totalPages);

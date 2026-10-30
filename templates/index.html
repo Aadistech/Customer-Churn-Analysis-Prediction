@@ -310,7 +310,7 @@
 
         <!-- Responsive Table Container with Sortable Columns -->
         <div class="table-container">
-            <table class="custom-table" id="customerTable">
+            <table class="custom-table" id="customerTable" data-total-records="{{ total_records_count or total_customers }}">
                 <thead>
                     <tr>
                         {% if table_columns and table_columns|length > 0 %}

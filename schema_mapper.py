@@ -1201,6 +1201,20 @@ def calculate_domain_analytics(
         if is_kaggle_telco else profile["risk_action"]
     )
 
+    # Memory & Payload Optimization for Web Rendering:
+    # Cap rendered HTML table rows to top 250 accounts sorted by churn probability (highest risk first).
+    # This prevents creating 350,000 DOM nodes (28MB HTML payload) that trigger Gunicorn OOM kills (502 error) on cloud hosts.
+    # The complete dataset remains 100% accessible via the 'Full CSV' export and for all KPI/Chart calculations.
+    MAX_DISPLAY_ROWS = 250
+    if len(table_rows) > MAX_DISPLAY_ROWS:
+        display_rows = sorted(
+            table_rows,
+            key=lambda r: float(r.get("churn_probability", 0.0)),
+            reverse=True
+        )[:MAX_DISPLAY_ROWS]
+    else:
+        display_rows = table_rows
+
     return {
         "domain_key": domain_key,
         "domain_name": domain_name_display,
@@ -1223,8 +1237,10 @@ def calculate_domain_analytics(
         "usd_to_inr_rate": USD_TO_INR_RATE,
         "currency_symbol": "₹",
         "table_columns": active_table_columns,
-        "table_data": table_rows,
-        "results": table_rows,
+        "table_data": display_rows,
+        "results": display_rows,
+        "total_records_count": total_customers,
+        "total_displayed_count": len(display_rows),
         "charts": {
             "chart1": chart1,
             "chart2": chart2,

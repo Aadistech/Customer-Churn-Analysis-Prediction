@@ -743,6 +743,22 @@ def analyze_customers(source_df, mapping=None, domain_key=None):
 
 
 # ============================================================
+# CLOUD HEALTH CHECK & UPTIME MONITORING
+# ============================================================
+
+@app.route("/health")
+@app.route("/ping")
+def health_check():
+    """Lightweight health probe for Render load balancers and uptime monitoring."""
+    return jsonify({
+        "status": "healthy",
+        "service": "AadiBI Customer Churn Intelligence",
+        "models_loaded": list(DOMAIN_MODELS.keys()),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }), 200
+
+
+# ============================================================
 # AUTHENTICATION ROUTES
 # ============================================================
 
@@ -1403,9 +1419,9 @@ def predict_mapped():
         os.makedirs(DATA_DIR, exist_ok=True)
         enriched_df.to_csv(BULK_RESULTS_PATH, index=False)
 
-        # Build JSON response
-        records_output = []
-        for idx, row in enriched_df.iterrows():
+        # Build JSON response (top 100 preview records to keep payload lightweight and avoid memory spikes)
+        preview_records_output = []
+        for idx, row in enriched_df.head(100).iterrows():
             rec = row.to_dict()
             rec = {k: (None if pd.isna(v) else v) for k, v in rec.items()}
             rec["is_churn"] = bool(predictions[idx] == 1)
@@ -1415,7 +1431,7 @@ def predict_mapped():
             rec["risk_level"] = str(enriched_df.loc[idx, "Risk Level"])
             rec["drivers"] = guidance_list[idx][0]
             rec["recommendation"] = guidance_list[idx][1]
-            records_output.append(rec)
+            preview_records_output.append(rec)
 
         total_customers = len(enriched_df)
         churned_customers = int((predictions == 1).sum())
@@ -1426,7 +1442,7 @@ def predict_mapped():
         if is_firebase_active:
             try:
                 first_col = list(original_df.columns)[0]
-                for rec in records_output[:10]:
+                for rec in preview_records_output[:10]:
                     if rec["risk_level"] == "HIGH":
                         sync_prediction_to_firestore({
                             "source": "predict_mapped",
@@ -1446,8 +1462,8 @@ def predict_mapped():
             "churn_count": churned_customers,
             "stay_count": staying_customers,
             "churn_rate": churn_rate,
-            "predictions": records_output,
-            "results": records_output,
+            "predictions": preview_records_output,
+            "results": preview_records_output,
             "feature_names_in": list(feature_df.columns),
             "firebase_synced": is_firebase_active
         })
